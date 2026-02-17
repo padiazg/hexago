@@ -1,0 +1,115 @@
+# GoReleaser configuration for HexaGo
+# https://goreleaser.com
+
+version: 2
+
+before:
+  hooks:
+    # Ensure dependencies are up to date
+    - go mod tidy
+    - go mod download
+
+builds:
+  - main: ./main.go
+    binary: hexago
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/padiazg/hexago/cmd.version={{.Version}}
+      - -X github.com/padiazg/hexago/cmd.commit={{.Commit}}
+      - -X github.com/padiazg/hexago/cmd.date={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE*
+      - CHANGELOG.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Enhancements'
+      regexp: '^.*?enhance(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: padiazg
+    name: hexago
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## HexaGo {{ .Tag }} Release
+
+    Hexagonal Architecture scaffolding tool for Go projects.
+
+    ### Installation
+
+    Download the appropriate binary for your platform below, or use:
+
+    ```bash
+    go install github.com/padiazg/hexago@{{ .Tag }}
+    ```
+
+  footer: |
+    **Full Changelog**: https://github.com/padiazg/hexago/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+    ---
+
+    ## Project Types
+
+    - **http-server** - HTTP API with framework support (Echo, Gin, Chi, Fiber, stdlib)
+    - **service** - Long-running daemon/service (no web framework for main logic)
+
+    All types support optional observability (health checks + Prometheus metrics).
+
+# Homebrew tap (optional - uncomment if you want to publish to homebrew)
+brews:
+  - repository:
+      owner: padiazg
+      name: homebrew-tap
+    homepage: https://github.com/padiazg/hexago
+    description: Hexagonal Architecture scaffolding tool for Go
+    license: MIT
+    install: |
+      bin.install "hexago"
