@@ -1,0 +1,30 @@
+package grpc
+
+import (
+	"context"
+
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
+)
+
+// {{.HandlerName}} implements the gRPC service
+type {{.HandlerName}} struct {
+	// TODO: Add use case dependencies
+	// UnimplementedXXXServer
+}
+
+// New{{.HandlerName}} creates a new {{.HandlerName}}
+func New{{.HandlerName}}( /* TODO: Add dependencies */ ) *{{.HandlerName}} {
+	return &{{.HandlerName}}{
+		// TODO: Initialize dependencies
+	}
+}
+
+// TODO: Implement gRPC service methods
+// Example:
+// func (h *{{.HandlerName}}) SomeMethod(ctx context.Context, req *pb.SomeRequest) (*pb.SomeResponse, error) {
+//     // 1. Validate request
+//     // 2. Call use case
+//     // 3. Map to protobuf response
+//     // 4. Return response
+//     return nil, fmt.Errorf("not implemented")
+// }

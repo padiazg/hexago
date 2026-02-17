@@ -1,0 +1,109 @@
+package workers
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// {{.WorkerName}}Job represents a job to be processed by {{.WorkerName}}
+type {{.WorkerName}}Job struct {
+	// TODO: Add job fields
+	ID      string
+	Payload interface{}
+}
+
+// {{.WorkerName}} processes jobs asynchronously using a worker pool
+type {{.WorkerName}} struct {
+	logger   logger.Logger
+	jobQueue chan {{.WorkerName}}Job
+	stopChan chan struct{}
+	wg       sync.WaitGroup
+	workers  int
+}
+
+// New{{.WorkerName}} creates a new {{.WorkerName}} with specified number of workers
+func New{{.WorkerName}}(log logger.Logger, queueSize, workers int) *{{.WorkerName}} {
+	return &{{.WorkerName}}{
+		logger:   log,
+		jobQueue: make(chan {{.WorkerName}}Job, queueSize),
+		stopChan: make(chan struct{}),
+		workers:  workers,
+	}
+}
+
+// Start begins processing jobs with multiple worker goroutines
+func (w *{{.WorkerName}}) Start(ctx context.Context) {
+	w.logger.Info("Starting {{.WorkerName}}", "workers", w.workers)
+
+	for i := 0; i < w.workers; i++ {
+		w.wg.Add(1)
+		go w.worker(ctx, i)
+	}
+}
+
+// worker is the main goroutine that processes jobs
+func (w *{{.WorkerName}}) worker(ctx context.Context, id int) {
+	defer w.wg.Done()
+
+	w.logger.Info("Worker started", "worker_id", id)
+
+	for {
+		select {
+		case <-ctx.Done():
+			w.logger.Info("Worker context cancelled", "worker_id", id)
+			return
+
+		case <-w.stopChan:
+			w.logger.Info("Worker received stop signal", "worker_id", id)
+			return
+
+		case job := <-w.jobQueue:
+			w.logger.Debug("Processing job", "worker_id", id, "job_id", job.ID)
+			if err := w.processJob(ctx, job); err != nil {
+				w.logger.Error("Failed to process job", "error", err, "job_id", job.ID)
+			}
+		}
+	}
+}
+
+// processJob handles the actual job processing
+func (w *{{.WorkerName}}) processJob(ctx context.Context, job {{.WorkerName}}Job) error {
+	// TODO: Implement job processing logic
+	// Example:
+	// 1. Validate job
+	// 2. Process payload
+	// 3. Call services/repositories
+	// 4. Handle errors and retries
+
+	// Simulate work (remove in production)
+	select {
+	case <-time.After(100 * time.Millisecond):
+		w.logger.Debug("Job processed successfully", "job_id", job.ID)
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// Submit adds a job to the queue (non-blocking with timeout)
+func (w *{{.WorkerName}}) Submit(job {{.WorkerName}}Job) error {
+	select {
+	case w.jobQueue <- job:
+		return nil
+	case <-time.After(5 * time.Second):
+		return fmt.Errorf("timeout submitting job")
+	}
+}
+
+// Stop gracefully stops the worker and waits for all jobs to complete
+func (w *{{.WorkerName}}) Stop() {
+	w.logger.Info("Stopping {{.WorkerName}}...")
+	close(w.stopChan)
+	w.wg.Wait()
+	close(w.jobQueue)
+	w.logger.Info("{{.WorkerName}} stopped")
+}

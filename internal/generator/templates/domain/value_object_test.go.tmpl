@@ -1,0 +1,64 @@
+package domain_test
+
+import (
+	"testing"
+
+	"{{.ModuleName}}/internal/core/domain"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestNew{{.VOName}}(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+	}{
+		{
+			name:    "valid {{.VOName}}",
+			wantErr: false,
+		},
+		// TODO: Add more test cases
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange & Act
+			vo, err := domain.New{{.VOName}}( /* TODO: Add parameters */ )
+
+			// Assert
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				// TODO: Add assertions
+				_ = vo
+			}
+		})
+	}
+}
+
+func Test{{.VOName}}_Equals(t *testing.T) {
+	// TODO: Implement equality tests
+	t.Skip("Not implemented")
+}
+
+func Test{{.VOName}}_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		vo      domain.{{.VOName}}
+		wantErr bool
+	}{
+		// TODO: Add test cases
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.vo.Validate()
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

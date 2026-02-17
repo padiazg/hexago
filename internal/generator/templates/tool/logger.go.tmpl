@@ -1,0 +1,59 @@
+package logger
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+)
+
+// {{.Name}} {{.Description}}
+type {{.Name}} struct {
+	logger *log.Logger
+	// TODO: Add fields (e.g., log level, context fields, etc.)
+}
+
+// New{{.Name}} creates a new {{.Name}} instance
+func New{{.Name}}() *{{.Name}} {
+	return &{{.Name}}{
+		logger: log.New(os.Stdout, "", log.LstdFlags),
+	}
+}
+
+// Debug logs a debug message
+func (l *{{.Name}}) Debug(format string, args ...interface{}) {
+	l.logger.Printf("[DEBUG] "+format, args...)
+}
+
+// Info logs an info message
+func (l *{{.Name}}) Info(format string, args ...interface{}) {
+	l.logger.Printf("[INFO] "+format, args...)
+}
+
+// Warn logs a warning message
+func (l *{{.Name}}) Warn(format string, args ...interface{}) {
+	l.logger.Printf("[WARN] "+format, args...)
+}
+
+// Error logs an error message
+func (l *{{.Name}}) Error(format string, args ...interface{}) {
+	l.logger.Printf("[ERROR] "+format, args...)
+}
+
+// Fatal logs a fatal message and exits
+func (l *{{.Name}}) Fatal(format string, args ...interface{}) {
+	l.logger.Printf("[FATAL] "+format, args...)
+	os.Exit(1)
+}
+
+// WithContext returns a logger with context fields
+func (l *{{.Name}}) WithContext(ctx context.Context) *{{.Name}} {
+	// TODO: Extract context fields (request ID, user ID, etc.)
+	return l
+}
+
+// WithFields returns a logger with additional fields
+func (l *{{.Name}}) WithFields(fields map[string]interface{}) *{{.Name}} {
+	// TODO: Add structured logging fields
+	return l
+}

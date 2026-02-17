@@ -1,0 +1,87 @@
+package workers
+
+import (
+	"context"
+	"sync"
+	"time"
+
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// {{.WorkerName}} performs periodic tasks
+type {{.WorkerName}} struct {
+	logger   logger.Logger
+	interval time.Duration
+	stopChan chan struct{}
+	wg       sync.WaitGroup
+}
+
+// New{{.WorkerName}} creates a new periodic {{.WorkerName}}
+func New{{.WorkerName}}(log logger.Logger, interval time.Duration) *{{.WorkerName}} {
+	return &{{.WorkerName}}{
+		logger:   log,
+		interval: interval,
+		stopChan: make(chan struct{}),
+	}
+}
+
+// Start begins the periodic task execution
+func (w *{{.WorkerName}}) Start(ctx context.Context) {
+	w.wg.Add(1)
+	go w.run(ctx)
+}
+
+// run is the main goroutine that executes periodic tasks
+func (w *{{.WorkerName}}) run(ctx context.Context) {
+	defer w.wg.Done()
+
+	ticker := time.NewTicker(w.interval)
+	defer ticker.Stop()
+
+	w.logger.Info("{{.WorkerName}} started", "interval", w.interval)
+
+	// Run immediately on start
+	if err := w.executeTask(ctx); err != nil {
+		w.logger.Error("Task execution failed", "error", err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			w.logger.Info("{{.WorkerName}} context cancelled")
+			return
+
+		case <-w.stopChan:
+			w.logger.Info("{{.WorkerName}} received stop signal")
+			return
+
+		case <-ticker.C:
+			if err := w.executeTask(ctx); err != nil {
+				w.logger.Error("Task execution failed", "error", err)
+			}
+		}
+	}
+}
+
+// executeTask performs the periodic task
+func (w *{{.WorkerName}}) executeTask(ctx context.Context) error {
+	w.logger.Info("Executing periodic task")
+
+	// TODO: Implement periodic task logic
+	// Example:
+	// - Health checks
+	// - Data cleanup
+	// - Metrics collection
+	// - Scheduled reports
+	// - Cache warming
+
+	return nil
+}
+
+// Stop gracefully stops the worker
+func (w *{{.WorkerName}}) Stop() {
+	w.logger.Info("Stopping {{.WorkerName}}...")
+	close(w.stopChan)
+	w.wg.Wait()
+	w.logger.Info("{{.WorkerName}} stopped")
+}

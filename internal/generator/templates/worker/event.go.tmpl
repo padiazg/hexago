@@ -1,0 +1,99 @@
+package workers
+
+import (
+	"context"
+	"sync"
+
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// {{.WorkerName}}Event represents an event to be processed
+type {{.WorkerName}}Event struct {
+	// TODO: Add event fields
+	Type    string
+	Payload interface{}
+}
+
+// {{.WorkerName}} processes events asynchronously
+type {{.WorkerName}} struct {
+	logger     logger.Logger
+	eventChan  chan {{.WorkerName}}Event
+	stopChan   chan struct{}
+	wg         sync.WaitGroup
+}
+
+// New{{.WorkerName}} creates a new event-driven {{.WorkerName}}
+func New{{.WorkerName}}(log logger.Logger, eventBufferSize int) *{{.WorkerName}} {
+	return &{{.WorkerName}}{
+		logger:    log,
+		eventChan: make(chan {{.WorkerName}}Event, eventBufferSize),
+		stopChan:  make(chan struct{}),
+	}
+}
+
+// Start begins listening for events
+func (w *{{.WorkerName}}) Start(ctx context.Context) {
+	w.wg.Add(1)
+	go w.run(ctx)
+}
+
+// run is the main goroutine that processes events
+func (w *{{.WorkerName}}) run(ctx context.Context) {
+	defer w.wg.Done()
+
+	w.logger.Info("{{.WorkerName}} started, listening for events")
+
+	for {
+		select {
+		case <-ctx.Done():
+			w.logger.Info("{{.WorkerName}} context cancelled")
+			return
+
+		case <-w.stopChan:
+			w.logger.Info("{{.WorkerName}} received stop signal")
+			return
+
+		case event := <-w.eventChan:
+			if err := w.handleEvent(ctx, event); err != nil {
+				w.logger.Error("Event handling failed", "error", err, "event_type", event.Type)
+			}
+		}
+	}
+}
+
+// handleEvent processes a single event
+func (w *{{.WorkerName}}) handleEvent(ctx context.Context, event {{.WorkerName}}Event) error {
+	w.logger.Info("Handling event", "type", event.Type)
+
+	// TODO: Implement event handling logic
+	// Example:
+	// switch event.Type {
+	// case "user.created":
+	//     return w.handleUserCreated(ctx, event.Payload)
+	// case "order.placed":
+	//     return w.handleOrderPlaced(ctx, event.Payload)
+	// default:
+	//     return fmt.Errorf("unknown event type: %s", event.Type)
+	// }
+
+	return nil
+}
+
+// Publish sends an event to the worker (non-blocking)
+func (w *{{.WorkerName}}) Publish(event {{.WorkerName}}Event) {
+	select {
+	case w.eventChan <- event:
+		w.logger.Debug("Event published", "type", event.Type)
+	default:
+		w.logger.Warn("Event channel full, dropping event", "type", event.Type)
+	}
+}
+
+// Stop gracefully stops the worker
+func (w *{{.WorkerName}}) Stop() {
+	w.logger.Info("Stopping {{.WorkerName}}...")
+	close(w.stopChan)
+	w.wg.Wait()
+	close(w.eventChan)
+	w.logger.Info("{{.WorkerName}} stopped")
+}

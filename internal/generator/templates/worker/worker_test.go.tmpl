@@ -1,0 +1,44 @@
+package workers_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"{{.ModuleName}}/internal/workers"
+	"{{.ModuleName}}/pkg/logger"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func Test{{.WorkerName}}_StartStop(t *testing.T) {
+	// Arrange
+	log := logger.New(&logger.Config{Level: "info"})
+	// TODO: Adjust constructor based on worker type
+	worker := workers.New{{.WorkerName}}(log, 100, 2)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Act - Start worker
+	worker.Start(ctx)
+
+	// Give it a moment to start
+	time.Sleep(100 * time.Millisecond)
+
+	// Assert - Worker should be running
+	// TODO: Add assertions
+
+	// Act - Stop worker
+	worker.Stop()
+
+	// Assert - Should stop cleanly
+	// TODO: Add assertions
+}
+
+// TODO: Add more tests
+// - Test job processing (for queue workers)
+// - Test periodic execution (for periodic workers)
+// - Test event handling (for event workers)
+// - Test error scenarios
+// - Test concurrent processing
+// - Test graceful shutdown

@@ -1,0 +1,15 @@
+package {{.ToolType}}_test
+
+import (
+	"testing"
+
+	"{{.ModuleName}}/internal/infrastructure/{{.ToolType}}"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test{{.Name}}_New(t *testing.T) {
+	tool := {{.ToolType}}.New{{.Name}}()
+	assert.NotNil(t, tool)
+}
+
+// TODO: Add more test cases

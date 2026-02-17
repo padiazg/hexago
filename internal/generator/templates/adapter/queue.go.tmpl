@@ -1,0 +1,44 @@
+package queue
+
+import (
+	"context"
+	"fmt"
+
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// {{.ConsumerName}} consumes messages from a queue
+type {{.ConsumerName}} struct {
+	logger logger.Logger
+	// TODO: Add use case dependencies
+}
+
+// New{{.ConsumerName}} creates a new {{.ConsumerName}}
+func New{{.ConsumerName}}(log logger.Logger /* TODO: Add dependencies */ ) *{{.ConsumerName}} {
+	return &{{.ConsumerName}}{
+		logger: log,
+		// TODO: Initialize dependencies
+	}
+}
+
+// Start begins consuming messages
+func (c *{{.ConsumerName}}) Start(ctx context.Context) error {
+	c.logger.Info("Starting {{.ConsumerName}}...")
+
+	// TODO: Implement message consumption
+	// 1. Connect to message broker
+	// 2. Subscribe to topic/queue
+	// 3. Process messages in loop
+	// 4. Call use case for each message
+	// 5. Handle errors and retries
+
+	return fmt.Errorf("not implemented")
+}
+
+// Stop gracefully stops the consumer
+func (c *{{.ConsumerName}}) Stop() error {
+	c.logger.Info("Stopping {{.ConsumerName}}...")
+	// TODO: Implement graceful shutdown
+	return nil
+}

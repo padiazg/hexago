@@ -1,0 +1,41 @@
+package domain
+
+{{.Imports}}
+
+// {{.EntityName}} represents a {{.EntityName}} entity in the domain.
+// This is a domain entity with unique identity and business logic.
+type {{.EntityName}} struct {
+{{.FieldDefs}}}
+
+// New{{.EntityName}} creates a new {{.EntityName}} with validation
+func New{{.EntityName}}( /* TODO: Add constructor parameters */ ) (*{{.EntityName}}, error) {
+	// TODO: Add validation logic
+
+	entity := &{{.EntityName}}{
+		// TODO: Initialize fields
+	}
+
+	if err := entity.Validate(); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+// Validate ensures the {{.EntityName}} entity is in a valid state
+func (e *{{.EntityName}}) Validate() error {
+	// TODO: Implement validation rules
+	// Example:
+	// if e.ID == "" {
+	//     return errors.New("id cannot be empty")
+	// }
+
+	return nil
+}
+
+// TODO: Add business logic methods here
+// Example:
+// func (e *{{.EntityName}}) SomeBusinessMethod() error {
+//     // Domain logic here
+//     return nil
+// }

@@ -1,0 +1,48 @@
+package domain
+
+{{.Imports}}
+
+// {{.VOName}} is a value object representing {{.VOName}}.
+// Value objects are immutable and compared by value, not identity.
+type {{.VOName}} struct {
+{{.FieldDefs}}}
+
+// New{{.VOName}} creates a new {{.VOName}} with validation
+func New{{.VOName}}( /* TODO: Add parameters */ ) ({{.VOName}}, error) {
+	vo := {{.VOName}}{
+		// TODO: Initialize fields
+	}
+
+	if err := vo.Validate(); err != nil {
+		return {{.VOName}}{}, err
+	}
+
+	return vo, nil
+}
+
+// Validate ensures the {{.VOName}} is valid
+func (v {{.VOName}}) Validate() error {
+	// TODO: Implement validation logic
+	// Example:
+	// if v.value == "" {
+	//     return errors.New("value cannot be empty")
+	// }
+
+	return nil
+}
+
+// Equals compares two {{.VOName}} instances for equality
+func (v {{.VOName}}) Equals(other {{.VOName}}) bool {
+	// TODO: Implement equality comparison
+	// Compare all fields
+	return false
+}
+
+// String returns string representation
+func (v {{.VOName}}) String() string {
+	// TODO: Implement string representation
+	return fmt.Sprintf("{{.VOName}}{}")
+}
+
+// NOTE: Value objects should be immutable
+// Do not add setter methods - create new instances instead

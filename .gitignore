@@ -1,0 +1,6 @@
+hexago
+tmp
+*.md
+!README.md
+!QUICKSTART.md
+!TEMPLATE_CUSTOMIZATION.md

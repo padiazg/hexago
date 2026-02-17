@@ -1,0 +1,63 @@
+package database
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+
+	"{{.ModuleName}}/internal/core/domain"
+)
+
+// {{.RepoName}} implements the repository for database operations
+type {{.RepoName}} struct {
+	db *sql.DB
+}
+
+// New{{.RepoName}} creates a new {{.RepoName}}
+func New{{.RepoName}}(db *sql.DB) *{{.RepoName}} {
+	return &{{.RepoName}}{
+		db: db,
+	}
+}
+
+// Create inserts a new record
+func (r *{{.RepoName}}) Create(ctx context.Context, entity *domain.Entity /* TODO: Update type */ ) error {
+	// TODO: Implement database insert
+	// Example:
+	// query := "INSERT INTO table_name (column1, column2) VALUES ($1, $2)"
+	// _, err := r.db.ExecContext(ctx, query, entity.Field1, entity.Field2)
+	// return err
+
+	return fmt.Errorf("not implemented")
+}
+
+// FindByID retrieves a record by ID
+func (r *{{.RepoName}}) FindByID(ctx context.Context, id string) (*domain.Entity /* TODO: Update type */, error) {
+	// TODO: Implement database query
+	// Example:
+	// query := "SELECT * FROM table_name WHERE id = $1"
+	// row := r.db.QueryRowContext(ctx, query, id)
+	// entity := &domain.Entity{}
+	// err := row.Scan(&entity.Field1, &entity.Field2)
+	// return entity, err
+
+	return nil, fmt.Errorf("not implemented")
+}
+
+// Update updates an existing record
+func (r *{{.RepoName}}) Update(ctx context.Context, entity *domain.Entity /* TODO: Update type */ ) error {
+	// TODO: Implement database update
+	return fmt.Errorf("not implemented")
+}
+
+// Delete removes a record
+func (r *{{.RepoName}}) Delete(ctx context.Context, id string) error {
+	// TODO: Implement database delete
+	return fmt.Errorf("not implemented")
+}
+
+// List retrieves multiple records
+func (r *{{.RepoName}}) List(ctx context.Context) ([]*domain.Entity /* TODO: Update type */, error) {
+	// TODO: Implement database query for multiple records
+	return nil, fmt.Errorf("not implemented")
+}

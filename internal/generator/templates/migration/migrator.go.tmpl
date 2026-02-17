@@ -1,0 +1,91 @@
+package database
+
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// Migrator handles database migrations using golang-migrate
+type Migrator struct {
+	db     *sql.DB
+	logger logger.Logger
+}
+
+// NewMigrator creates a new migration manager
+func NewMigrator(db *sql.DB, log logger.Logger) *Migrator {
+	return &Migrator{
+		db:     db,
+		logger: log,
+	}
+}
+
+// Up runs all pending migrations
+func (m *Migrator) Up() error {
+	migration, err := m.getMigration()
+	if err != nil {
+		return fmt.Errorf("failed to create migration instance: %w", err)
+	}
+	defer migration.Close()
+
+	m.logger.Info("Running migrations...")
+	if err := migration.Up(); err != nil && err != migrate.ErrNoChange {
+		return fmt.Errorf("failed to run migrations: %w", err)
+	}
+
+	m.logger.Info("Migrations completed successfully")
+	return nil
+}
+
+// Down rolls back the last migration
+func (m *Migrator) Down() error {
+	migration, err := m.getMigration()
+	if err != nil {
+		return fmt.Errorf("failed to create migration instance: %w", err)
+	}
+	defer migration.Close()
+
+	m.logger.Info("Rolling back migration...")
+	if err := migration.Steps(-1); err != nil {
+		return fmt.Errorf("failed to rollback migration: %w", err)
+	}
+
+	m.logger.Info("Migration rolled back successfully")
+	return nil
+}
+
+// Version returns the current migration version
+func (m *Migrator) Version() (uint, bool, error) {
+	migration, err := m.getMigration()
+	if err != nil {
+		return 0, false, fmt.Errorf("failed to create migration instance: %w", err)
+	}
+	defer migration.Close()
+
+	version, dirty, err := migration.Version()
+	if err != nil {
+		return 0, false, fmt.Errorf("failed to get version: %w", err)
+	}
+
+	return version, dirty, nil
+}
+
+// getMigration creates a migrate instance
+func (m *Migrator) getMigration() (*migrate.Migrate, error) {
+	driver, err := postgres.WithInstance(m.db, &postgres.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Update database name if not using postgres
+	return migrate.NewWithDatabaseInstance(
+		"file://migrations",
+		"postgres",
+		driver,
+	)
+}

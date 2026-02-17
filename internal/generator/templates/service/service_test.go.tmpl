@@ -1,0 +1,56 @@
+{{/*
+Template: service/service_test.go
+Description: Service/UseCase test file
+Variables:
+  - CoreLogic: string - Core logic directory name
+  - ModuleName: string - Go module name
+  - ServiceName: string - Service name
+*/}}
+package {{.CoreLogic}}_test
+
+import (
+	"context"
+	"testing"
+
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func Test{{.ServiceName}}Service_Execute(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   {{.CoreLogic}}.{{.ServiceName}}Input
+		wantErr bool
+	}{
+		{
+			name: "successful execution",
+			input: {{.CoreLogic}}.{{.ServiceName}}Input{
+				// TODO: Add test input
+			},
+			wantErr: false,
+		},
+		// TODO: Add more test cases
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			service := {{.CoreLogic}}.New{{.ServiceName}}Service( /* TODO: Add mock dependencies */ )
+			ctx := context.Background()
+
+			// Act
+			output, err := service.Execute(ctx, tt.input)
+
+			// Assert
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Nil(t, output)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, output)
+				// TODO: Add more assertions
+			}
+		})
+	}
+}

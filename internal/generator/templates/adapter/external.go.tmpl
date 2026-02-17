@@ -1,0 +1,35 @@
+package external
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+)
+
+// {{.ServiceName}} implements communication with external service
+type {{.ServiceName}} struct {
+	client  *http.Client
+	baseURL string
+	apiKey  string
+}
+
+// New{{.ServiceName}} creates a new {{.ServiceName}}
+func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}} {
+	return &{{.ServiceName}}{
+		client:  &http.Client{},
+		baseURL: baseURL,
+		apiKey:  apiKey,
+	}
+}
+
+// CallExternalAPI makes a call to the external service
+func (s *{{.ServiceName}}) CallExternalAPI(ctx context.Context, params interface{}) (interface{}, error) {
+	// TODO: Implement external API call
+	// 1. Build request
+	// 2. Add authentication headers
+	// 3. Make HTTP request
+	// 4. Parse response
+	// 5. Handle errors
+
+	return nil, fmt.Errorf("not implemented")
+}

@@ -1,0 +1,60 @@
+package workers
+
+import (
+	"context"
+	"sync"
+
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// Worker interface that all workers must implement
+type Worker interface {
+	Start(ctx context.Context)
+	Stop()
+}
+
+// Manager manages multiple workers and their lifecycle
+type Manager struct {
+	logger  logger.Logger
+	workers []Worker
+	wg      sync.WaitGroup
+}
+
+// NewManager creates a new worker manager
+func NewManager(log logger.Logger) *Manager {
+	return &Manager{
+		logger:  log,
+		workers: make([]Worker, 0),
+	}
+}
+
+// Register adds a worker to the manager
+func (m *Manager) Register(worker Worker) {
+	m.workers = append(m.workers, worker)
+	m.logger.Info("Worker registered", "total_workers", len(m.workers))
+}
+
+// StartAll starts all registered workers
+func (m *Manager) StartAll(ctx context.Context) {
+	m.logger.Info("Starting all workers", "count", len(m.workers))
+
+	for _, worker := range m.workers {
+		m.wg.Add(1)
+		go func(w Worker) {
+			defer m.wg.Done()
+			w.Start(ctx)
+		}(worker)
+	}
+}
+
+// StopAll gracefully stops all workers
+func (m *Manager) StopAll() {
+	m.logger.Info("Stopping all workers...")
+
+	for _, worker := range m.workers {
+		worker.Stop()
+	}
+
+	m.wg.Wait()
+	m.logger.Info("All workers stopped")
+}

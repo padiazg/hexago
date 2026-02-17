@@ -1,0 +1,34 @@
+package logger_test
+
+import (
+	"testing"
+
+	"{{.ModuleName}}/internal/infrastructure/logger"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test{{.Name}}_New(t *testing.T) {
+	log := logger.New{{.Name}}()
+	assert.NotNil(t, log)
+}
+
+func Test{{.Name}}_Info(t *testing.T) {
+	log := logger.New{{.Name}}()
+
+	// Should not panic
+	assert.NotPanics(t, func() {
+		log.Info("test message")
+	})
+}
+
+func Test{{.Name}}_WithFields(t *testing.T) {
+	log := logger.New{{.Name}}()
+
+	fields := map[string]interface{}{
+		"user_id": "123",
+		"action":  "test",
+	}
+
+	logWithFields := log.WithFields(fields)
+	assert.NotNil(t, logWithFields)
+}

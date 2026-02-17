@@ -1,0 +1,60 @@
+package middleware
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/pkg/logger"
+)
+
+// {{.Name}} {{.Description}}
+type {{.Name}} struct {
+	logger logger.Logger
+	// TODO: Add dependencies (e.g., auth service, rate limiter, etc.)
+}
+
+// New{{.Name}} creates a new {{.Name}} instance
+func New{{.Name}}(log logger.Logger) *{{.Name}} {
+	return &{{.Name}}{
+		logger: log,
+	}
+}
+
+// Handler wraps an http.Handler with middleware logic
+func (m *{{.Name}}) Handler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: Implement middleware logic
+		//
+		// Common patterns:
+		// 1. Authentication/Authorization
+		//    - Verify tokens, check permissions
+		//    - Return 401/403 if unauthorized
+		//
+		// 2. Logging
+		//    - Log request details
+		//    - Log response status and duration
+		//
+		// 3. Rate Limiting
+		//    - Check rate limits
+		//    - Return 429 if exceeded
+		//
+		// 4. Request Validation
+		//    - Validate headers, query params
+		//    - Return 400 if invalid
+		//
+		// 5. CORS
+		//    - Set CORS headers
+		//    - Handle preflight requests
+
+		m.logger.Info("Processing request: %s %s", r.Method, r.URL.Path)
+
+		// Call next handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+// HandlerFunc wraps an http.HandlerFunc with middleware logic
+func (m *{{.Name}}) HandlerFunc(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		m.Handler(next).ServeHTTP(w, r)
+	}
+}

@@ -1,0 +1,63 @@
+package mapper_test
+
+import (
+	"testing"
+
+	"{{.ModuleName}}/internal/infrastructure/mapper"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test{{.Name}}_ToDTO(t *testing.T) {
+	m := mapper.New{{.Name}}()
+
+	// TODO: Replace with actual domain entity
+	entity := struct {
+		ID   string
+		Name string
+	}{
+		ID:   "123",
+		Name: "Test",
+	}
+
+	dto := m.ToDTO(&entity)
+	assert.NotNil(t, dto)
+
+	// TODO: Add specific assertions for DTO fields
+}
+
+func Test{{.Name}}_ToDomain(t *testing.T) {
+	m := mapper.New{{.Name}}()
+
+	// TODO: Replace with actual DTO
+	dto := struct {
+		ID   string
+		Name string
+	}{
+		ID:   "123",
+		Name: "Test",
+	}
+
+	entity, err := m.ToDomain(&dto)
+	assert.NoError(t, err)
+	assert.NotNil(t, entity)
+
+	// TODO: Add specific assertions for entity fields
+}
+
+func Test{{.Name}}_ToListDTO(t *testing.T) {
+	m := mapper.New{{.Name}}()
+
+	entities := []interface{}{
+		&struct {
+			ID   string
+			Name string
+		}{"1", "Test1"},
+		&struct {
+			ID   string
+			Name string
+		}{"2", "Test2"},
+	}
+
+	dtos := m.ToListDTO(entities)
+	assert.Len(t, dtos, 2)
+}

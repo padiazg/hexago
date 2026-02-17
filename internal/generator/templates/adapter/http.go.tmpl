@@ -1,0 +1,54 @@
+package http
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
+)
+
+// {{.HandlerName}} handles HTTP requests for {{.HandlerName}} operations
+type {{.HandlerName}} struct {
+	// TODO: Add use case dependencies
+	// Example:
+	// createUserService *{{.CoreLogic}}.CreateUserService
+}
+
+// New{{.HandlerName}} creates a new {{.HandlerName}}
+func New{{.HandlerName}}( /* TODO: Add dependencies */ ) *{{.HandlerName}} {
+	return &{{.HandlerName}}{
+		// TODO: Initialize dependencies
+	}
+}
+
+// HandleGet handles GET requests
+// TODO: Update method signature based on your framework
+func (h *{{.HandlerName}}) HandleGet(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement GET logic
+	// 1. Parse request parameters
+	// 2. Call use case
+	// 3. Map to response DTO
+	// 4. Return JSON response
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "not implemented",
+	})
+}
+
+// HandlePost handles POST requests
+func (h *{{.HandlerName}}) HandlePost(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement POST logic
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "not implemented",
+	})
+}
+
+// TODO: Add more handler methods as needed
+// - HandlePut
+// - HandleDelete
+// - HandleList

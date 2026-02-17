@@ -1,0 +1,26 @@
+{{/*
+Template: project/main.go
+Description: Main entry point for the application
+Variables:
+  - Year: string - Copyright year
+  - Author: string - Author name
+  - ModuleName: string - Go module name
+*/}}
+/*
+Copyright © {{.Year}} {{.Author}}
+*/
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"{{.ModuleName}}/cmd"
+)
+
+func main() {
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}

@@ -1,0 +1,37 @@
+package cache
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+// {{.CacheName}} implements caching operations
+type {{.CacheName}} struct {
+	// TODO: Add cache client (Redis, Memcached, etc.)
+}
+
+// New{{.CacheName}} creates a new {{.CacheName}}
+func New{{.CacheName}}( /* TODO: Add dependencies */ ) *{{.CacheName}} {
+	return &{{.CacheName}}{
+		// TODO: Initialize cache client
+	}
+}
+
+// Get retrieves a value from cache
+func (c *{{.CacheName}}) Get(ctx context.Context, key string) (interface{}, error) {
+	// TODO: Implement cache get
+	return nil, fmt.Errorf("not implemented")
+}
+
+// Set stores a value in cache
+func (c *{{.CacheName}}) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	// TODO: Implement cache set
+	return fmt.Errorf("not implemented")
+}
+
+// Delete removes a value from cache
+func (c *{{.CacheName}}) Delete(ctx context.Context, key string) error {
+	// TODO: Implement cache delete
+	return fmt.Errorf("not implemented")
+}

@@ -1,0 +1,41 @@
+{{/*
+Template: misc/gitignore
+Description: Git ignore file for Go projects with common artifacts and IDE files
+Variables:
+  - ProjectName: string - Name of the project binary to ignore
+*/}}
+# Binaries
+{{.ProjectName}}
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.out
+
+# Build artifacts
+/bin/
+/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Config
+.env
+.env.local
+*.local.yaml
+
+# Temporary
+/tmp/
+__debug_bin*

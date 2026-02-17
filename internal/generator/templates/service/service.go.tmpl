@@ -1,0 +1,54 @@
+{{/*
+Template: service/service.go
+Description: Service/UseCase business logic implementation
+Variables:
+  - CoreLogic: string - Core logic directory name (services/usecases)
+  - ModuleName: string - Go module name
+  - ServiceName: string - Service name
+  - Description: string - Service description
+*/}}
+package {{.CoreLogic}}
+
+import (
+	"context"
+	"fmt"
+
+	"{{.ModuleName}}/internal/core/domain"
+)
+
+// {{.ServiceName}}Input represents the input for {{.ServiceName}}
+type {{.ServiceName}}Input struct {
+	// TODO: Add input fields
+}
+
+// {{.ServiceName}}Output represents the output for {{.ServiceName}}
+type {{.ServiceName}}Output struct {
+	// TODO: Add output fields
+}
+
+// {{.ServiceName}}Service {{.Description}}
+type {{.ServiceName}}Service struct {
+	// TODO: Add dependencies (repositories, external services, etc.)
+	// Example:
+	// userRepo driven.UserRepository
+}
+
+// New{{.ServiceName}}Service creates a new instance of {{.ServiceName}}Service
+func New{{.ServiceName}}Service( /* TODO: Add dependencies */ ) *{{.ServiceName}}Service {
+	return &{{.ServiceName}}Service{
+		// TODO: Initialize dependencies
+	}
+}
+
+// Execute runs the {{.ServiceName}} use case
+func (s *{{.ServiceName}}Service) Execute(ctx context.Context, input {{.ServiceName}}Input) (*{{.ServiceName}}Output, error) {
+	// TODO: Implement business logic
+	//
+	// Example structure:
+	// 1. Validate input
+	// 2. Call domain logic
+	// 3. Interact with repositories/external services
+	// 4. Return output or error
+
+	return nil, fmt.Errorf("not implemented")
+}

@@ -1,0 +1,65 @@
+package middleware_test
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"{{.ModuleName}}/internal/infrastructure/middleware"
+	"{{.ModuleName}}/pkg/logger"
+	"github.com/stretchr/testify/assert"
+)
+
+func Test{{.Name}}_Handler(t *testing.T) {
+	// Create middleware
+	log := logger.New(&logger.Config{Level: "info"})
+	mw := middleware.New{{.Name}}(log)
+
+	// Create test handler
+	called := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Wrap with middleware
+	wrappedHandler := mw.Handler(handler)
+
+	// Create test request
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	rec := httptest.NewRecorder()
+
+	// Execute
+	wrappedHandler.ServeHTTP(rec, req)
+
+	// Verify handler was called
+	assert.True(t, called)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func Test{{.Name}}_HandlerFunc(t *testing.T) {
+	// Create middleware
+	log := logger.New(&logger.Config{Level: "info"})
+	mw := middleware.New{{.Name}}(log)
+
+	// Create test handler
+	called := false
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}
+
+	// Wrap with middleware
+	wrappedFunc := mw.HandlerFunc(handlerFunc)
+
+	// Create test request
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	rec := httptest.NewRecorder()
+
+	// Execute
+	wrappedFunc(rec, req)
+
+	// Verify handler was called
+	assert.True(t, called)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
