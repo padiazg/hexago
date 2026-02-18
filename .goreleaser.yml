@@ -98,8 +98,8 @@ homebrew_casks:
       - hexago
     repository:
       owner: padiazg
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      name: hexago-homebrew-tap
+      # token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: https://github.com/padiazg/hexago
     description: Hexagonal Architecture scaffolding tool for Go
     license: MIT
