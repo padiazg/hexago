@@ -71,10 +71,10 @@ Available Commands:
   init        Initialize a new hexagonal architecture project
   add         Add components to an existing project
   validate    Validate hexagonal architecture compliance
-  templates   Manage code generation templates
 
 Flags:
-  -h, --help   help for hexago
+  -h, --help      help for hexago
+  -v, --verbose   Enable verbose output
 ```
 
 ---

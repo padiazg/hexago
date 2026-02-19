@@ -27,7 +27,7 @@ hexago add domain entity <name> [--fields "field:type,field:type"]
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--fields` | | string | `""` | Comma-separated `field:type` pairs |
+| `--fields` | `-f` | string | `""` | Comma-separated `field:type` pairs |
 
 **Field Types:**
 
@@ -55,7 +55,7 @@ hexago add domain valueobject <name> [--fields "field:type"]
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--fields` | | string | `""` | Comma-separated `field:type` pairs |
+| `--fields` | `-f` | string | `""` | Comma-separated `field:type` pairs |
 
 **Examples:**
 

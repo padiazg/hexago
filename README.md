@@ -58,14 +58,19 @@ go build -o hexago
 ### 1. Create a New Project
 
 ```shell
-# Basic project with stdlib
+# Basic HTTP server with stdlib
 hexago init my-app --module github.com/user/my-app
 
 # With Echo framework
 hexago init api-server --module github.com/user/api-server --framework echo
 
+# Long-running service (no HTTP framework)
+hexago init my-service --module github.com/company/my-service \
+  --project-type service \
+  --with-workers
+
 # With alternative naming (DDD style)
-hexago init service --module github.com/company/service \
+hexago init ordering --module github.com/company/ordering \
   --adapter-style driver-driven \
   --core-logic usecases
 ```
@@ -144,10 +149,11 @@ my-app/
 hexago init <name> [flags]
 
 Flags:
-  -m, --module string          Go module name (required)
-  -f, --framework string       Web framework (echo|gin|chi|fiber|stdlib)
-      --adapter-style string   Adapter naming (primary-secondary|driver-driven)
-      --core-logic string      Business logic dir (services|usecases)
+  -m, --module string          Go module name (defaults to project name if omitted)
+  -t, --project-type string    Project type (http-server|service) (default: http-server)
+  -f, --framework string       Web framework for http-server (echo|gin|chi|fiber|stdlib) (default: stdlib)
+      --adapter-style string   Adapter naming (primary-secondary|driver-driven) (default: primary-secondary)
+      --core-logic string      Business logic dir (services|usecases) (default: services)
       --with-docker            Generate Docker files (default: false)
       --with-observability     Include health + metrics (default: false)
       --with-migrations        Include migration setup (default: false)
@@ -219,10 +225,10 @@ Examples:
 hexago add worker <name> [flags]
 
 Flags:
-  -t, --type string         Worker type (queue|periodic|event)
-  -i, --interval string     Interval for periodic workers (e.g., "5m", "1h")
-  -w, --workers int         Number of worker goroutines (queue type)
-  -q, --queue-size int      Job queue buffer size (queue type)
+  -t, --type string         Worker type (queue|periodic|event) (default: queue)
+      --interval string     Interval for periodic workers (e.g., "5m", "1h") (default: 5m)
+      --workers int         Number of worker goroutines (queue type) (default: 5)
+      --queue-size int      Job queue buffer size (queue type) (default: 100)
 
 Examples:
   hexago add worker EmailWorker --type queue --workers 5
@@ -233,7 +239,10 @@ Examples:
 ### Add Migration
 
 ```shell
-hexago add migration <name>
+hexago add migration <name> [flags]
+
+Flags:
+  -t, --type string   Migration type (sql|go) (default: sql)
 
 Examples:
   hexago add migration create_users_table

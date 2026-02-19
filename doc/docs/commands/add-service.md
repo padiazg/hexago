@@ -16,7 +16,7 @@ Must be run from the project root directory.
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--description` | | string | `""` | Description of what the service does |
+| `--description` | `-d` | string | `""` | Description of what the service does |
 
 ---
 
