@@ -10,7 +10,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "hexago",
 	Short: "HexaGo - Hexagonal Architecture Scaffolding CLI",
-	Long: `HexaGo is an opinionated CLI tool that generates scaffolding for applications
+	Long: `HexaGo is an opinionated CLI tool to scaffold applications
 following the Hexagonal Architecture (Ports & Adapters) pattern.
 
 It helps developers maintain proper separation of concerns and avoid conceptual

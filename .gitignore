@@ -5,3 +5,5 @@ tmp
 !QUICKSTART.md
 !TEMPLATE_CUSTOMIZATION.md
 !CHANGELOG.md
+!doc/**/*.md
+doc/site

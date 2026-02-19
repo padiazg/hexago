@@ -1,0 +1,95 @@
+site_name: HexaGo
+site_description: CLI scaffolding tool for Go applications following Hexagonal Architecture
+site_url: https://padiazg.github.io/hexago
+repo_url: https://github.com/padiazg/hexago
+repo_name: padiazg/hexago
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  logo: https://raw.githubusercontent.com/padiazg/hexago/main/assets/logo.png
+  favicon: https://raw.githubusercontent.com/padiazg/hexago/main/assets/logo.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/index.md
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quickstart.md
+  - Commands:
+    - commands/index.md
+    - hexago init: commands/init.md
+    - add service: commands/add-service.md
+    - add domain: commands/add-domain.md
+    - add adapter: commands/add-adapter.md
+    - add worker: commands/add-worker.md
+    - add migration: commands/add-migration.md
+    - add tool: commands/add-tool.md
+    - validate: commands/validate.md
+  - Architecture:
+    - architecture/index.md
+    - Overview: architecture/overview.md
+    - Project Structure: architecture/project-structure.md
+  - Customization:
+    - customization/index.md
+    - Templates: customization/templates.md
+  - Changelog: changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/padiazg/hexago
