@@ -50,8 +50,10 @@ For `hexago add tool validator PostValidator`:
 
 ```
 internal/
-└── tools/
-    └── post_validator.go
+└── infrastructure/
+    └── validator/
+        ├── post_validator.go
+        └── post_validator_test.go
 ```
 
 ---

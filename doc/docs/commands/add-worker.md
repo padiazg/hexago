@@ -16,10 +16,10 @@ Must be run from the project root directory.
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--type` | `-t` | string | *(required)* | Worker type: `queue`, `periodic`, or `event` |
-| `--interval` | `-i` | string | `""` | Execution interval for periodic workers (e.g. `5m`, `1h`, `30s`) |
-| `--workers` | `-w` | int | `1` | Number of goroutines for queue workers |
-| `--queue-size` | `-q` | int | `100` | Job queue buffer size for queue workers |
+| `--type` | `-t` | string | `queue` | Worker type: `queue`, `periodic`, or `event` |
+| `--interval` | | string | `5m` | Execution interval for periodic workers (e.g. `5m`, `1h`, `30s`) |
+| `--workers` | | int | `5` | Number of goroutines for queue workers |
+| `--queue-size` | | int | `100` | Job queue buffer size for queue workers |
 
 ---
 

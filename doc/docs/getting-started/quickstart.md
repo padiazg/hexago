@@ -25,15 +25,27 @@ This guide walks you through creating your first HexaGo project and adding compo
     make run
     ```
 
+=== "Long-running Service"
+
+    ```shell
+    hexago init worker-service \
+      --module github.com/company/worker-service \
+      --project-type service \
+      --with-workers
+
+    cd worker-service
+    go run main.go run
+    ```
+
 === "DDD Style (driver-driven)"
 
     ```shell
-    hexago init service \
-      --module github.com/company/service \
+    hexago init ordering \
+      --module github.com/company/ordering \
       --adapter-style driver-driven \
       --core-logic usecases
 
-    cd service
+    cd ordering
     go run main.go run
     ```
 

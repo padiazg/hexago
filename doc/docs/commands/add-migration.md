@@ -5,10 +5,21 @@ Add a database migration to an existing project.
 ## Synopsis
 
 ```shell
-hexago add migration <name>
+hexago add migration <name> [flags]
 ```
 
 Must be run from the project root directory.
+
+---
+
+## Flags
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--type` | `-t` | string | `sql` | Migration type: `sql` |
+
+!!! note
+    Only `sql` migrations are supported. The `go` migration type is reserved for a future release.
 
 ---
 

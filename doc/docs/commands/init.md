@@ -16,8 +16,9 @@ hexago init <name> [flags]
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--module` | `-m` | string | *(required)* | Go module name (e.g. `github.com/user/my-app`) |
-| `--framework` | `-f` | string | `stdlib` | Web framework: `echo`, `gin`, `chi`, `fiber`, or `stdlib` |
+| `--module` | `-m` | string | *(project name)* | Go module name (e.g. `github.com/user/my-app`). Defaults to the project name if omitted. |
+| `--project-type` | `-t` | string | `http-server` | Project type: `http-server` or `service` |
+| `--framework` | `-f` | string | `stdlib` | Web framework for `http-server`: `echo`, `gin`, `chi`, `fiber`, or `stdlib` |
 | `--adapter-style` | | string | `primary-secondary` | Adapter naming: `primary-secondary` or `driver-driven` |
 | `--core-logic` | | string | `services` | Business logic directory: `services` or `usecases` |
 | `--with-docker` | | bool | `false` | Generate Dockerfile and docker-compose |
@@ -30,6 +31,17 @@ hexago init <name> [flags]
 
 !!! note
     All `--with-*` flags default to `false` (opt-in). This keeps generated projects lean — only include what you need.
+
+---
+
+## Project Types
+
+| Value | Description |
+|-------|-------------|
+| `http-server` | HTTP API server with a web framework (default) |
+| `service` | Long-running daemon or background service (no web framework required) |
+
+The `--framework` flag is only relevant for `http-server` projects. Specifying `--framework` with `--project-type service` emits a warning and is ignored.
 
 ---
 
@@ -105,11 +117,12 @@ hexago init ordering \
 
 This creates `internal/core/usecases/`, `internal/adapters/driver/`, `internal/adapters/driven/`, and `internal/core/ports/`.
 
-### Microservice (no HTTP, long-running daemon)
+### Long-running service (no HTTP)
 
 ```shell
 hexago init email-service \
   --module github.com/company/email-service \
+  --project-type service \
   --with-workers \
   --with-migrations
 ```

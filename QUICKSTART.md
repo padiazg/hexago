@@ -109,10 +109,11 @@ export MY_APP_LOGLEVEL=debug
 hexago init <name> [flags]
 
 Flags:
-  -m, --module string          Go module name
-  -f, --framework string       echo|gin|chi|fiber|stdlib (default "stdlib")
-      --adapter-style string   primary-secondary|driver-driven (default "primary-secondary")
-      --core-logic string      services|usecases (default "services")
+  -m, --module string          Go module name (defaults to project name if omitted)
+  -t, --project-type string    Project type: http-server|service (default "http-server")
+  -f, --framework string       Web framework for http-server: echo|gin|chi|fiber|stdlib (default "stdlib")
+      --adapter-style string   Adapter naming: primary-secondary|driver-driven (default "primary-secondary")
+      --core-logic string      Business logic dir: services|usecases (default "services")
       --with-docker            Generate Docker files (default false)
       --with-observability     Include health + metrics (default false)
       --with-migrations        Include migration setup (default false)
@@ -136,6 +137,7 @@ go run main.go run
 ```bash
 hexago init email-service \
   --module github.com/company/email-service \
+  --project-type service \
   --with-workers \
   --with-migrations
 
