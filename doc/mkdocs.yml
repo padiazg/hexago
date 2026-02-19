@@ -7,8 +7,8 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
-  logo: https://raw.githubusercontent.com/padiazg/hexago/main/assets/logo.png
-  favicon: https://raw.githubusercontent.com/padiazg/hexago/main/assets/logo.png
+  logo: https://raw.githubusercontent.com/padiazg/hexago/master/logo.png
+  favicon: https://raw.githubusercontent.com/padiazg/hexago/master/logo.png
   icon:
     repo: fontawesome/brands/github
   palette:
