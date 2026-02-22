@@ -10,9 +10,10 @@ HexaGo searches for templates in the following order (highest priority first):
 
 | Priority | Location | Use Case |
 |----------|----------|----------|
-| **1 — Highest** | `./.hexago/templates/` | Per-project customization |
-| **2 — Medium** | `~/.hexago/templates/` | User-wide defaults |
-| **3 — Fallback** | Embedded in binary | Default templates |
+| **1 — Highest** | `<binary-dir>/templates/` | Binary-local overrides |
+| **2** | `./.hexago/templates/` | Per-project customization |
+| **3** | `~/.hexago/templates/` | User-wide defaults |
+| **4 — Fallback** | Embedded in binary | Default templates |
 
 When you provide a custom template, HexaGo uses it instead of the built-in default.
 
@@ -26,40 +27,62 @@ templates/
 │   ├── main.go.tmpl
 │   ├── root_cmd.go.tmpl
 │   ├── run_cmd.go.tmpl
+│   ├── run_cmd_http_server.go.tmpl
+│   ├── run_cmd_service.go.tmpl
 │   ├── config.go.tmpl
-│   └── logger.go.tmpl
+│   ├── logger.go.tmpl
+│   ├── http_server_interface.go.tmpl
+│   ├── http_server_echo.go.tmpl
+│   ├── http_server_gin.go.tmpl
+│   ├── http_server_chi.go.tmpl
+│   ├── http_server_fiber.go.tmpl
+│   └── http_server_stdlib.go.tmpl
 ├── misc/                       # Project support files
 │   ├── makefile.tmpl
 │   ├── readme.md.tmpl
 │   ├── dockerfile.tmpl
 │   ├── compose.yaml.tmpl
-│   └── gitignore.tmpl
+│   ├── gitignore.tmpl
+│   ├── health.go.tmpl
+│   ├── metrics.go.tmpl
+│   └── server.go.tmpl
 ├── service/                    # Business logic templates
 │   ├── service.go.tmpl
-│   └── service_test.go.tmpl
+│   ├── service_test.go.tmpl
+│   └── processor.go.tmpl
 ├── domain/                     # Domain entity templates
 │   ├── entity.go.tmpl
 │   ├── entity_test.go.tmpl
 │   ├── value_object.go.tmpl
 │   └── value_object_test.go.tmpl
-├── adapter/                    # Adapter templates
-│   ├── primary/
-│   │   ├── http_handler.go.tmpl
-│   │   ├── grpc_handler.go.tmpl
-│   │   └── queue_consumer.go.tmpl
-│   └── secondary/
-│       ├── database_repo.go.tmpl
-│       ├── external_service.go.tmpl
-│       └── cache_adapter.go.tmpl
+├── adapter/                    # Adapter templates (flat, framework-agnostic)
+│   ├── http.go.tmpl
+│   ├── grpc.go.tmpl
+│   ├── queue.go.tmpl
+│   ├── database.go.tmpl
+│   ├── external.go.tmpl
+│   ├── cache.go.tmpl
+│   └── adapter_test.go.tmpl
 ├── worker/                     # Background worker templates
-│   ├── queue_worker.go.tmpl
-│   ├── periodic_worker.go.tmpl
-│   ├── event_worker.go.tmpl
-│   └── manager.go.tmpl
-└── migration/                  # Database migration templates
-    ├── migration.up.sql.tmpl
-    ├── migration.down.sql.tmpl
-    └── migrator.go.tmpl
+│   ├── queue.go.tmpl
+│   ├── periodic.go.tmpl
+│   ├── event.go.tmpl
+│   ├── manager.go.tmpl
+│   └── worker_test.go.tmpl
+├── migration/                  # Database migration templates
+│   ├── up.sql.tmpl
+│   ├── down.sql.tmpl
+│   └── migrator.go.tmpl
+└── tool/                       # Infrastructure tool templates
+    ├── logger.go.tmpl
+    ├── logger_test.go.tmpl
+    ├── validator.go.tmpl
+    ├── validator_test.go.tmpl
+    ├── mapper.go.tmpl
+    ├── mapper_test.go.tmpl
+    ├── middleware.go.tmpl
+    ├── middleware_test.go.tmpl
+    └── generic_test.go.tmpl
 ```
 
 ---
@@ -72,13 +95,15 @@ templates/
 hexago templates list
 ```
 
+Shows all 52 built-in templates grouped by directory. Templates with an active override are annotated with `← project-local` or `← user-global`.
+
 ### Check which template will be used
 
 ```shell
 hexago templates which project/main.go.tmpl
 ```
 
-Shows whether the project-local, user-global, or embedded template will be used.
+Shows the winning source (embedded, project-local, user-global, or binary-local) with its full path.
 
 ### Export a template for editing
 
@@ -88,16 +113,30 @@ hexago templates export project/main.go.tmpl
 
 # Export to user-global (~/.hexago/templates/)
 hexago templates export project/main.go.tmpl --global
-
-# Export to a specific location
-hexago templates export project/main.go.tmpl --output /path/to/template
 ```
+
+### Export all templates at once
+
+```shell
+# Export all templates to project-local
+hexago templates export-all
+
+# Export all templates to user-global
+hexago templates export-all --global
+
+# Overwrite templates that already have an override
+hexago templates export-all --force
+```
+
+Templates that already have an override are skipped by default. Use `--force` to overwrite them.
 
 ### Validate template syntax
 
 ```shell
 hexago templates validate .hexago/templates/project/main.go.tmpl
 ```
+
+Prints `✓ <path> — template syntax is valid` on success, or `✗ <path>` with the error detail on failure.
 
 ### Reset to default
 
@@ -348,25 +387,7 @@ tar xzf hexago-templates.tar.gz
 
 ## Currently Available for Customization
 
-!!! success "Available now"
-    - `project/main.go.tmpl`
-    - `project/root_cmd.go.tmpl`
-    - `project/run_cmd.go.tmpl`
-    - `project/config.go.tmpl`
-    - `project/logger.go.tmpl`
-    - `misc/makefile.tmpl`
-    - `misc/readme.md.tmpl`
-    - `misc/dockerfile.tmpl`
-    - `misc/compose.yaml.tmpl`
-    - `misc/gitignore.tmpl`
-    - `service/service.go.tmpl`
-    - `service/service_test.go.tmpl`
-
-!!! info "Coming soon"
-    - Domain templates
-    - Adapter templates
-    - Worker templates
-    - Migration templates
+All 52 built-in templates are available for customization. Run `hexago templates list` to see the full set. Use `hexago templates export-all` to export every template to your override directory in one step.
 
 ---
 

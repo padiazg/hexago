@@ -280,6 +280,32 @@ Checks:
   ✓ Naming conventions
 ```
 
+### Manage Templates
+
+```shell
+# List all built-in templates (overrides annotated)
+hexago templates list
+
+# Show which source wins for a given template
+hexago templates which service/service.go.tmpl
+
+# Export a single template for editing
+hexago templates export service/service.go.tmpl          # project-local
+hexago templates export service/service.go.tmpl --global # user-global
+
+# Export every template at once
+hexago templates export-all                 # project-local, skip existing
+hexago templates export-all --global        # user-global
+hexago templates export-all --force         # overwrite existing overrides
+
+# Validate template syntax after editing
+hexago templates validate .hexago/templates/service/service.go.tmpl
+
+# Remove a custom override (reverts to built-in)
+hexago templates reset service/service.go.tmpl
+hexago templates reset service/service.go.tmpl --global
+```
+
 ## Complete Example
 
 ```shell

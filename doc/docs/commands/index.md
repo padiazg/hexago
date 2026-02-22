@@ -16,6 +16,7 @@ HexaGo provides a set of commands to scaffold and manage hexagonal architecture 
 | [`hexago add migration`](add-migration.md) | Add a database migration |
 | [`hexago add tool`](add-tool.md) | Add an infrastructure tool |
 | [`hexago validate`](validate.md) | Validate architecture compliance |
+| `hexago templates` | Manage and customize code generation templates |
 
 ---
 

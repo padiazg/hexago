@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Template Management Commands (`hexago templates`)
+- **`hexago templates list`**: lists all embedded templates grouped by directory; annotates overrides with `← project-local` or `← user-global`
+- **`hexago templates which <name>`**: shows the winning source (embedded, project-local, user-global, or binary-local) with its full path
+- **`hexago templates export <name> [--global]`**: copies a built-in template to `.hexago/templates/<name>` or `~/.hexago/templates/<name>` for customization
+- **`hexago templates export-all [--global] [--force]`**: bulk-exports every embedded template at once; skips templates that already have an override unless `--force` is passed
+- **`hexago templates validate <path>`**: parses a template file and reports `text/template` syntax errors — prints `✓` on success, `✗ <error>` on failure
+- **`hexago templates reset <name> [--global]`**: removes a custom override, reverting to the next-priority source; errors clearly when no override exists
+- `TemplateLoader.Validate(path string) error` and `TemplateLoader.Reset(name string, global bool) error` added to `internal/generator/template_loader.go`
+
 #### `.hexago.yaml` Project Configuration File
 - **`internal/generator/hexago_config.go`** (new): typed YAML structs (`HexagoConfig`, `HexagoProjectConfig`, `HexagoStructureConfig`, `HexagoFeaturesConfig`) plus four helpers:
   - `HexagoConfigFromProject(cfg)` — maps `ProjectConfig` → YAML struct

@@ -239,6 +239,36 @@ func (l *TemplateLoader) Export(name string, global bool) error {
 	return nil
 }
 
+// Validate parses the template at path to check for syntax errors
+func (l *TemplateLoader) Validate(path string) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read template: %w", err)
+	}
+	_, err = template.New("validate").Funcs(l.funcMap).Parse(string(content))
+	if err != nil {
+		return fmt.Errorf("template syntax error: %w", err)
+	}
+	return nil
+}
+
+// Reset removes a custom template override (project-local or user-global)
+func (l *TemplateLoader) Reset(name string, global bool) error {
+	var path string
+	if global {
+		path = filepath.Join(fileutil.HomeDir(), ".hexago", "templates", name)
+	} else {
+		path = filepath.Join(".hexago", "templates", name)
+	}
+	if !fileutil.FileExists(path) {
+		return fmt.Errorf("no custom override found at %s", path)
+	}
+	if err := os.Remove(path); err != nil {
+		return fmt.Errorf("failed to remove template override: %w", err)
+	}
+	return nil
+}
+
 // loadRawTemplate loads template content without parsing
 func (l *TemplateLoader) loadRawTemplate(name string) ([]byte, error) {
 	for _, source := range l.sources {
