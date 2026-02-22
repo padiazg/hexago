@@ -42,7 +42,8 @@ templates/
 │   ├── readme.md.tmpl
 │   ├── dockerfile.tmpl
 │   ├── compose.yaml.tmpl
-│   ├── gitignore.tmpl
+│   └── gitignore.tmpl
+├── observability/              # Observability files (health, metrics, server)
 │   ├── health.go.tmpl
 │   ├── metrics.go.tmpl
 │   └── server.go.tmpl

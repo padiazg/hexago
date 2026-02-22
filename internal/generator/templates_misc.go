@@ -61,7 +61,7 @@ func (g *ProjectGenerator) generateDockerFiles(projectPath string) error {
 // generateObservability generates observability files
 func (g *ProjectGenerator) generateObservability(projectPath string) error {
 	// Generate health.go
-	healthContent, err := g.config.templateLoader.Render("misc/health.go.tmpl", nil)
+	healthContent, err := g.config.templateLoader.Render("observability/health.go.tmpl", nil)
 	if err != nil {
 		return fmt.Errorf("failed to render health template: %w", err)
 	}
@@ -71,7 +71,7 @@ func (g *ProjectGenerator) generateObservability(projectPath string) error {
 	}
 
 	// Generate metrics.go
-	metricsContent, err := g.config.templateLoader.Render("misc/metrics.go.tmpl", nil)
+	metricsContent, err := g.config.templateLoader.Render("observability/metrics.go.tmpl", nil)
 	if err != nil {
 		return fmt.Errorf("failed to render metrics template: %w", err)
 	}
@@ -81,7 +81,7 @@ func (g *ProjectGenerator) generateObservability(projectPath string) error {
 	}
 
 	// Generate server.go
-	serverContent, err := g.config.templateLoader.Render("misc/server.go.tmpl", nil)
+	serverContent, err := g.config.templateLoader.Render("observability/server.go.tmpl", nil)
 	if err != nil {
 		return fmt.Errorf("failed to render server template: %w", err)
 	}
