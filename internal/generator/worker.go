@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // WorkerConfig holds worker configuration
@@ -35,8 +36,8 @@ func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig)
 		return err
 	}
 
-	fileName := toSnakeCase(workerName) + ".go"
-	testFileName := toSnakeCase(workerName) + "_test.go"
+	fileName := utils.ToSnakeCase(workerName) + ".go"
+	testFileName := utils.ToSnakeCase(workerName) + "_test.go"
 
 	filePath := filepath.Join(workersDir, fileName)
 	testFilePath := filepath.Join(workersDir, testFileName)
@@ -90,7 +91,7 @@ func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, confi
 		"QueueSize":  config.QueueSize,
 	}
 
-	content, err := globalTemplateLoader.Render("worker/queue.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("worker/queue.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render queue worker template: %w", err)
 	}
@@ -106,7 +107,7 @@ func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, co
 		"Interval":   config.Interval,
 	}
 
-	content, err := globalTemplateLoader.Render("worker/periodic.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("worker/periodic.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render periodic worker template: %w", err)
 	}
@@ -121,7 +122,7 @@ func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, confi
 		"WorkerName": workerName,
 	}
 
-	content, err := globalTemplateLoader.Render("worker/event.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("worker/event.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render event worker template: %w", err)
 	}
@@ -136,7 +137,7 @@ func (g *WorkerGenerator) generateWorkerTestFile(filePath, workerName string) er
 		"WorkerName": workerName,
 	}
 
-	content, err := globalTemplateLoader.Render("worker/worker_test.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("worker/worker_test.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render worker test template: %w", err)
 	}
@@ -160,7 +161,7 @@ func (g *WorkerGenerator) ensureWorkerManager(workersDir string) error {
 		"ModuleName": g.config.ModuleName,
 	}
 
-	content, err := globalTemplateLoader.Render("worker/manager.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("worker/manager.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render worker manager template: %w", err)
 	}

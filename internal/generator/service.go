@@ -3,9 +3,9 @@ package generator
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // ServiceGenerator generates service/usecase files
@@ -31,8 +31,8 @@ func (g *ServiceGenerator) Generate(serviceName, description string) error {
 	}
 
 	// Convert service name to file name (snake_case)
-	fileName := toSnakeCase(serviceName) + ".go"
-	testFileName := toSnakeCase(serviceName) + "_test.go"
+	fileName := utils.ToSnakeCase(serviceName) + ".go"
+	testFileName := utils.ToSnakeCase(serviceName) + "_test.go"
 
 	filePath := filepath.Join(serviceDir, fileName)
 	testFilePath := filepath.Join(serviceDir, testFileName)
@@ -73,7 +73,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, descriptio
 		"Description": desc,
 	}
 
-	content, err := globalTemplateLoader.Render("service/service.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("service/service.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render service template: %w", err)
 	}
@@ -89,24 +89,12 @@ func (g *ServiceGenerator) generateTestFile(filePath, serviceName string) error 
 		"ServiceName": serviceName,
 	}
 
-	content, err := globalTemplateLoader.Render("service/service_test.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("service/service_test.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render service test template: %w", err)
 	}
 
 	return fileutil.WriteFile(filePath, content)
-}
-
-// toSnakeCase converts PascalCase to snake_case
-func toSnakeCase(s string) string {
-	var result strings.Builder
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result.WriteRune('_')
-		}
-		result.WriteRune(r)
-	}
-	return strings.ToLower(result.String())
 }
 
 // renderTemplateString is a helper to render templates

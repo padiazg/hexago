@@ -5,9 +5,9 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/padiazg/hexago/internal/generator"
+	"github.com/padiazg/hexago/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -77,8 +77,8 @@ func runAddTool(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("\n✅ Tool added successfully!")
 	fmt.Printf("\n📝 Files created:\n")
-	fmt.Printf("   - internal/infrastructure/%s/%s\n", toolType, toSnakeCase(toolName)+".go")
-	fmt.Printf("   - internal/infrastructure/%s/%s\n", toolType, toSnakeCase(toolName)+"_test.go")
+	fmt.Printf("   - internal/infrastructure/%s/%s\n", toolType, utils.ToSnakeCase(toolName)+".go")
+	fmt.Printf("   - internal/infrastructure/%s/%s\n", toolType, utils.ToSnakeCase(toolName)+"_test.go")
 
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the %s logic\n", toolName)
@@ -95,15 +95,4 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
-}
-
-func toSnakeCase(s string) string {
-	var result []rune
-	for i, r := range s {
-		if i > 0 && r >= 'A' && r <= 'Z' {
-			result = append(result, '_')
-		}
-		result = append(result, r)
-	}
-	return strings.ToLower(string(result))
 }

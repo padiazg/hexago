@@ -9,6 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 //go:embed templates/**/*.tmpl
@@ -42,9 +45,9 @@ func NewTemplateLoader() *TemplateLoader {
 		// 1. Binary-local templates (./templates/ relative to binary)
 		{
 			Name:     "binary-local",
-			Path:     filepath.Join(binaryDir(), "templates"),
+			Path:     filepath.Join(fileutil.BinaryDir(), "templates"),
 			Priority: 1,
-			exists:   fileExists,
+			exists:   fileutil.FileExists,
 			read:     os.ReadFile,
 		},
 		// 2. Project-local overrides (./.hexago/templates/)
@@ -52,15 +55,15 @@ func NewTemplateLoader() *TemplateLoader {
 			Name:     "project-local",
 			Path:     ".hexago/templates",
 			Priority: 2,
-			exists:   fileExists,
+			exists:   fileutil.FileExists,
 			read:     os.ReadFile,
 		},
 		// 3. User-global overrides (~/.hexago/templates/)
 		{
 			Name:     "user-global",
-			Path:     filepath.Join(homeDir(), ".hexago", "templates"),
+			Path:     filepath.Join(fileutil.HomeDir(), ".hexago", "templates"),
 			Priority: 3,
-			exists:   fileExists,
+			exists:   fileutil.FileExists,
 			read:     os.ReadFile,
 		},
 		// 4. Embedded templates (fallback)
@@ -218,7 +221,7 @@ func (l *TemplateLoader) Export(name string, global bool) error {
 	// Determine destination
 	var destPath string
 	if global {
-		destPath = filepath.Join(homeDir(), ".hexago", "templates", name)
+		destPath = filepath.Join(fileutil.HomeDir(), ".hexago", "templates", name)
 	} else {
 		destPath = filepath.Join(".hexago", "templates", name)
 	}
@@ -258,38 +261,7 @@ func createTemplateFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"upper": strings.ToUpper,
 		"lower": strings.ToLower,
-		"title": toTitleCase,
-		"snake": toSnakeCase,
+		"title": utils.ToTitleCase,
+		"snake": utils.ToSnakeCase,
 	}
-}
-
-// toTitleCase converts a string to title case (simple implementation)
-func toTitleCase(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
-}
-
-// Helper functions
-
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
-func homeDir() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	return home
-}
-
-func binaryDir() string {
-	exe, err := os.Executable()
-	if err != nil {
-		return "."
-	}
-	return filepath.Dir(exe)
 }
