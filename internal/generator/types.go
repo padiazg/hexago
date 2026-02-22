@@ -15,19 +15,21 @@ type ProjectConfig struct {
 	AdapterStyle string // "primary-secondary" or "driver-driven"
 	CoreLogic    string // "services" or "usecases"
 
+	// Metadata
+	Year      int
+	Author    string
+	GoVersion string
+
 	// Optional features
-	WithDocker      bool
-	WithExample     bool
-	WithMigrations  bool
-	WithMetrics     bool
-	ExplicitPorts   bool // Create explicit ports/ directory
-	WithWorkers     bool
+	WithDocker        bool
+	WithExample       bool
+	WithMigrations    bool
+	WithMetrics       bool
+	ExplicitPorts     bool // Create explicit ports/ directory
+	WithWorkers       bool
 	WithObservability bool
 
-	// Metadata
-	GoVersion string
-	Author    string
-	Year      int
+	templateLoader *TemplateLoader
 }
 
 // NewProjectConfig creates a new ProjectConfig with sensible defaults
@@ -50,6 +52,7 @@ func NewProjectConfig(projectName, moduleName string) *ProjectConfig {
 		GoVersion:         "1.21",
 		Author:            "",
 		Year:              time.Now().Year(),
+		templateLoader:    NewTemplateLoader(),
 	}
 }
 

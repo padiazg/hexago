@@ -9,7 +9,7 @@ import (
 
 // generateMakefile generates the Makefile
 func (g *ProjectGenerator) generateMakefile(projectPath string) error {
-	content, err := globalTemplateLoader.Render("misc/makefile.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("misc/makefile.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render makefile template: %w", err)
 	}
@@ -19,7 +19,7 @@ func (g *ProjectGenerator) generateMakefile(projectPath string) error {
 
 // generateGitignore generates the .gitignore file
 func (g *ProjectGenerator) generateGitignore(projectPath string) error {
-	content, err := globalTemplateLoader.Render("misc/gitignore.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("misc/gitignore.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render gitignore template: %w", err)
 	}
@@ -29,7 +29,7 @@ func (g *ProjectGenerator) generateGitignore(projectPath string) error {
 
 // generateReadme generates the README.md file
 func (g *ProjectGenerator) generateReadme(projectPath string) error {
-	content, err := globalTemplateLoader.Render("misc/readme.md.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("misc/readme.md.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render readme template: %w", err)
 	}
@@ -40,7 +40,7 @@ func (g *ProjectGenerator) generateReadme(projectPath string) error {
 // generateDockerFiles generates Dockerfile and compose.yaml
 func (g *ProjectGenerator) generateDockerFiles(projectPath string) error {
 	// Generate Dockerfile
-	dockerContent, err := globalTemplateLoader.Render("misc/dockerfile.tmpl", g.config)
+	dockerContent, err := g.config.templateLoader.Render("misc/dockerfile.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render dockerfile template: %w", err)
 	}
@@ -50,7 +50,7 @@ func (g *ProjectGenerator) generateDockerFiles(projectPath string) error {
 	}
 
 	// Generate compose.yaml
-	composeContent, err := globalTemplateLoader.Render("misc/compose.yaml.tmpl", g.config)
+	composeContent, err := g.config.templateLoader.Render("misc/compose.yaml.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render compose template: %w", err)
 	}
@@ -61,7 +61,7 @@ func (g *ProjectGenerator) generateDockerFiles(projectPath string) error {
 // generateObservability generates observability files
 func (g *ProjectGenerator) generateObservability(projectPath string) error {
 	// Generate health.go
-	healthContent, err := globalTemplateLoader.Render("misc/health.go.tmpl", nil)
+	healthContent, err := g.config.templateLoader.Render("misc/health.go.tmpl", nil)
 	if err != nil {
 		return fmt.Errorf("failed to render health template: %w", err)
 	}
@@ -71,7 +71,7 @@ func (g *ProjectGenerator) generateObservability(projectPath string) error {
 	}
 
 	// Generate metrics.go
-	metricsContent, err := globalTemplateLoader.Render("misc/metrics.go.tmpl", nil)
+	metricsContent, err := g.config.templateLoader.Render("misc/metrics.go.tmpl", nil)
 	if err != nil {
 		return fmt.Errorf("failed to render metrics template: %w", err)
 	}
@@ -81,7 +81,7 @@ func (g *ProjectGenerator) generateObservability(projectPath string) error {
 	}
 
 	// Generate server.go
-	serverContent, err := globalTemplateLoader.Render("misc/server.go.tmpl", nil)
+	serverContent, err := g.config.templateLoader.Render("misc/server.go.tmpl", nil)
 	if err != nil {
 		return fmt.Errorf("failed to render server template: %w", err)
 	}

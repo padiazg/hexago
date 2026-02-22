@@ -72,3 +72,19 @@ func ReadDir(path string) ([]string, error) {
 
 	return names, nil
 }
+
+func HomeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return home
+}
+
+func BinaryDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "."
+	}
+	return filepath.Dir(exe)
+}

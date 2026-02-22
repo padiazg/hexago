@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // AdapterGenerator generates adapter files
@@ -41,8 +42,8 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, portName st
 		return err
 	}
 
-	fileName := toSnakeCase(adapterName) + ".go"
-	testFileName := toSnakeCase(adapterName) + "_test.go"
+	fileName := utils.ToSnakeCase(adapterName) + ".go"
+	testFileName := utils.ToSnakeCase(adapterName) + "_test.go"
 
 	filePath := filepath.Join(adapterDir, fileName)
 	testFilePath := filepath.Join(adapterDir, testFileName)
@@ -100,8 +101,8 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName 
 		return err
 	}
 
-	fileName := toSnakeCase(adapterName) + ".go"
-	testFileName := toSnakeCase(adapterName) + "_test.go"
+	fileName := utils.ToSnakeCase(adapterName) + ".go"
+	testFileName := utils.ToSnakeCase(adapterName) + "_test.go"
 
 	filePath := filepath.Join(adapterDir, fileName)
 	testFilePath := filepath.Join(adapterDir, testFileName)
@@ -154,7 +155,7 @@ func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) err
 		"HandlerName": handlerName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/http.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/http.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render HTTP adapter template: %w", err)
 	}
@@ -170,7 +171,7 @@ func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) err
 		"HandlerName": handlerName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/grpc.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/grpc.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render gRPC adapter template: %w", err)
 	}
@@ -186,7 +187,7 @@ func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) e
 		"ConsumerName": consumerName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/queue.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/queue.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render queue adapter template: %w", err)
 	}
@@ -201,7 +202,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, portName 
 		"RepoName":   repoName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/database.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/database.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render database adapter template: %w", err)
 	}
@@ -215,7 +216,7 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 		"ServiceName": serviceName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/external.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/external.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render external adapter template: %w", err)
 	}
@@ -229,7 +230,7 @@ func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName st
 		"CacheName": cacheName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/cache.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/cache.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render cache adapter template: %w", err)
 	}
@@ -251,7 +252,7 @@ func (g *AdapterGenerator) generateAdapterTestFile(filePath, adapterName, adapte
 		"AdapterName": adapterName,
 	}
 
-	content, err := globalTemplateLoader.Render("adapter/adapter_test.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/adapter_test.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render adapter test template: %w", err)
 	}

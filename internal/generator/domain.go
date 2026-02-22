@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // Field represents a struct field
@@ -34,8 +35,8 @@ func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) erro
 		return fmt.Errorf("directory %s does not exist", domainDir)
 	}
 
-	fileName := toSnakeCase(entityName) + ".go"
-	testFileName := toSnakeCase(entityName) + "_test.go"
+	fileName := utils.ToSnakeCase(entityName) + ".go"
+	testFileName := utils.ToSnakeCase(entityName) + "_test.go"
 
 	filePath := filepath.Join(domainDir, fileName)
 	testFilePath := filepath.Join(domainDir, testFileName)
@@ -67,8 +68,8 @@ func (g *DomainGenerator) GenerateValueObject(voName string, fields []Field) err
 		return fmt.Errorf("directory %s does not exist", domainDir)
 	}
 
-	fileName := toSnakeCase(voName) + ".go"
-	testFileName := toSnakeCase(voName) + "_test.go"
+	fileName := utils.ToSnakeCase(voName) + ".go"
+	testFileName := utils.ToSnakeCase(voName) + "_test.go"
 
 	filePath := filepath.Join(domainDir, fileName)
 	testFilePath := filepath.Join(domainDir, testFileName)
@@ -136,7 +137,7 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields
 		"Imports":    imports,
 	}
 
-	content, err := globalTemplateLoader.Render("domain/entity.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("domain/entity.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render entity template: %w", err)
 	}
@@ -151,7 +152,7 @@ func (g *DomainGenerator) generateEntityTestFile(filePath, entityName string) er
 		"EntityName": entityName,
 	}
 
-	content, err := globalTemplateLoader.Render("domain/entity_test.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("domain/entity_test.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render entity test template: %w", err)
 	}
@@ -196,7 +197,7 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, field
 		"Imports":   imports,
 	}
 
-	content, err := globalTemplateLoader.Render("domain/value_object.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("domain/value_object.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render value object template: %w", err)
 	}
@@ -211,7 +212,7 @@ func (g *DomainGenerator) generateValueObjectTestFile(filePath, voName string) e
 		"VOName":     voName,
 	}
 
-	content, err := globalTemplateLoader.Render("domain/value_object_test.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("domain/value_object_test.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render value object test template: %w", err)
 	}

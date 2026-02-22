@@ -9,16 +9,9 @@ import (
 	"github.com/padiazg/hexago/pkg/fileutil"
 )
 
-// Package-level template loader (initialized once)
-var globalTemplateLoader *TemplateLoader
-
-func init() {
-	globalTemplateLoader = NewTemplateLoader()
-}
-
 // generateMainFile generates the main.go file
 func (g *ProjectGenerator) generateMainFile(projectPath string) error {
-	content, err := globalTemplateLoader.Render("project/main.go.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("project/main.go.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render main.go template: %w", err)
 	}
@@ -28,7 +21,7 @@ func (g *ProjectGenerator) generateMainFile(projectPath string) error {
 
 // generateRootCommand generates cmd/root.go
 func (g *ProjectGenerator) generateRootCommand(projectPath string) error {
-	content, err := globalTemplateLoader.Render("project/root_cmd.go.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("project/root_cmd.go.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render root_cmd.go template: %w", err)
 	}
@@ -54,7 +47,7 @@ func (g *ProjectGenerator) generateRunCommand(projectPath string) error {
 		templateName = "project/run_cmd.go.tmpl"
 	}
 
-	content, err := globalTemplateLoader.Render(templateName, g.config)
+	content, err := g.config.templateLoader.Render(templateName, g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render %s template: %w", templateName, err)
 	}
@@ -64,7 +57,7 @@ func (g *ProjectGenerator) generateRunCommand(projectPath string) error {
 
 // generateProcessor generates internal/core/services/processor.go for service type
 func (g *ProjectGenerator) generateProcessor(projectPath string) error {
-	content, err := globalTemplateLoader.Render("service/processor.go.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("service/processor.go.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render processor.go template: %w", err)
 	}
@@ -77,7 +70,7 @@ func (g *ProjectGenerator) generateProcessor(projectPath string) error {
 
 // generateConfig generates internal/config/config.go
 func (g *ProjectGenerator) generateConfig(projectPath string) error {
-	content, err := globalTemplateLoader.Render("project/config.go.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("project/config.go.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render config.go template: %w", err)
 	}
@@ -87,7 +80,7 @@ func (g *ProjectGenerator) generateConfig(projectPath string) error {
 
 // generateLogger generates pkg/logger/logger.go
 func (g *ProjectGenerator) generateLogger(projectPath string) error {
-	content, err := globalTemplateLoader.Render("project/logger.go.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("project/logger.go.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render logger.go template: %w", err)
 	}
@@ -97,7 +90,7 @@ func (g *ProjectGenerator) generateLogger(projectPath string) error {
 
 // generateServerInterface generates pkg/server/server.go
 func (g *ProjectGenerator) generateHTTPServerInterface(projectPath string) error {
-	content, err := globalTemplateLoader.Render("project/http_server_interface.go.tmpl", g.config)
+	content, err := g.config.templateLoader.Render("project/http_server_interface.go.tmpl", g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render http_server_interface.go template: %w", err)
 	}
@@ -114,7 +107,7 @@ func (g *ProjectGenerator) generateHTTPServerFile(projectPath string) error {
 	}
 
 	templateName := fmt.Sprintf("project/http_server_%s.go.tmpl", framework)
-	content, err := globalTemplateLoader.Render(templateName, g.config)
+	content, err := g.config.templateLoader.Render(templateName, g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render %s template: %w", templateName, err)
 	}

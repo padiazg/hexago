@@ -26,6 +26,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `internal/adapters/{inbound}/http/server.go` (generated) now owns all framework-specific lifecycle code
 - `pkg/server/server.go` (generated, new) is the single source of truth for the `Server` interface contract
 
+### Refactored (internal — no generated-code change)
+
+#### Remove global template loader singleton
+- **`globalTemplateLoader` package-level variable and `init()` removed** from `internal/generator/templates.go`
+- `TemplateLoader` is now a field (`templateLoader *TemplateLoader`) on `ProjectConfig`, initialized in `NewProjectConfig()`
+- All generator methods that previously called `globalTemplateLoader.Render(...)` now call `g.config.templateLoader.Render(...)` — scoping the loader to its owning config and making generators straightforward to test in isolation
+
+#### New `pkg/utils` package
+- `pkg/utils/case.go` added with two exported helpers:
+  - `ToSnakeCase(s string) string` — converts CamelCase identifiers to snake_case file names
+  - `ToTitleCase(s string) string` — uppercases the first letter of a string
+- Eliminates at least three identical local `toSnakeCase` copies that existed independently in `service.go`, `tool.go`, `worker.go`, `domain.go`, `adapter.go`, and `cmd/add_tool.go`
+- `createTemplateFuncMap()` in `template_loader.go` now references `utils.ToSnakeCase` and `utils.ToTitleCase` for the `"snake"` and `"title"` template functions
+
+#### Extended `pkg/fileutil`
+- `HomeDir() string` and `BinaryDir() string` migrated from `internal/generator/template_loader.go` into `pkg/fileutil/fileutil.go`
+- `template_loader.go` now uses `fileutil.HomeDir()`, `fileutil.BinaryDir()`, and `fileutil.FileExists` — removing three private helper functions from the generator package
+
 ---
 
 ## [0.0.1] - 2026-02-17
