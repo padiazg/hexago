@@ -1,12 +1,14 @@
 {{/*
 Template: project/run_cmd_http_server.go
-Description: Run command for HTTP API server
+Description: Run command for HTTP API server — framework-agnostic orchestrator.
+             Framework-specific code lives in internal/adapters/{inbound}/http/server.go.
 Variables:
   - Year: string - Copyright year
   - Author: string - Author name
   - ProjectName: string - Project name
   - ModuleName: string - Go module name
-  - Framework: string - Web framework (echo|gin|chi|fiber|stdlib)
+  - AdapterInboundDir: string - primary or driver
+  - WithObservability: bool - include observability support
 */}}
 /*
 Copyright © {{.Year}} {{.Author}}
@@ -15,24 +17,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"{{.ModuleName}}/pkg/logger"
-{{- if eq .Framework "echo"}}
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
-{{- else if eq .Framework "gin"}}
-	"github.com/gin-gonic/gin"
-{{- else if eq .Framework "chi"}}
-	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
-{{- else if eq .Framework "fiber"}}
-	"github.com/gofiber/fiber/v2"
-{{- end}}
+	httpserver "{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http"
 {{- if .WithObservability}}
 	"{{.ModuleName}}/internal/observability"
 {{- end}}
@@ -49,7 +39,7 @@ The server will listen for SIGINT (Ctrl+C) and SIGTERM signals
 and perform a graceful shutdown with a configurable timeout.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := GetConfig()
-		
+
 		// Initialize logger from config
 		log := logger.New(&logger.Config{
 			Level:  cfg.LogLevel,
@@ -83,27 +73,10 @@ and perform a graceful shutdown with a configurable timeout.`,
 		}
 {{- end}}
 
-		// Setup router and routes
-{{- if eq .Framework "echo"}}
-		e := echo.New()
-		e.HidePort = true
-		e.HideBanner = true
-
-		// Middleware
-		e.Use(middleware.Logger())
-		e.Use(middleware.Recover())
-
-		// Routes
-		setupRoutes(e{{if .WithObservability}}, metrics{{end}})
-
-		// Configure server
-		server := &http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-			Handler:      e,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
-		}
+		// Create and configure the HTTP server.
+		// Framework-specific setup (middleware, routes) lives in
+		// internal/adapters/{{.AdapterInboundDir}}/http/server.go.
+		srv := httpserver.New(cfg, log{{if .WithObservability}}, metrics{{end}})
 
 		// Channel to capture OS signals
 		sigChan := make(chan os.Signal, 1)
@@ -112,15 +85,10 @@ and perform a graceful shutdown with a configurable timeout.`,
 		// Channel for server errors
 		errChan := make(chan error, 1)
 
-		// Start server in goroutine
-		go func() {
-			log.Info("Server listening on port %d", cfg.Server.Port)
-			if err := e.StartServer(server); err != nil && err != http.ErrServerClosed {
-				errChan <- err
-			}
-		}()
+		// Start server (non-blocking)
+		srv.Run(errChan)
 
-		// Wait for signal or error
+		// Wait for signal or fatal server error
 		select {
 		case sig := <-sigChan:
 			log.Info("Received signal: %v, initiating graceful shutdown...", sig)
@@ -133,7 +101,7 @@ and perform a graceful shutdown with a configurable timeout.`,
 			defer shutdownCancel()
 
 			// Attempt graceful shutdown
-			if err := e.Shutdown(shutdownCtx); err != nil {
+			if err := srv.Stop(shutdownCtx); err != nil {
 				log.Error("Server shutdown error: %v", err)
 				return err
 			}
@@ -145,216 +113,6 @@ and perform a graceful shutdown with a configurable timeout.`,
 			log.Error("Server error: %v", err)
 			return err
 		}
-
-{{- else if eq .Framework "gin"}}
-		gin.SetMode(gin.ReleaseMode)
-		router := gin.New()
-		router.Use(gin.Logger())
-		router.Use(gin.Recovery())
-
-		// Setup routes
-		setupRoutes(router{{if .WithObservability}}, metrics{{end}})
-
-		// Configure server
-		server := &http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-			Handler:      router,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
-		}
-
-		// Channel to capture OS signals
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-		// Channel for server errors
-		errChan := make(chan error, 1)
-
-		// Start server in goroutine
-		go func() {
-			log.Info("Server listening on port %d", cfg.Server.Port)
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				errChan <- err
-			}
-		}()
-
-		// Wait for signal or error
-		select {
-		case sig := <-sigChan:
-			log.Info("Received signal: %v, initiating graceful shutdown...", sig)
-
-			// Create shutdown context with timeout
-			shutdownCtx, shutdownCancel := context.WithTimeout(
-				context.Background(),
-				cfg.Server.ShutdownTimeout,
-			)
-			defer shutdownCancel()
-
-			// Attempt graceful shutdown
-			if err := server.Shutdown(shutdownCtx); err != nil {
-				log.Error("Server shutdown error: %v", err)
-				return err
-			}
-
-			log.Info("Server stopped gracefully")
-			return nil
-
-		case err := <-errChan:
-			log.Error("Server error: %v", err)
-			return err
-		}
-
-{{- else if eq .Framework "chi"}}
-		router := chi.NewRouter()
-
-		// Middleware
-		router.Use(chimiddleware.Logger)
-		router.Use(chimiddleware.Recoverer)
-
-		// Setup routes
-		setupRoutes(router{{if .WithObservability}}, metrics{{end}})
-
-		// Configure server
-		server := &http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-			Handler:      router,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
-		}
-
-		// Channel to capture OS signals
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-		// Channel for server errors
-		errChan := make(chan error, 1)
-
-		// Start server in goroutine
-		go func() {
-			log.Info("Server listening on port %d", cfg.Server.Port)
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				errChan <- err
-			}
-		}()
-
-		// Wait for signal or error
-		select {
-		case sig := <-sigChan:
-			log.Info("Received signal: %v, initiating graceful shutdown...", sig)
-
-			// Create shutdown context with timeout
-			shutdownCtx, shutdownCancel := context.WithTimeout(
-				context.Background(),
-				cfg.Server.ShutdownTimeout,
-			)
-			defer shutdownCancel()
-
-			// Attempt graceful shutdown
-			if err := server.Shutdown(shutdownCtx); err != nil {
-				log.Error("Server shutdown error: %v", err)
-				return err
-			}
-
-			log.Info("Server stopped gracefully")
-			return nil
-
-		case err := <-errChan:
-			log.Error("Server error: %v", err)
-			return err
-		}
-
-{{- else if eq .Framework "fiber"}}
-		app := fiber.New(fiber.Config{
-			DisableStartupMessage: true,
-		})
-
-		// Setup routes
-		setupRoutes(app{{if .WithObservability}}, metrics{{end}})
-
-		// Channel to capture OS signals
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-		// Start server in goroutine
-		go func() {
-			log.Info("Server listening on port %d", cfg.Server.Port)
-			if err := app.Listen(fmt.Sprintf(":%d", cfg.Server.Port)); err != nil {
-				log.Error("Server error: %v", err)
-			}
-		}()
-
-		// Wait for signal
-		sig := <-sigChan
-		log.Info("Received signal: %v, initiating graceful shutdown...", sig)
-
-		// Graceful shutdown
-		if err := app.ShutdownWithTimeout(cfg.Server.ShutdownTimeout); err != nil {
-			log.Error("Server shutdown error: %v", err)
-			return err
-		}
-
-		log.Info("Server stopped gracefully")
-		return nil
-
-{{- else}}
-		// stdlib HTTP server
-		mux := http.NewServeMux()
-
-		// Setup routes
-		setupRoutes(mux{{if .WithObservability}}, metrics{{end}})
-
-		// Configure server
-		server := &http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
-			Handler:      mux,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
-		}
-
-		// Channel to capture OS signals
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-
-		// Channel for server errors
-		errChan := make(chan error, 1)
-
-		// Start server in goroutine
-		go func() {
-			log.Info("Server listening on port %d", cfg.Server.Port)
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				errChan <- err
-			}
-		}()
-
-		// Wait for signal or error
-		select {
-		case sig := <-sigChan:
-			log.Info("Received signal: %v, initiating graceful shutdown...", sig)
-
-			// Create shutdown context with timeout
-			shutdownCtx, shutdownCancel := context.WithTimeout(
-				context.Background(),
-				cfg.Server.ShutdownTimeout,
-			)
-			defer shutdownCancel()
-
-			// Attempt graceful shutdown
-			if err := server.Shutdown(shutdownCtx); err != nil {
-				log.Error("Server shutdown error: %v", err)
-				return err
-			}
-
-			log.Info("Server stopped gracefully")
-			return nil
-
-		case err := <-errChan:
-			log.Error("Server error: %v", err)
-			return err
-		}
-{{- end}}
 	},
 }
 
@@ -367,83 +125,3 @@ func init() {
 	runCmd.Flags().String("observability-addr", ":8080", "Observability server address")
 {{- end}}
 }
-
-// setupRoutes configures the HTTP routes
-{{- if eq .Framework "echo"}}
-func setupRoutes(e *echo.Echo{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) {
-	// API health check (lightweight)
-	e.GET("/ping", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, map[string]string{
-			"status":  "healthy",
-			"service": "{{.ProjectName}}",
-		})
-	})
-
-	// TODO: Add your routes here
-	// Example:
-	// api := e.Group("/api/v1")
-	// api.GET("/users", handlers.ListUsers)
-	// api.POST("/users", handlers.CreateUser)
-}
-{{- else if eq .Framework "gin"}}
-func setupRoutes(router *gin.Engine{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) {
-	// API health check (lightweight)
-	router.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "healthy",
-			"service": "{{.ProjectName}}",
-		})
-	})
-
-	// TODO: Add your routes here
-	// Example:
-	// api := router.Group("/api/v1")
-	// api.GET("/users", handlers.ListUsers)
-	// api.POST("/users", handlers.CreateUser)
-}
-{{- else if eq .Framework "chi"}}
-func setupRoutes(router chi.Router{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) {
-	// API health check (lightweight)
-	router.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status":"healthy","service":"{{.ProjectName}}"}`)
-	})
-
-	// TODO: Add your routes here
-	// Example:
-	// router.Route("/api/v1", func(r chi.Router) {
-	//     r.Get("/users", handlers.ListUsers)
-	//     r.Post("/users", handlers.CreateUser)
-	// })
-}
-{{- else if eq .Framework "fiber"}}
-func setupRoutes(app *fiber.App{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) {
-	// API health check (lightweight)
-	app.Get("/ping", func(c *fiber.Ctx) error {
-		return c.JSON(fiber.Map{
-			"status":  "healthy",
-			"service": "{{.ProjectName}}",
-		})
-	})
-
-	// TODO: Add your routes here
-	// Example:
-	// api := app.Group("/api/v1")
-	// api.Get("/users", handlers.ListUsers)
-	// api.Post("/users", handlers.CreateUser)
-}
-{{- else}}
-func setupRoutes(mux *http.ServeMux{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) {
-	// API health check (lightweight)
-	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status":"healthy","service":"{{.ProjectName}}"}`)
-	})
-
-	// TODO: Add your routes here
-	// Example:
-	// mux.HandleFunc("/api/v1/users", handlers.ListUsers)
-}
-{{- end}}

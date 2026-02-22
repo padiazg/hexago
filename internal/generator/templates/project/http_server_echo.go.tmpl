@@ -1,0 +1,122 @@
+{{/*
+Template: project/http_server_echo.go
+Description: HTTP server implementation using Echo framework
+Variables:
+  - Year: string - Copyright year
+  - Author: string - Author name
+  - ProjectName: string - Project name
+  - ModuleName: string - Go module name
+  - AdapterInboundDir: string - primary or driver
+  - AdapterOutboundDir: string - secondary or driven
+  - CoreLogic: string - services or usecases
+  - WithObservability: bool - include observability support
+*/}}
+/*
+Copyright © {{.Year}} {{.Author}}
+*/
+// Package httpserver provides the HTTP server implementation using Echo.
+//
+// This is a {{if eq .AdapterStyle "driver-driven"}}DRIVER{{else}}PRIMARY{{end}} adapter (inbound).
+// It receives HTTP requests and delegates to core services.
+//
+// Allowed imports:
+//   - internal/core/ports/inbound (interfaces, if using explicit ports)
+//   - internal/core/{{.CoreLogic}} (business logic)
+//   - internal/config
+//   - pkg/logger
+//   - Echo framework
+//
+// Forbidden:
+//   - internal/adapters/{{.AdapterOutboundDir}}/* (outbound adapters — use ports instead)
+package httpserver
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/pkg/logger"
+	srv "{{.ModuleName}}/pkg/server"
+{{- if .WithObservability}}
+	"{{.ModuleName}}/internal/observability"
+{{- end}}
+)
+
+var _ srv.Server = (*server)(nil)
+
+// server is the unexported Echo-backed implementation of Server.
+type server struct {
+	echo    *echo.Echo
+	httpSrv *http.Server
+	cfg     *config.Config
+	log     logger.Logger
+{{- if .WithObservability}}
+	metrics *observability.PrometheusMetrics
+{{- end}}
+}
+
+// New creates and configures a new Echo HTTP server.
+// Middleware and routes are wired here, keeping cmd/run.go framework-agnostic.
+func New(cfg *config.Config, log logger.Logger{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) srv.Server {
+	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	s := &server{
+		echo: e,
+		httpSrv: &http.Server{
+			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+			Handler:      e,
+			ReadTimeout:  cfg.Server.ReadTimeout,
+			WriteTimeout: cfg.Server.WriteTimeout,
+			IdleTimeout:  cfg.Server.IdleTimeout,
+		},
+		cfg: cfg,
+		log: log,
+{{- if .WithObservability}}
+		metrics: metrics,
+{{- end}}
+	}
+
+	s.setupRoutes()
+	return s
+}
+
+// Run starts the HTTP server in a non-blocking goroutine.
+func (s *server) Run(errChan chan<- error) {
+	go func() {
+		s.log.Info("Server listening on port %d", s.cfg.Server.Port)
+		if err := s.echo.StartServer(s.httpSrv); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+}
+
+// Stop gracefully shuts down the Echo server.
+func (s *server) Stop(ctx context.Context) error {
+	return s.echo.Shutdown(ctx)
+}
+
+// setupRoutes registers all HTTP routes on the Echo instance.
+func (s *server) setupRoutes() {
+	// Lightweight API health check (distinct from /health on the observability server)
+	s.echo.GET("/ping", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"status":  "healthy",
+			"service": "{{.ProjectName}}",
+		})
+	})
+
+	// TODO: Add your routes here
+	// Example:
+	// api := s.echo.Group("/api/v1")
+	// api.GET("/users", handlers.ListUsers)
+	// api.POST("/users", handlers.CreateUser)
+}

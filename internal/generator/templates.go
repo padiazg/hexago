@@ -95,6 +95,36 @@ func (g *ProjectGenerator) generateLogger(projectPath string) error {
 	return fileutil.WriteFile(filepath.Join(projectPath, "pkg", "logger", "logger.go"), content)
 }
 
+// generateServerInterface generates pkg/server/server.go
+func (g *ProjectGenerator) generateHTTPServerInterface(projectPath string) error {
+	content, err := globalTemplateLoader.Render("project/http_server_interface.go.tmpl", g.config)
+	if err != nil {
+		return fmt.Errorf("failed to render http_server_interface.go template: %w", err)
+	}
+
+	return fileutil.WriteFile(filepath.Join(projectPath, "pkg", "server", "server.go"), content)
+}
+
+// generateHTTPServerFile generates internal/adapters/{inbound}/http/server.go
+// using the framework-specific template.
+func (g *ProjectGenerator) generateHTTPServerFile(projectPath string) error {
+	framework := g.config.Framework
+	if framework == "" {
+		framework = "stdlib"
+	}
+
+	templateName := fmt.Sprintf("project/http_server_%s.go.tmpl", framework)
+	content, err := globalTemplateLoader.Render(templateName, g.config)
+	if err != nil {
+		return fmt.Errorf("failed to render %s template: %w", templateName, err)
+	}
+
+	return fileutil.WriteFile(
+		filepath.Join(projectPath, "internal", "adapters", g.config.AdapterInboundDir(), "http", "server.go"),
+		content,
+	)
+}
+
 // renderTemplate renders a template with the given data
 func (g *ProjectGenerator) renderTemplate(tmplStr string, data interface{}) ([]byte, error) {
 	tmpl, err := template.New("tmpl").Funcs(template.FuncMap{

@@ -124,6 +124,17 @@ func (g *ProjectGenerator) generateFiles(projectPath string) error {
 		return err
 	}
 
+	// Generate internal/adapters/{inbound}/http/server.go (http-server type only)
+	if g.config.ProjectType == "http-server" {
+		if err := g.generateHTTPServerInterface(projectPath); err != nil {
+			return err
+		}
+
+		if err := g.generateHTTPServerFile(projectPath); err != nil {
+			return err
+		}
+	}
+
 	// Generate config
 	if err := g.generateConfig(projectPath); err != nil {
 		return err

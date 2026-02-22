@@ -1,0 +1,111 @@
+{{/*
+Template: project/http_server_stdlib.go
+Description: HTTP server implementation using Go standard library
+Variables:
+  - Year: string - Copyright year
+  - Author: string - Author name
+  - ProjectName: string - Project name
+  - ModuleName: string - Go module name
+  - AdapterInboundDir: string - primary or driver
+  - AdapterOutboundDir: string - secondary or driven
+  - CoreLogic: string - services or usecases
+  - WithObservability: bool - include observability support
+*/}}
+/*
+Copyright © {{.Year}} {{.Author}}
+*/
+// Package httpserver provides the HTTP server implementation using stdlib net/http.
+//
+// This is a {{if eq .AdapterStyle "driver-driven"}}DRIVER{{else}}PRIMARY{{end}} adapter (inbound).
+// It receives HTTP requests and delegates to core services.
+//
+// Allowed imports:
+//   - internal/core/ports/inbound (interfaces, if using explicit ports)
+//   - internal/core/{{.CoreLogic}} (business logic)
+//   - internal/config
+//   - pkg/logger
+//   - Standard library only (no external HTTP framework)
+//
+// Forbidden:
+//   - internal/adapters/{{.AdapterOutboundDir}}/* (outbound adapters — use ports instead)
+package httpserver
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/pkg/logger"
+	srv "{{.ModuleName}}/pkg/server"
+{{- if .WithObservability}}
+	"{{.ModuleName}}/internal/observability"
+{{- end}}
+)
+
+var _ srv.Server = (*server)(nil)
+
+// server is the unexported stdlib-backed implementation of Server.
+type server struct {
+	mux     *http.ServeMux
+	httpSrv *http.Server
+	cfg     *config.Config
+	log     logger.Logger
+{{- if .WithObservability}}
+	metrics *observability.PrometheusMetrics
+{{- end}}
+}
+
+// New creates and configures a new stdlib HTTP server.
+// Routes are wired here, keeping cmd/run.go framework-agnostic.
+func New(cfg *config.Config, log logger.Logger{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) srv.Server {
+	mux := http.NewServeMux()
+
+	s := &server{
+		mux: mux,
+		httpSrv: &http.Server{
+			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+			Handler:      mux,
+			ReadTimeout:  cfg.Server.ReadTimeout,
+			WriteTimeout: cfg.Server.WriteTimeout,
+			IdleTimeout:  cfg.Server.IdleTimeout,
+		},
+		cfg: cfg,
+		log: log,
+{{- if .WithObservability}}
+		metrics: metrics,
+{{- end}}
+	}
+
+	s.setupRoutes()
+	return s
+}
+
+// Run starts the HTTP server in a non-blocking goroutine.
+func (s *server) Run(errChan chan<- error) {
+	go func() {
+		s.log.Info("Server listening on port %d", s.cfg.Server.Port)
+		if err := s.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+}
+
+// Stop gracefully shuts down the stdlib HTTP server.
+func (s *server) Stop(ctx context.Context) error {
+	return s.httpSrv.Shutdown(ctx)
+}
+
+// setupRoutes registers all HTTP routes on the ServeMux.
+func (s *server) setupRoutes() {
+	// Lightweight API health check (distinct from /health on the observability server)
+	s.mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status":"healthy","service":"{{.ProjectName}}"}`)
+	})
+
+	// TODO: Add your routes here
+	// Example:
+	// s.mux.HandleFunc("/api/v1/users", handlers.ListUsers)
+}

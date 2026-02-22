@@ -5,6 +5,29 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - v0.0.2
+
+### Added
+
+#### HTTP Server Interface Pattern
+- **Shared `Server` interface** in `pkg/server/server.go`: a single `Run(errChan chan<- error)` / `Stop(ctx context.Context) error` contract lives in a public, framework-agnostic package instead of being re-declared in every adapter
+- **`http_server_interface.go.tmpl`**: new template that generates `pkg/server/server.go` for every `http-server` project
+- **Compile-time interface guard** in every framework adapter: `var _ srv.Server = (*server)(nil)` catches implementation drift at build time, not at runtime
+
+#### HTTP Server Adapter Refactoring
+- **Framework-specific `server.go`** files extracted from `cmd/run.go` into `internal/adapters/{primary|driver}/http/server.go` for all five supported frameworks (Echo, Gin, Chi, Fiber, stdlib):
+  - Framework instance creation, middleware wiring, and `http.Server` configuration are now encapsulated inside each adapter
+  - `setupRoutes` promoted from a package-level function to a method on `*server`, giving it direct access to the framework instance without parameter passing
+  - Each adapter's `New()` constructor returns `srv.Server` (the shared interface), hiding all framework types behind the abstraction boundary
+- **Thin `cmd/run.go` orchestrator**: the run command is now completely framework-agnostic — it only calls `httpserver.New()`, `srv.Run()`, and `srv.Stop()`. No framework imports, no repeated signal/shutdown boilerplate per framework
+
+### Changed
+- `cmd/run.go` (generated) no longer contains `setupRoutes` or any web-framework imports
+- `internal/adapters/{inbound}/http/server.go` (generated) now owns all framework-specific lifecycle code
+- `pkg/server/server.go` (generated, new) is the single source of truth for the `Server` interface contract
+
+---
+
 ## [0.0.1] - 2026-02-17
 
 ### Added - MVP Release
