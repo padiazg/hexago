@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### `.hexago.yaml` Project Configuration File
+- **`internal/generator/hexago_config.go`** (new): typed YAML structs (`HexagoConfig`, `HexagoProjectConfig`, `HexagoStructureConfig`, `HexagoFeaturesConfig`) plus four helpers:
+  - `HexagoConfigFromProject(cfg)` — maps `ProjectConfig` → YAML struct
+  - `(h) ToProjectConfig()` — maps YAML struct → `ProjectConfig`
+  - `LoadHexagoConfig(dir)` — reads `{dir}/.hexago.yaml` with `gopkg.in/yaml.v3`
+  - `SaveHexagoConfig(dir, cfg)` — writes `{dir}/.hexago.yaml` with a comment header
+- **`hexago init` writes `.hexago.yaml`** into the generated project root after scaffolding, persisting all init-time settings (framework, adapter style, features, etc.) that could not be recovered from the filesystem alone
+- **`hexago add *` reads `.hexago.yaml` first**: `DetectConfig()` in `detector.go` now tries `LoadHexagoConfig` before falling back to filesystem heuristics — giving every `add` command access to the full original config (including `Framework`, `ProjectType`, `Author`, `GoVersion`, feature flags)
+- **`hexago init` honours `.hexago.yaml` as a defaults layer**: priority is `flags > .hexago.yaml > hardcoded defaults`. Any flag not explicitly passed on the command line is filled from a `.hexago.yaml` found in the current working directory, enabling a personal or team-wide preferences file without forcing every flag on every invocation. Uses Cobra's `cmd.Flags().Changed()` to distinguish user-supplied flags from default values
+- `gopkg.in/yaml.v3` added as a direct dependency
+
 #### HTTP Server Interface Pattern
 - **Shared `Server` interface** in `pkg/server/server.go`: a single `Run(errChan chan<- error)` / `Stop(ctx context.Context) error` contract lives in a public, framework-agnostic package instead of being re-declared in every adapter
 - **`http_server_interface.go.tmpl`**: new template that generates `pkg/server/server.go` for every `http-server` project

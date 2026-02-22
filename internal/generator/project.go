@@ -63,6 +63,12 @@ func (g *ProjectGenerator) Generate() error {
 		fmt.Printf("⚠️  Warning: failed to format code: %v\n", err)
 	}
 
+	// Write .hexago.yaml to persist init-time settings
+	if err := g.saveHexagoConfig(projectPath); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write .hexago.yaml: %v\n", err)
+		// non-fatal — project is still fully usable
+	}
+
 	g.printSuccess(projectPath)
 	return nil
 }
@@ -258,6 +264,12 @@ func (g *ProjectGenerator) formatCode(projectPath string) error {
 	}
 
 	return nil
+}
+
+// saveHexagoConfig writes .hexago.yaml with the current project settings.
+func (g *ProjectGenerator) saveHexagoConfig(projectPath string) error {
+	cfg := HexagoConfigFromProject(g.config)
+	return SaveHexagoConfig(projectPath, cfg)
 }
 
 // printSuccess prints success message with next steps
