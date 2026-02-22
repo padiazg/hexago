@@ -13,17 +13,17 @@ import (
 )
 
 var (
-	moduleName       string
-	projectType      string
-	framework        string
-	adapterStyle     string
-	coreLogic        string
-	withDocker       bool
-	withExample      bool
-	withMigrations   bool
-	withMetrics      bool
-	explicitPorts    bool
-	withWorkers      bool
+	moduleName        string
+	projectType       string
+	framework         string
+	adapterStyle      string
+	coreLogic         string
+	withDocker        bool
+	withExample       bool
+	withMigrations    bool
+	withMetrics       bool
+	explicitPorts     bool
+	withWorkers       bool
 	withObservability bool
 )
 
@@ -83,6 +83,48 @@ func runInit(cmd *cobra.Command, args []string) error {
 	// Validate project name
 	if err := validateProjectName(projectName); err != nil {
 		return err
+	}
+
+	// Load .hexago.yaml from CWD as a defaults layer (flags > yaml > hardcoded defaults)
+	if hexCfg, err := generator.LoadHexagoConfig("."); err == nil {
+		fmt.Println("ℹ️  Loading defaults from .hexago.yaml")
+		pc := hexCfg.ToProjectConfig()
+		if !cmd.Flags().Changed("module") && pc.ModuleName != "" {
+			moduleName = pc.ModuleName
+		}
+		if !cmd.Flags().Changed("project-type") && pc.ProjectType != "" {
+			projectType = pc.ProjectType
+		}
+		if !cmd.Flags().Changed("framework") && pc.Framework != "" {
+			framework = pc.Framework
+		}
+		if !cmd.Flags().Changed("adapter-style") && pc.AdapterStyle != "" {
+			adapterStyle = pc.AdapterStyle
+		}
+		if !cmd.Flags().Changed("core-logic") && pc.CoreLogic != "" {
+			coreLogic = pc.CoreLogic
+		}
+		if !cmd.Flags().Changed("with-docker") {
+			withDocker = pc.WithDocker
+		}
+		if !cmd.Flags().Changed("with-example") {
+			withExample = pc.WithExample
+		}
+		if !cmd.Flags().Changed("with-migrations") {
+			withMigrations = pc.WithMigrations
+		}
+		if !cmd.Flags().Changed("with-metrics") {
+			withMetrics = pc.WithMetrics
+		}
+		if !cmd.Flags().Changed("explicit-ports") {
+			explicitPorts = pc.ExplicitPorts
+		}
+		if !cmd.Flags().Changed("with-workers") {
+			withWorkers = pc.WithWorkers
+		}
+		if !cmd.Flags().Changed("with-observability") {
+			withObservability = pc.WithObservability
+		}
 	}
 
 	// Generate module name if not provided

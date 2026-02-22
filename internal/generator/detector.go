@@ -23,6 +23,16 @@ func NewProjectDetector(projectPath string) *ProjectDetector {
 
 // DetectConfig detects the project configuration from existing structure
 func (d *ProjectDetector) DetectConfig() (*ProjectConfig, error) {
+	// Try .hexago.yaml first — it has the full picture
+	if hexCfg, err := LoadHexagoConfig(d.projectPath); err == nil {
+		cfg := hexCfg.ToProjectConfig()
+		// Always override ProjectName with actual directory name
+		cfg.ProjectName = filepath.Base(d.projectPath)
+		return cfg, nil
+	}
+
+	// Fall back to filesystem heuristics (legacy / non-hexago projects)
+
 	// Verify we're in a Go project
 	if !d.isGoProject() {
 		return nil, fmt.Errorf("not a Go project (go.mod not found)")
