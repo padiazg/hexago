@@ -60,6 +60,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Eliminates at least three identical local `toSnakeCase` copies that existed independently in `service.go`, `tool.go`, `worker.go`, `domain.go`, `adapter.go`, and `cmd/add_tool.go`
 - `createTemplateFuncMap()` in `template_loader.go` now references `utils.ToSnakeCase` and `utils.ToTitleCase` for the `"snake"` and `"title"` template functions
 
+#### Observability templates moved to dedicated directory
+- **`internal/generator/templates/misc/health.go.tmpl`** → **`observability/health.go.tmpl`**
+- **`internal/generator/templates/misc/metrics.go.tmpl`** → **`observability/metrics.go.tmpl`**
+- **`internal/generator/templates/misc/server.go.tmpl`** → **`observability/server.go.tmpl`**
+- `generateObservability()` in `templates_misc.go` updated to reference the new `observability/` prefix
+- `misc/` now contains only pure project-support files (Makefile, README, Dockerfile, compose.yaml, .gitignore); observability templates have their own top-level group matching the generated `internal/observability/` package
+
 #### Extended `pkg/fileutil`
 - `HomeDir() string` and `BinaryDir() string` migrated from `internal/generator/template_loader.go` into `pkg/fileutil/fileutil.go`
 - `template_loader.go` now uses `fileutil.HomeDir()`, `fileutil.BinaryDir()`, and `fileutil.FileExists` — removing three private helper functions from the generator package

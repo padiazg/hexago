@@ -54,16 +54,16 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 // StartInBackground starts the server in a background goroutine and returns a shutdown function
-func (s *Server) StartInBackground(logger interface{ Infof(string, ...interface{}) }) func() {
+func (s *Server) StartInBackground(logger interface{ Info(string, ...interface{}) }) func() {
 	go func() {
-		logger.Infof("Observability server started on %s", s.server.Addr)
-		logger.Infof("  Health:            http://%s/health", s.server.Addr)
-		logger.Infof("  Ready:             http://%s/health/ready", s.server.Addr)
-		logger.Infof("  Live:              http://%s/health/live", s.server.Addr)
-		logger.Infof("  Metrics (Prom):    http://%s/metrics", s.server.Addr)
+		logger.Info("Observability server started on %s", s.server.Addr)
+		logger.Info("  Health:            http://%s/health", s.server.Addr)
+		logger.Info("  Ready:             http://%s/health/ready", s.server.Addr)
+		logger.Info("  Live:              http://%s/health/live", s.server.Addr)
+		logger.Info("  Metrics (Prom):    http://%s/metrics", s.server.Addr)
 
 		if err := s.Start(); err != nil && err != http.ErrServerClosed {
-			logger.Infof("Observability server error: %v", err)
+			logger.Info("Observability server error: %v", err)
 		}
 	}()
 
