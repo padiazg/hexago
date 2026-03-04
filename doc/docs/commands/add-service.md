@@ -8,7 +8,7 @@ Add a business logic service (use case) to an existing project.
 hexago add service <name> [flags]
 ```
 
-Must be run from the project root directory.
+Operates on the project root — use `--working-directory` (`-w`) to target a project without changing directories.
 
 ---
 

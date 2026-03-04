@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // ProjectDetector detects existing project configuration
@@ -73,13 +73,13 @@ func (d *ProjectDetector) DetectConfig() (*ProjectConfig, error) {
 // isGoProject checks if go.mod exists
 func (d *ProjectDetector) isGoProject() bool {
 	goModPath := filepath.Join(d.projectPath, "go.mod")
-	return fileutil.FileExists(goModPath)
+	return utils.FileExists(goModPath)
 }
 
 // hasHexagonalStructure checks if internal/core exists
 func (d *ProjectDetector) hasHexagonalStructure() bool {
 	corePath := filepath.Join(d.projectPath, "internal", "core")
-	return fileutil.FileExists(corePath)
+	return utils.FileExists(corePath)
 }
 
 // detectModuleName reads module name from go.mod
@@ -107,13 +107,13 @@ func (d *ProjectDetector) detectAdapterStyle() string {
 
 	// Check for primary/secondary
 	primaryPath := filepath.Join(adaptersPath, "primary")
-	if fileutil.FileExists(primaryPath) {
+	if utils.FileExists(primaryPath) {
 		return "primary-secondary"
 	}
 
 	// Check for driver/driven
 	driverPath := filepath.Join(adaptersPath, "driver")
-	if fileutil.FileExists(driverPath) {
+	if utils.FileExists(driverPath) {
 		return "driver-driven"
 	}
 
@@ -127,13 +127,13 @@ func (d *ProjectDetector) detectCoreLogic() string {
 
 	// Check for services
 	servicesPath := filepath.Join(corePath, "services")
-	if fileutil.FileExists(servicesPath) {
+	if utils.FileExists(servicesPath) {
 		return "services"
 	}
 
 	// Check for usecases
 	usecasesPath := filepath.Join(corePath, "usecases")
-	if fileutil.FileExists(usecasesPath) {
+	if utils.FileExists(usecasesPath) {
 		return "usecases"
 	}
 
@@ -144,22 +144,26 @@ func (d *ProjectDetector) detectCoreLogic() string {
 // hasExplicitPorts checks if ports directory exists
 func (d *ProjectDetector) hasExplicitPorts() bool {
 	portsPath := filepath.Join(d.projectPath, "internal", "core", "ports")
-	return fileutil.FileExists(portsPath)
+	return utils.FileExists(portsPath)
 }
 
 // hasObservability checks if observability directory exists
 func (d *ProjectDetector) hasObservability() bool {
 	obsPath := filepath.Join(d.projectPath, "internal", "observability")
-	return fileutil.FileExists(obsPath)
+	return utils.FileExists(obsPath)
 }
 
-// GetCurrentProjectConfig detects configuration from current directory
-func GetCurrentProjectConfig() (*ProjectConfig, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current directory: %w", err)
+// GetCurrentProjectConfig detects the project in the given dir.
+// If dir is empty, os.Getwd() is used.
+func GetCurrentProjectConfig(dir string) (*ProjectConfig, error) {
+	if dir == "" {
+		var err error
+		dir, err = os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get current directory: %w", err)
+		}
 	}
 
-	detector := NewProjectDetector(cwd)
+	detector := NewProjectDetector(dir)
 	return detector.DetectConfig()
 }

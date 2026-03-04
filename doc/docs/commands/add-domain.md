@@ -9,7 +9,7 @@ hexago add domain entity <name> [flags]
 hexago add domain valueobject <name> [flags]
 ```
 
-Must be run from the project root directory.
+Operates on the project root — use `--working-directory` (`-w`) to target a project without changing directories.
 
 ---
 

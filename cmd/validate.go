@@ -45,7 +45,7 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--fix flag not yet implemented")
 	}
 
-	config, err := generator.GetCurrentProjectConfig()
+	config, err := generator.GetCurrentProjectConfig(workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to detect project: %w\nMake sure you're in a hexagonal architecture project directory", err)
 	}

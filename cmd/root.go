@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var workingDir string
+
 var rootCmd = &cobra.Command{
 	Use:   "hexago",
 	Short: "HexaGo - Hexagonal Architecture Scaffolding CLI",
@@ -40,4 +42,5 @@ func Execute() error {
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output")
+	rootCmd.PersistentFlags().StringVarP(&workingDir, "working-directory", "w", "", "Working directory (defaults to current directory)")
 }

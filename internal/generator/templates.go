@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // generateMainFile generates the main.go file
@@ -16,7 +16,7 @@ func (g *ProjectGenerator) generateMainFile(projectPath string) error {
 		return fmt.Errorf("failed to render main.go template: %w", err)
 	}
 
-	return fileutil.WriteFile(filepath.Join(projectPath, "main.go"), content)
+	return utils.WriteFile(filepath.Join(projectPath, "main.go"), content)
 }
 
 // generateRootCommand generates cmd/root.go
@@ -26,7 +26,7 @@ func (g *ProjectGenerator) generateRootCommand(projectPath string) error {
 		return fmt.Errorf("failed to render root_cmd.go template: %w", err)
 	}
 
-	return fileutil.WriteFile(filepath.Join(projectPath, "cmd", "root.go"), content)
+	return utils.WriteFile(filepath.Join(projectPath, "cmd", "root.go"), content)
 }
 
 // generateRunCommand generates cmd/run.go using the appropriate template for project type
@@ -52,7 +52,7 @@ func (g *ProjectGenerator) generateRunCommand(projectPath string) error {
 		return fmt.Errorf("failed to render %s template: %w", templateName, err)
 	}
 
-	return fileutil.WriteFile(filepath.Join(projectPath, "cmd", "run.go"), content)
+	return utils.WriteFile(filepath.Join(projectPath, "cmd", "run.go"), content)
 }
 
 // generateProcessor generates internal/core/services/processor.go for service type
@@ -62,7 +62,7 @@ func (g *ProjectGenerator) generateProcessor(projectPath string) error {
 		return fmt.Errorf("failed to render processor.go template: %w", err)
 	}
 
-	return fileutil.WriteFile(
+	return utils.WriteFile(
 		filepath.Join(projectPath, "internal", "core", g.config.CoreLogicDir(), "processor.go"),
 		content,
 	)
@@ -75,7 +75,7 @@ func (g *ProjectGenerator) generateConfig(projectPath string) error {
 		return fmt.Errorf("failed to render config.go template: %w", err)
 	}
 
-	return fileutil.WriteFile(filepath.Join(projectPath, "internal", "config", "config.go"), content)
+	return utils.WriteFile(filepath.Join(projectPath, "internal", "config", "config.go"), content)
 }
 
 // generateLogger generates pkg/logger/logger.go
@@ -85,7 +85,7 @@ func (g *ProjectGenerator) generateLogger(projectPath string) error {
 		return fmt.Errorf("failed to render logger.go template: %w", err)
 	}
 
-	return fileutil.WriteFile(filepath.Join(projectPath, "pkg", "logger", "logger.go"), content)
+	return utils.WriteFile(filepath.Join(projectPath, "pkg", "logger", "logger.go"), content)
 }
 
 // generateServerInterface generates pkg/server/server.go
@@ -95,7 +95,7 @@ func (g *ProjectGenerator) generateHTTPServerInterface(projectPath string) error
 		return fmt.Errorf("failed to render http_server_interface.go template: %w", err)
 	}
 
-	return fileutil.WriteFile(filepath.Join(projectPath, "pkg", "server", "server.go"), content)
+	return utils.WriteFile(filepath.Join(projectPath, "pkg", "server", "server.go"), content)
 }
 
 // generateHTTPServerFile generates internal/adapters/{inbound}/http/server.go
@@ -112,7 +112,7 @@ func (g *ProjectGenerator) generateHTTPServerFile(projectPath string) error {
 		return fmt.Errorf("failed to render %s template: %w", templateName, err)
 	}
 
-	return fileutil.WriteFile(
+	return utils.WriteFile(
 		filepath.Join(projectPath, "internal", "adapters", g.config.AdapterInboundDir(), "http", "server.go"),
 		content,
 	)

@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 // ProjectGenerator handles the generation of new projects
@@ -23,17 +23,21 @@ func NewProjectGenerator(config *ProjectConfig) *ProjectGenerator {
 
 // Generate creates the complete project structure
 func (g *ProjectGenerator) Generate() error {
-	projectPath := filepath.Join(g.config.OutputDir, g.config.ProjectName)
-
-	// Check if directory already exists
-	if fileutil.FileExists(projectPath) {
-		return fmt.Errorf("directory %s already exists", projectPath)
+	var projectPath string
+	if g.config.InPlace {
+		projectPath = g.config.OutputDir
+	} else {
+		projectPath = filepath.Join(g.config.OutputDir, g.config.ProjectName)
+		// Check if directory already exists (in-place always uses an existing dir)
+		if utils.FileExists(projectPath) {
+			return fmt.Errorf("directory %s already exists", projectPath)
+		}
 	}
 
 	fmt.Printf("🚀 Generating project %s...\n", g.config.ProjectName)
 
-	// Create base directory
-	if err := fileutil.CreateDir(projectPath); err != nil {
+	// Create base directory (no-op when in-place, dir already exists)
+	if err := utils.CreateDir(projectPath); err != nil {
 		return fmt.Errorf("failed to create project directory: %w", err)
 	}
 
@@ -108,7 +112,7 @@ func (g *ProjectGenerator) generateDirectoryStructure(projectPath string) error 
 	}
 
 	// Create all directories
-	return fileutil.CreateDirs(projectPath, dirs)
+	return utils.CreateDirs(projectPath, dirs)
 }
 
 // generateFiles generates all files from templates

@@ -5,6 +5,72 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] v0.0.3
+
+### Added
+
+#### `--working-directory` global flag
+- **`-w` / `--working-directory` persistent flag** on the root command — every subcommand
+  can now target a project in a different directory without `cd`-ing into it first
+- `hexago init --working-directory <dir>` uses the supplied path as `OutputDir`, so the
+  project is scaffolded relative to `<dir>` instead of the current working directory
+- All `add *` and `validate` commands pass the flag value to `GetCurrentProjectConfig`,
+  which falls back to `os.Getwd()` when the flag is not supplied
+
+#### `--in-place` flag for `hexago init`
+- New `--in-place` bool flag: generates project files directly into `working_directory`
+  instead of creating a `<name>` subdirectory inside it
+- Useful when the target directory already exists and is the intended project root (e.g.
+  a freshly cloned empty repo or the current working directory)
+- `InPlace bool` field added to `ProjectConfig` in `internal/generator/types.go`
+- `ProjectGenerator.Generate()` checks `config.InPlace`: when true it uses `OutputDir`
+  as the project path directly and skips the "directory already exists" guard
+
+#### Built-in MCP Server (`hexago mcp`)
+- **`cmd/mcp.go`** (new): `hexago mcp` starts a stdio
+  [Model Context Protocol](https://modelcontextprotocol.io/) server using
+  `github.com/mark3labs/mcp-go v0.44.0`
+- Nine tools registered — each tool calls back into the running hexago binary with
+  `--working-directory`, so all generation logic is shared with the regular CLI:
+
+  | Tool | Equivalent CLI call |
+  |------|---------------------|
+  | `hexago_init` | `hexago [--wd W] init <name> [flags]` |
+  | `hexago_add_service` | `hexago [--wd W] add service <name>` |
+  | `hexago_add_domain_entity` | `hexago [--wd W] add domain entity <name>` |
+  | `hexago_add_domain_valueobject` | `hexago [--wd W] add domain valueobject <name>` |
+  | `hexago_add_adapter` | `hexago [--wd W] add adapter <direction> <type> <name>` |
+  | `hexago_add_worker` | `hexago [--wd W] add worker <name>` |
+  | `hexago_add_migration` | `hexago [--wd W] add migration <name>` |
+  | `hexago_add_tool` | `hexago [--wd W] add tool <type> <name>` |
+  | `hexago_validate` | `hexago [--wd W] validate` |
+
+- **MCP server instructions** (`server.WithInstructions`) delivered on every
+  `initialize` handshake — covers all tool parameters, valid enum values, defaults,
+  field format, and a "do not run shell commands" directive that prevents AI agents
+  from falling back to raw CLI calls
+- All MCP tool descriptions enriched with: generated file paths, architectural layer
+  context, valid enum values for every string parameter, defaults for every optional
+  parameter, and concrete call examples
+- `github.com/mark3labs/mcp-go v0.44.0` added as a direct dependency
+- MCP server version sourced from `version.CurrentVersion()` instead of a hardcoded string
+
+#### MCP client registration documentation
+- New **`## MCP Server`** section in `README.md` with config snippets for six clients:
+  Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed
+- Quick-reference table comparing config file paths, top-level JSON keys, and whether
+  `"type": "stdio"` is required per client
+
+### Changed
+- `GetCurrentProjectConfig()` signature changed to `GetCurrentProjectConfig(dir string)`;
+  empty string falls back to `os.Getwd()`. All call sites updated.
+- `cmd/init.go` resolves `OutputDir` from the `--working-directory` flag value (with
+  `os.Getwd()` fallback) and explicitly sets `config.OutputDir` before calling the generator
+- `internal/generator/project.go` and `internal/generator/detector.go` migrated from
+  `pkg/fileutil` to `pkg/utils` for file-system helpers (internal refactor, no behaviour change)
+
+---
+
 ## v0.0.2 - - 2026-02-26
 
 ### Added

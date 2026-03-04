@@ -8,6 +8,7 @@ type ProjectConfig struct {
 	ProjectName string // e.g., "my-app"
 	ModuleName  string // e.g., "github.com/user/my-app"
 	OutputDir   string // Where to create the project
+	InPlace     bool   // Generate directly in OutputDir (no <ProjectName> subdirectory)
 
 	// Project type and architecture choices
 	ProjectType  string // "http-server", "service", "job", "cli"

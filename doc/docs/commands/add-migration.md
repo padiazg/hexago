@@ -8,7 +8,7 @@ Add a database migration to an existing project.
 hexago add migration <name> [flags]
 ```
 
-Must be run from the project root directory.
+Operates on the project root — use `--working-directory` (`-w`) to target a project without changing directories.
 
 ---
 

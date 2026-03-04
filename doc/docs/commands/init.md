@@ -14,6 +14,14 @@ hexago init <name> [flags]
 
 ## Flags
 
+### Global flags (inherited from root)
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--working-directory` | `-w` | string | *(current dir)* | Parent directory where the project will be created. Defaults to `os.Getwd()` when not supplied. |
+
+### Init-specific flags
+
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--module` | `-m` | string | *(project name)* | Go module name (e.g. `github.com/user/my-app`). Defaults to the project name if omitted. |
@@ -21,6 +29,7 @@ hexago init <name> [flags]
 | `--framework` | `-f` | string | `stdlib` | Web framework for `http-server`: `echo`, `gin`, `chi`, `fiber`, or `stdlib` |
 | `--adapter-style` | | string | `primary-secondary` | Adapter naming: `primary-secondary` or `driver-driven` |
 | `--core-logic` | | string | `services` | Business logic directory: `services` or `usecases` |
+| `--in-place` | | bool | `false` | Generate files directly into `working_directory` — no `<name>` subdirectory is created. |
 | `--with-docker` | | bool | `false` | Generate Dockerfile and docker-compose |
 | `--with-observability` | | bool | `false` | Include health checks and Prometheus metrics |
 | `--with-migrations` | | bool | `false` | Include database migration setup |
@@ -126,6 +135,36 @@ hexago init email-service \
   --with-workers \
   --with-migrations
 ```
+
+### Scaffold into a specific parent directory (no `cd` required)
+
+```shell
+hexago init my-api \
+  --module github.com/user/my-api \
+  --working-directory /home/user/projects
+# → creates /home/user/projects/my-api/
+```
+
+### Scaffold into an existing directory (`--in-place`)
+
+Use `--in-place` when you are already inside the intended project root, or when
+targeting a pre-existing directory (e.g. a freshly cloned empty repo):
+
+```shell
+# Current directory becomes the project root — no subfolder created
+hexago init my-api --module github.com/user/my-api --in-place
+
+# Remote directory, in-place
+hexago init my-api \
+  --module github.com/user/my-api \
+  --working-directory /home/user/projects/my-api \
+  --in-place
+# → files go directly into /home/user/projects/my-api/
+```
+
+!!! tip
+    Without `--in-place`, the project is always placed at `<working-directory>/<name>/`.
+    With `--in-place`, it is placed directly at `<working-directory>/`.
 
 ---
 

@@ -59,7 +59,7 @@ func runAddMigration(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("go migrations not yet implemented. Use --type sql")
 	}
 
-	config, err := generator.GetCurrentProjectConfig()
+	config, err := generator.GetCurrentProjectConfig(workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to detect project: %w", err)
 	}
