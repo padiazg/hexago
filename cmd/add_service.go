@@ -54,7 +54,7 @@ func runAddService(cmd *cobra.Command, args []string) error {
 	}
 
 	// Detect current project configuration
-	config, err := generator.GetCurrentProjectConfig()
+	config, err := generator.GetCurrentProjectConfig(workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to detect project: %w\nMake sure you're in a hexagonal architecture project directory", err)
 	}

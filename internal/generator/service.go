@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -26,7 +25,7 @@ func (g *ServiceGenerator) Generate(serviceName, description string) error {
 	serviceDir := filepath.Join("internal", "core", g.config.CoreLogicDir())
 
 	// Check if directory exists
-	if !fileutil.FileExists(serviceDir) {
+	if !utils.FileExists(serviceDir) {
 		return fmt.Errorf("directory %s does not exist. Are you in a hexagonal project?", serviceDir)
 	}
 
@@ -38,7 +37,7 @@ func (g *ServiceGenerator) Generate(serviceName, description string) error {
 	testFilePath := filepath.Join(serviceDir, testFileName)
 
 	// Check if file already exists
-	if fileutil.FileExists(filePath) {
+	if utils.FileExists(filePath) {
 		return fmt.Errorf("service file %s already exists", filePath)
 	}
 
@@ -78,7 +77,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, descriptio
 		return fmt.Errorf("failed to render service template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateTestFile generates the test file
@@ -94,7 +93,7 @@ func (g *ServiceGenerator) generateTestFile(filePath, serviceName string) error 
 		return fmt.Errorf("failed to render service test template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // renderTemplateString is a helper to render templates

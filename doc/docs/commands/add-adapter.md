@@ -9,7 +9,7 @@ hexago add adapter primary <type> <name>
 hexago add adapter secondary <type> <name>
 ```
 
-Must be run from the project root directory.
+Operates on the project root — use `--working-directory` (`-w`) to target a project without changing directories.
 
 ---
 

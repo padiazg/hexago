@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 )
 
 var migrationUpFilePattern = regexp.MustCompile(`^(\d{6})_.*\.up\.sql$`)
@@ -27,7 +27,7 @@ func NewMigrationGenerator(config *ProjectConfig) *MigrationGenerator {
 func (g *MigrationGenerator) Generate(migrationName string) (int, error) {
 	// Create migrations directory if it doesn't exist
 	migrationsDir := "migrations"
-	if err := fileutil.CreateDir(migrationsDir); err != nil {
+	if err := utils.CreateDir(migrationsDir); err != nil {
 		return 0, err
 	}
 
@@ -78,7 +78,7 @@ func (g *MigrationGenerator) getNextMigrationNumber(migrationsDir string) (int, 
 	maxNumber := 0
 
 	// Read directory
-	entries, err := fileutil.ReadDir(migrationsDir)
+	entries, err := utils.ReadDir(migrationsDir)
 	if err != nil {
 		// Directory doesn't exist or is empty - start at 1
 		return 1, nil
@@ -109,7 +109,7 @@ func (g *MigrationGenerator) generateUpMigration(filePath, migrationName string)
 		return fmt.Errorf("failed to render UP migration template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateDownMigration creates the DOWN migration file
@@ -124,7 +124,7 @@ func (g *MigrationGenerator) generateDownMigration(filePath, migrationName strin
 		return fmt.Errorf("failed to render DOWN migration template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // ensureMigrationManager creates the migration manager if it doesn't exist
@@ -133,12 +133,12 @@ func (g *MigrationGenerator) ensureMigrationManager() error {
 	managerPath := filepath.Join(dbDir, "migrator.go")
 
 	// If manager already exists, don't overwrite
-	if fileutil.FileExists(managerPath) {
+	if utils.FileExists(managerPath) {
 		return nil
 	}
 
 	// Create directory
-	if err := fileutil.CreateDir(dbDir); err != nil {
+	if err := utils.CreateDir(dbDir); err != nil {
 		return err
 	}
 
@@ -153,7 +153,7 @@ func (g *MigrationGenerator) ensureMigrationManager() error {
 		return fmt.Errorf("failed to render migrator template: %w", err)
 	}
 
-	return fileutil.WriteFile(managerPath, content)
+	return utils.WriteFile(managerPath, content)
 }
 
 // ensureMakefileMigrationCommands adds migration commands to Makefile

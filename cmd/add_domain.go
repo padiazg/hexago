@@ -83,7 +83,7 @@ func runAddDomainEntity(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	config, err := generator.GetCurrentProjectConfig()
+	config, err := generator.GetCurrentProjectConfig(workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to detect project: %w", err)
 	}
@@ -119,7 +119,7 @@ func runAddDomainValueObject(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	config, err := generator.GetCurrentProjectConfig()
+	config, err := generator.GetCurrentProjectConfig(workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to detect project: %w", err)
 	}

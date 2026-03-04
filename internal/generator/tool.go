@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -24,7 +23,7 @@ func NewToolGenerator(config *ProjectConfig) *ToolGenerator {
 func (g *ToolGenerator) Generate(toolType, toolName, description string) error {
 	// Create directory
 	toolDir := filepath.Join("internal", "infrastructure", toolType)
-	if err := fileutil.CreateDir(toolDir); err != nil {
+	if err := utils.CreateDir(toolDir); err != nil {
 		return err
 	}
 
@@ -60,7 +59,7 @@ func (g *ToolGenerator) generateLogger(dir, name, description string) error {
 		return fmt.Errorf("failed to render logger template: %w", err)
 	}
 
-	if err := fileutil.WriteFile(filePath, content); err != nil {
+	if err := utils.WriteFile(filePath, content); err != nil {
 		return err
 	}
 
@@ -84,7 +83,7 @@ func (g *ToolGenerator) generateValidator(dir, name, description string) error {
 		return fmt.Errorf("failed to render validator template: %w", err)
 	}
 
-	if err := fileutil.WriteFile(filePath, content); err != nil {
+	if err := utils.WriteFile(filePath, content); err != nil {
 		return err
 	}
 
@@ -109,7 +108,7 @@ func (g *ToolGenerator) generateMapper(dir, name, description string) error {
 		return fmt.Errorf("failed to render mapper template: %w", err)
 	}
 
-	if err := fileutil.WriteFile(filePath, content); err != nil {
+	if err := utils.WriteFile(filePath, content); err != nil {
 		return err
 	}
 
@@ -134,7 +133,7 @@ func (g *ToolGenerator) generateMiddleware(dir, name, description string) error 
 		return fmt.Errorf("failed to render middleware template: %w", err)
 	}
 
-	if err := fileutil.WriteFile(filePath, content); err != nil {
+	if err := utils.WriteFile(filePath, content); err != nil {
 		return err
 	}
 
@@ -173,7 +172,7 @@ func (g *ToolGenerator) generateTestFile(dir, name, toolType string) error {
 		return fmt.Errorf("failed to render tool test template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 func getDescription(desc, defaultDesc string) string {

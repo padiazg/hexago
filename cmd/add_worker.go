@@ -70,7 +70,7 @@ func runAddWorker(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid worker type '%s'. Valid types: queue, periodic, event", workerType)
 	}
 
-	config, err := generator.GetCurrentProjectConfig()
+	config, err := generator.GetCurrentProjectConfig(workingDir)
 	if err != nil {
 		return fmt.Errorf("failed to detect project: %w", err)
 	}

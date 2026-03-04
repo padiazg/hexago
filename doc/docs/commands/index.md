@@ -16,6 +16,8 @@ HexaGo provides a set of commands to scaffold and manage hexagonal architecture 
 | [`hexago add migration`](add-migration.md) | Add a database migration |
 | [`hexago add tool`](add-tool.md) | Add an infrastructure tool |
 | [`hexago validate`](validate.md) | Validate architecture compliance |
+| [`hexago mcp`](mcp.md) | Start the built-in MCP server for AI assistants |
+| [`hexago version`](version.md) | Print version and build information |
 | [`hexago templates`](../customization/templates.md) | Manage and customize code generation templates |
 
 ---
@@ -32,15 +34,31 @@ hexago add --help          # Help for add subcommands
 
 ## Where to Run Commands
 
-All `hexago add` and `hexago validate` commands must be run from the **project root directory** — the directory containing `go.mod`.
+All `hexago add` and `hexago validate` commands operate on the **project root** — the directory that contains `go.mod` and `internal/`.
+
+You can point to it in two ways:
+
+=== "Navigate first (classic)"
+
+    ```shell
+    cd my-project
+    hexago add service CreateUser
+    ```
+
+=== "--working-directory flag (no cd)"
+
+    ```shell
+    hexago add service CreateUser --working-directory /home/user/projects/my-project
+    ```
+
+The `-w` short form also works:
 
 ```shell
-cd my-project       # navigate to project root
-hexago add service CreateUser
+hexago validate -w /home/user/projects/my-project
 ```
 
 !!! warning
-    Running `hexago add` outside a valid hexagonal architecture project root will produce an error:
+    Running without a valid hexagonal architecture project root produces:
     ```
     Error: not a hexagonal architecture project
     ```

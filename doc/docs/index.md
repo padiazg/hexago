@@ -45,6 +45,14 @@ HexaGo is an opinionated CLI tool to scaffold Go applications following the **He
 
     [:octicons-arrow-right-24: Template Customization](customization/templates.md)
 
+-   :robot: **AI Assistant Integration**
+
+    ---
+
+    Built-in MCP server lets Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, and Zed scaffold projects without leaving the conversation. The `--working-directory` flag means no `cd` is ever required.
+
+    [:octicons-arrow-right-24: hexago mcp](commands/mcp.md)
+
 </div>
 
 ---

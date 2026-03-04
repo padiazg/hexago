@@ -30,11 +30,18 @@ HexaGo is an opinionated CLI tool to scaffold for Go applications following the 
 - 🗄️ **Migrations** - Database migrations with sequential numbering
 - ✅ **Validation** - Architecture compliance validation
 
-### 🎨 Template Customization (NEW!)
+### 🎨 Template Customization
 - 📝 **Customizable Templates** - Modify generated code to match your style
 - 🏢 **Company Branding** - Add custom headers and comments
 - 👥 **Team Sharing** - Version control and share custom templates
 - 🔄 **Multi-Source Loading** - Project-local, user-global, or embedded templates
+
+### 🤖 AI Assistant Integration (NEW in v0.0.3)
+- 🔌 **Built-in MCP Server** - `hexago mcp` starts a stdio Model Context Protocol server
+- 🛠️ **9 MCP Tools** - Scaffold any component without leaving your AI chat
+- 📍 **`--working-directory` flag** - Target any project from any directory, no `cd` required
+- 📂 **`--in-place` init** - Generate into the current directory, no subfolder created
+- 🖥️ **Multi-client support** - Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed
 
 ## Installation
 Using Go
@@ -60,7 +67,7 @@ go build -o hexago
 ### 1. Create a New Project
 
 ```shell
-# Basic HTTP server with stdlib
+# Basic HTTP server with stdlib (in current directory)
 hexago init my-app --module github.com/user/my-app
 
 # With Echo framework
@@ -75,6 +82,13 @@ hexago init my-service --module github.com/company/my-service \
 hexago init ordering --module github.com/company/ordering \
   --adapter-style driver-driven \
   --core-logic usecases
+
+# Target a specific parent directory (no cd required)
+hexago init my-app --module github.com/user/my-app \
+  --working-directory /home/user/projects
+
+# Generate directly into the current directory (no <name> subfolder)
+hexago init my-app --module github.com/user/my-app --in-place
 ```
 
 ### 2. Add Components
@@ -97,6 +111,9 @@ hexago add adapter secondary database ProductRepository
 # Add HTTP handlers
 hexago add adapter primary http UserHandler
 hexago add adapter primary http ProductHandler
+
+# All commands also accept --working-directory to avoid cd
+hexago add service CreateUser --working-directory /home/user/projects/my-app
 ```
 
 ### 3. Run Your Application
@@ -584,8 +601,202 @@ MIT License - see [LICENSE](LICENSE) file
 
 **HexaGo is production-ready and actively maintained!**
 
-### Coverage: 97%
-All core features implemented. Remaining 3% includes optional enhancements like auth scaffolding, diagram generation, and CI/CD templates.
+---
+
+## MCP Server
+
+HexaGo includes a built-in [MCP](https://modelcontextprotocol.io/) server so AI
+assistants (Claude Code, Claude Desktop, Cursor, VS Code, …) can scaffold hexagonal
+architecture projects without leaving their conversation.
+
+### Available tools
+
+| Tool | What it does |
+|------|-------------|
+| `hexago_init` | Initialize a new project |
+| `hexago_add_service` | Add a business logic service |
+| `hexago_add_domain_entity` | Add a domain entity |
+| `hexago_add_domain_valueobject` | Add a domain value object |
+| `hexago_add_adapter` | Add a primary or secondary adapter |
+| `hexago_add_worker` | Add a background worker |
+| `hexago_add_migration` | Add a database migration |
+| `hexago_add_tool` | Add an infrastructure tool |
+| `hexago_validate` | Validate architecture compliance |
+
+All tools accept a required `working_directory` parameter — the project root (or parent
+directory for `hexago_init`).
+`hexago_init` also accepts `in_place: true` to generate files directly into
+`working_directory` without creating a `<name>` subdirectory.
+
+---
+
+### Claude Code
+
+```shell
+# User scope — available across all your projects
+claude mcp add --scope user hexago -- hexago mcp
+
+# Project scope — stored in .mcp.json, commit it so the whole team gets it
+claude mcp add --scope project hexago -- hexago mcp
+```
+
+Verify with `claude mcp list`. Scope precedence (highest → lowest): `local > project > user`.
+
+---
+
+### Claude Desktop
+
+Edit `claude_desktop_config.json` and restart the app completely.
+
+| Platform | Config file |
+|----------|-------------|
+| macOS    | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows  | `%APPDATA%\Claude\claude_desktop_config.json` |
+
+```json
+{
+  "mcpServers": {
+    "hexago": {
+      "command": "hexago",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+> **Tip:** If `hexago` is not on `PATH`, use the full binary path (e.g. `/home/user/go/bin/hexago`).
+> Logs: `~/Library/Logs/Claude/mcp.log` (macOS) · `%APPDATA%\Claude\logs\` (Windows).
+
+---
+
+### VS Code (Copilot / GitHub Copilot Chat)
+
+VS Code uses `mcp.json` with a `"servers"` top-level key. The `"type": "stdio"` field
+is required.
+
+**Workspace scope** (commit this file to share with your team):
+
+`.vscode/mcp.json`
+```json
+{
+  "servers": {
+    "hexago": {
+      "type": "stdio",
+      "command": "hexago",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**User scope** (available in all your workspaces):
+
+| Platform | Path |
+|----------|------|
+| macOS    | `~/Library/Application Support/Code/User/mcp.json` |
+| Linux    | `~/.config/Code/User/mcp.json` |
+| Windows  | `%APPDATA%\Code\User\mcp.json` |
+
+You can also open it via the Command Palette: **MCP: Open User Configuration**.
+
+---
+
+### Cursor
+
+Cursor uses `mcp.json` with a `"mcpServers"` top-level key.
+
+**Project scope** (`.cursor/mcp.json` in the project root):
+```json
+{
+  "mcpServers": {
+    "hexago": {
+      "command": "hexago",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Global scope** (`~/.cursor/mcp.json` — available in all projects):
+```json
+{
+  "mcpServers": {
+    "hexago": {
+      "command": "hexago",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+After editing, restart the MCP server from Cursor's Settings → MCP panel.
+
+---
+
+### Windsurf (Codeium)
+
+Edit the global config and restart Windsurf.
+
+| Platform | Config file |
+|----------|-------------|
+| macOS / Linux | `~/.codeium/windsurf/mcp_config.json` |
+| Windows       | `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
+
+```json
+{
+  "mcpServers": {
+    "hexago": {
+      "command": "hexago",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+---
+
+### Zed
+
+Add a `"context_servers"` entry to your Zed settings (`Cmd+,` → JSON view).
+
+| Platform | Config file |
+|----------|-------------|
+| macOS    | `~/.zed/settings.json` |
+| Linux    | `~/.config/zed/settings.json` |
+
+```json
+{
+  "context_servers": {
+    "hexago": {
+      "source": "custom",
+      "command": "hexago",
+      "args": ["mcp"],
+      "env": {}
+    }
+  }
+}
+```
+
+`"source": "custom"` is required for manually configured servers. Verify the connection
+in the Agent Panel — a green dot means the server is active.
+
+---
+
+### Quick reference
+
+| Client | Config file | Key | `type` field |
+|--------|-------------|-----|--------------|
+| Claude Code | `~/.claude.json` / `.mcp.json` | `mcpServers` | — |
+| Claude Desktop | `claude_desktop_config.json` | `mcpServers` | — |
+| VS Code | `.vscode/mcp.json` or `…/Code/User/mcp.json` | `servers` | `"stdio"` required |
+| Cursor | `.cursor/mcp.json` or `~/.cursor/mcp.json` | `mcpServers` | — |
+| Windsurf | `mcp_config.json` | `mcpServers` | — |
+| Zed | `settings.json` | `context_servers` | `source: "custom"` |
+
+---
+
+### Coverage: 99%
+All core features implemented. Remaining 1% includes optional enhancements like auth scaffolding, diagram generation, and CI/CD templates.
 
 ---
 

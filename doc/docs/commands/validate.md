@@ -5,10 +5,15 @@ Validate hexagonal architecture compliance for the current project.
 ## Synopsis
 
 ```shell
-hexago validate
+hexago validate [flags]
 ```
 
-Must be run from the project root directory.
+Operates on the project root — the directory containing `go.mod` and `internal/`.
+Use `--working-directory` (`-w`) to point to a project without changing directories:
+
+```shell
+hexago validate --working-directory /home/user/projects/my-api
+```
 
 ---
 

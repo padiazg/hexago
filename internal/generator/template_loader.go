@@ -10,7 +10,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -45,9 +44,9 @@ func NewTemplateLoader() *TemplateLoader {
 		// 1. Binary-local templates (./templates/ relative to binary)
 		{
 			Name:     "binary-local",
-			Path:     filepath.Join(fileutil.BinaryDir(), "templates"),
+			Path:     filepath.Join(utils.BinaryDir(), "templates"),
 			Priority: 1,
-			exists:   fileutil.FileExists,
+			exists:   utils.FileExists,
 			read:     os.ReadFile,
 		},
 		// 2. Project-local overrides (./.hexago/templates/)
@@ -55,15 +54,15 @@ func NewTemplateLoader() *TemplateLoader {
 			Name:     "project-local",
 			Path:     ".hexago/templates",
 			Priority: 2,
-			exists:   fileutil.FileExists,
+			exists:   utils.FileExists,
 			read:     os.ReadFile,
 		},
 		// 3. User-global overrides (~/.hexago/templates/)
 		{
 			Name:     "user-global",
-			Path:     filepath.Join(fileutil.HomeDir(), ".hexago", "templates"),
+			Path:     filepath.Join(utils.HomeDir(), ".hexago", "templates"),
 			Priority: 3,
-			exists:   fileutil.FileExists,
+			exists:   utils.FileExists,
 			read:     os.ReadFile,
 		},
 		// 4. Embedded templates (fallback)
@@ -221,7 +220,7 @@ func (l *TemplateLoader) Export(name string, global bool) error {
 	// Determine destination
 	var destPath string
 	if global {
-		destPath = filepath.Join(fileutil.HomeDir(), ".hexago", "templates", name)
+		destPath = filepath.Join(utils.HomeDir(), ".hexago", "templates", name)
 	} else {
 		destPath = filepath.Join(".hexago", "templates", name)
 	}
@@ -256,11 +255,11 @@ func (l *TemplateLoader) Validate(path string) error {
 func (l *TemplateLoader) Reset(name string, global bool) error {
 	var path string
 	if global {
-		path = filepath.Join(fileutil.HomeDir(), ".hexago", "templates", name)
+		path = filepath.Join(utils.HomeDir(), ".hexago", "templates", name)
 	} else {
 		path = filepath.Join(".hexago", "templates", name)
 	}
-	if !fileutil.FileExists(path) {
+	if !utils.FileExists(path) {
 		return fmt.Errorf("no custom override found at %s", path)
 	}
 	if err := os.Remove(path); err != nil {

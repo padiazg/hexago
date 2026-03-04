@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -32,7 +31,7 @@ func NewWorkerGenerator(config *ProjectConfig) *WorkerGenerator {
 func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig) error {
 	// Create workers directory if it doesn't exist
 	workersDir := filepath.Join("internal", "workers")
-	if err := fileutil.CreateDir(workersDir); err != nil {
+	if err := utils.CreateDir(workersDir); err != nil {
 		return err
 	}
 
@@ -42,7 +41,7 @@ func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig)
 	filePath := filepath.Join(workersDir, fileName)
 	testFilePath := filepath.Join(workersDir, testFileName)
 
-	if fileutil.FileExists(filePath) {
+	if utils.FileExists(filePath) {
 		return fmt.Errorf("worker file %s already exists", filePath)
 	}
 
@@ -96,7 +95,7 @@ func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, confi
 		return fmt.Errorf("failed to render queue worker template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generatePeriodicWorker generates a periodic worker
@@ -112,7 +111,7 @@ func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, co
 		return fmt.Errorf("failed to render periodic worker template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateEventWorker generates an event-driven worker
@@ -127,7 +126,7 @@ func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, confi
 		return fmt.Errorf("failed to render event worker template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateWorkerTestFile generates test file for worker
@@ -142,7 +141,7 @@ func (g *WorkerGenerator) generateWorkerTestFile(filePath, workerName string) er
 		return fmt.Errorf("failed to render worker test template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // ensureWorkerManager creates or updates the worker manager
@@ -150,7 +149,7 @@ func (g *WorkerGenerator) ensureWorkerManager(workersDir string) error {
 	managerPath := filepath.Join(workersDir, "manager.go")
 
 	// If manager already exists, don't overwrite
-	if fileutil.FileExists(managerPath) {
+	if utils.FileExists(managerPath) {
 		fmt.Printf("ℹ️  Worker manager already exists: %s\n", managerPath)
 		return nil
 	}
@@ -166,5 +165,5 @@ func (g *WorkerGenerator) ensureWorkerManager(workersDir string) error {
 		return fmt.Errorf("failed to render worker manager template: %w", err)
 	}
 
-	return fileutil.WriteFile(managerPath, content)
+	return utils.WriteFile(managerPath, content)
 }

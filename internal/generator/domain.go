@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -31,7 +30,7 @@ func NewDomainGenerator(config *ProjectConfig) *DomainGenerator {
 func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) error {
 	domainDir := filepath.Join("internal", "core", "domain")
 
-	if !fileutil.FileExists(domainDir) {
+	if !utils.FileExists(domainDir) {
 		return fmt.Errorf("directory %s does not exist", domainDir)
 	}
 
@@ -41,7 +40,7 @@ func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) erro
 	filePath := filepath.Join(domainDir, fileName)
 	testFilePath := filepath.Join(domainDir, testFileName)
 
-	if fileutil.FileExists(filePath) {
+	if utils.FileExists(filePath) {
 		return fmt.Errorf("entity file %s already exists", filePath)
 	}
 
@@ -64,7 +63,7 @@ func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) erro
 func (g *DomainGenerator) GenerateValueObject(voName string, fields []Field) error {
 	domainDir := filepath.Join("internal", "core", "domain")
 
-	if !fileutil.FileExists(domainDir) {
+	if !utils.FileExists(domainDir) {
 		return fmt.Errorf("directory %s does not exist", domainDir)
 	}
 
@@ -74,7 +73,7 @@ func (g *DomainGenerator) GenerateValueObject(voName string, fields []Field) err
 	filePath := filepath.Join(domainDir, fileName)
 	testFilePath := filepath.Join(domainDir, testFileName)
 
-	if fileutil.FileExists(filePath) {
+	if utils.FileExists(filePath) {
 		return fmt.Errorf("value object file %s already exists", filePath)
 	}
 
@@ -142,7 +141,7 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields
 		return fmt.Errorf("failed to render entity template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateEntityTestFile generates entity test file
@@ -157,7 +156,7 @@ func (g *DomainGenerator) generateEntityTestFile(filePath, entityName string) er
 		return fmt.Errorf("failed to render entity test template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateValueObjectFile generates the value object implementation
@@ -202,7 +201,7 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, field
 		return fmt.Errorf("failed to render value object template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateValueObjectTestFile generates value object test file
@@ -217,5 +216,5 @@ func (g *DomainGenerator) generateValueObjectTestFile(filePath, voName string) e
 		return fmt.Errorf("failed to render value object test template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }

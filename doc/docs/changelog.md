@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] v0.0.3
+
+!!! info "Unreleased"
+    These features are available on `main` and will be included in the next release.
+
+### `--working-directory` global flag
+
+- New **`-w` / `--working-directory`** persistent flag on the root command — every subcommand can now target a project in a different directory without `cd`-ing into it first.
+- All `hexago add *` and `hexago validate` commands accept the flag and pass it to the project detector. When omitted, the current working directory is used as before.
+- `hexago init --working-directory <dir>` creates the project under `<dir>` instead of the current directory.
+
+```shell
+# Add a service to a project located elsewhere — no cd required
+hexago add service CreateUser --working-directory /home/user/projects/my-api
+```
+
+### `--in-place` flag for `hexago init`
+
+- New **`--in-place`** bool flag: generates project files directly into `working_directory` instead of creating a `<name>` subdirectory inside it.
+- Useful when the target directory already exists and is the intended project root (e.g. a freshly cloned empty repo or the current working directory).
+
+```shell
+# Scaffold into the current directory
+hexago init my-api --module github.com/user/my-api --in-place
+
+# Scaffold into an existing remote directory
+hexago init my-api --module github.com/user/my-api \
+  --working-directory /home/user/projects/my-api \
+  --in-place
+```
+
+### Built-in MCP Server (`hexago mcp`)
+
+HexaGo now ships with a built-in [Model Context Protocol](https://modelcontextprotocol.io/) server, letting AI assistants scaffold hexagonal architecture projects without leaving the conversation.
+
+```shell
+hexago mcp   # start the stdio MCP server
+```
+
+Register with Claude Code:
+
+```shell
+claude mcp add --scope project hexago -- hexago mcp
+```
+
+**Nine tools** are available — each delegates to the hexago CLI with `--working-directory`:
+
+| Tool | What it does |
+|------|-------------|
+| `hexago_init` | Bootstrap a new project |
+| `hexago_add_service` | Add a business-logic service |
+| `hexago_add_domain_entity` | Add a domain entity |
+| `hexago_add_domain_valueobject` | Add a domain value object |
+| `hexago_add_adapter` | Add a primary or secondary adapter |
+| `hexago_add_worker` | Add a background worker |
+| `hexago_add_migration` | Add a database migration |
+| `hexago_add_tool` | Add an infrastructure utility |
+| `hexago_validate` | Validate architecture compliance |
+
+The server delivers comprehensive usage instructions on every `initialize` handshake, covering all parameter names, valid enum values, defaults, field format, and a directive that prevents AI agents from falling back to raw CLI shell calls.
+
+See [`hexago mcp`](commands/mcp.md) for client configuration examples (Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed).
+
+### Changed
+
+- `GetCurrentProjectConfig()` signature updated to `GetCurrentProjectConfig(dir string)` — empty string falls back to `os.Getwd()`. All call sites updated.
+- `cmd/init.go` resolves `OutputDir` from the `--working-directory` flag value with an `os.Getwd()` fallback.
+- `internal/generator/project.go` and `detector.go` migrated from `pkg/fileutil` to `pkg/utils` for file-system helpers (internal refactor, no behaviour change).
+
+---
+
 ## [0.0.2] — 2026-02-26
 
 !!! success "Release Highlights"

@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +26,7 @@ var (
 	explicitPorts     bool
 	withWorkers       bool
 	withObservability bool
+	inPlace           bool
 )
 
 // initCmd represents the init command
@@ -75,6 +77,7 @@ func init() {
 	initCmd.Flags().BoolVar(&explicitPorts, "explicit-ports", false, "Create explicit ports/ directory")
 	initCmd.Flags().BoolVar(&withWorkers, "with-workers", false, "Include worker pattern setup")
 	initCmd.Flags().BoolVar(&withObservability, "with-observability", false, "Include observability (health checks + metrics)")
+	initCmd.Flags().BoolVar(&inPlace, "in-place", false, "Generate project files directly in the working directory (no <name> subdirectory)")
 }
 
 func runInit(cmd *cobra.Command, args []string) error {
@@ -85,8 +88,18 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Load .hexago.yaml from CWD as a defaults layer (flags > yaml > hardcoded defaults)
-	if hexCfg, err := generator.LoadHexagoConfig("."); err == nil {
+	// Resolve output directory (working dir flag or CWD)
+	outDir := workingDir
+	if outDir == "" {
+		var wdErr error
+		outDir, wdErr = os.Getwd()
+		if wdErr != nil {
+			return fmt.Errorf("failed to get current directory: %w", wdErr)
+		}
+	}
+
+	// Load .hexago.yaml from outDir as a defaults layer (flags > yaml > hardcoded defaults)
+	if hexCfg, err := generator.LoadHexagoConfig(outDir); err == nil {
 		fmt.Println("ℹ️  Loading defaults from .hexago.yaml")
 		pc := hexCfg.ToProjectConfig()
 		if !cmd.Flags().Changed("module") && pc.ModuleName != "" {
@@ -165,6 +178,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Create project configuration
 	config := generator.NewProjectConfig(projectName, moduleName)
+	config.OutputDir = outDir
 	config.ProjectType = projectType
 	config.Framework = framework
 	config.AdapterStyle = adapterStyle
@@ -176,6 +190,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	config.ExplicitPorts = explicitPorts
 	config.WithWorkers = withWorkers
 	config.WithObservability = withObservability
+	config.InPlace = inPlace
 
 	// Print configuration
 	printProjectInfo(config)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/padiazg/hexago/pkg/fileutil"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -38,7 +37,7 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, portName st
 	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), adapterType)
 
 	// Create directory if it doesn't exist
-	if err := fileutil.CreateDir(adapterDir); err != nil {
+	if err := utils.CreateDir(adapterDir); err != nil {
 		return err
 	}
 
@@ -48,7 +47,7 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, portName st
 	filePath := filepath.Join(adapterDir, fileName)
 	testFilePath := filepath.Join(adapterDir, testFileName)
 
-	if fileutil.FileExists(filePath) {
+	if utils.FileExists(filePath) {
 		return fmt.Errorf("adapter file %s already exists", filePath)
 	}
 
@@ -97,7 +96,7 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName 
 	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
 
 	// Create directory if it doesn't exist
-	if err := fileutil.CreateDir(adapterDir); err != nil {
+	if err := utils.CreateDir(adapterDir); err != nil {
 		return err
 	}
 
@@ -107,7 +106,7 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName 
 	filePath := filepath.Join(adapterDir, fileName)
 	testFilePath := filepath.Join(adapterDir, testFileName)
 
-	if fileutil.FileExists(filePath) {
+	if utils.FileExists(filePath) {
 		return fmt.Errorf("adapter file %s already exists", filePath)
 	}
 
@@ -160,7 +159,7 @@ func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) err
 		return fmt.Errorf("failed to render HTTP adapter template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateGRPCAdapter generates a gRPC handler adapter
@@ -176,7 +175,7 @@ func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) err
 		return fmt.Errorf("failed to render gRPC adapter template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateQueueAdapter generates a message queue consumer adapter
@@ -192,7 +191,7 @@ func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) e
 		return fmt.Errorf("failed to render queue adapter template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateDatabaseAdapter generates a database repository adapter
@@ -207,7 +206,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, portName 
 		return fmt.Errorf("failed to render database adapter template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateExternalAdapter generates an external service adapter
@@ -221,7 +220,7 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 		return fmt.Errorf("failed to render external adapter template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generateCacheAdapter generates a cache adapter
@@ -235,7 +234,7 @@ func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName st
 		return fmt.Errorf("failed to render cache adapter template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }
 
 // generatePortInterface generates a port interface (if using explicit ports)
@@ -257,5 +256,5 @@ func (g *AdapterGenerator) generateAdapterTestFile(filePath, adapterName, adapte
 		return fmt.Errorf("failed to render adapter test template: %w", err)
 	}
 
-	return fileutil.WriteFile(filePath, content)
+	return utils.WriteFile(filePath, content)
 }

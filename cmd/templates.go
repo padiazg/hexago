@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/padiazg/hexago/internal/generator"
-	"github.com/padiazg/hexago/pkg/fileutil"
+	"github.com/padiazg/hexago/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -126,7 +126,7 @@ Once exported, HexaGo will use your customized version instead of the built-in o
 
 		var destPath string
 		if global {
-			destPath = filepath.Join(fileutil.HomeDir(), ".hexago", "templates", name)
+			destPath = filepath.Join(utils.HomeDir(), ".hexago", "templates", name)
 		} else {
 			destPath = filepath.Join(".hexago", "templates", name)
 		}
@@ -159,7 +159,7 @@ Templates that already have an override are skipped unless --force is provided.`
 
 		var baseDir string
 		if global {
-			baseDir = filepath.Join(fileutil.HomeDir(), ".hexago", "templates")
+			baseDir = filepath.Join(utils.HomeDir(), ".hexago", "templates")
 		} else {
 			baseDir = filepath.Join(".hexago", "templates")
 		}
@@ -167,7 +167,7 @@ Templates that already have an override are skipped unless --force is provided.`
 		var exported, skipped int
 		for _, name := range names {
 			destPath := filepath.Join(baseDir, name)
-			if !force && fileutil.FileExists(destPath) {
+			if !force && utils.FileExists(destPath) {
 				skipped++
 				continue
 			}
