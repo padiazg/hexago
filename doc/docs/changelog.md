@@ -9,9 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.0.3 - 2026-03-04
 
-!!! info "Unreleased"
-    These features are available on `main` and will be included in the next release.
-
 ### `--working-directory` global flag
 
 - New **`-w` / `--working-directory`** persistent flag on the root command — every subcommand can now target a project in a different directory without `cd`-ing into it first.
