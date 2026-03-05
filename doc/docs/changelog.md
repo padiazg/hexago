@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] v0.0.3
+## v0.0.3 - 2026-03-04
 
 !!! info "Unreleased"
     These features are available on `main` and will be included in the next release.
