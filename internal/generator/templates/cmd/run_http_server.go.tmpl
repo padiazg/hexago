@@ -76,7 +76,11 @@ and perform a graceful shutdown with a configurable timeout.`,
 		// Create and configure the HTTP server.
 		// Framework-specific setup (middleware, routes) lives in
 		// internal/adapters/{{.AdapterInboundDir}}/http/server.go.
-		srv := httpserver.New(cfg, log{{if .WithObservability}}, metrics{{end}})
+		srv := httpserver.New(&httpserver.ServerConfig{
+			Config:  cfg,
+			Logger:  log,
+			{{if .WithObservability}}Metrics: metrics,{{end}}
+		})
 
 		// Channel to capture OS signals
 		sigChan := make(chan os.Signal, 1)
@@ -122,6 +126,6 @@ func init() {
 {{- if .WithObservability}}
 	// Observability flags (separate server from main API)
 	runCmd.Flags().Bool("observability", false, "Enable observability server (health + metrics)")
-	runCmd.Flags().String("observability-addr", ":8080", "Observability server address")
+	runCmd.Flags().String("observability-addr", ":8081", "Observability server address")
 {{- end}}
 }

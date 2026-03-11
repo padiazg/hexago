@@ -17,11 +17,17 @@ type Migrator struct {
 	logger logger.Logger
 }
 
+// MigratorConfig is the configuration data for the migrator
+type MigratorConfig struct {
+	DB     *sql.DB
+	Logger logger.Logger
+}
+
 // NewMigrator creates a new migration manager
-func NewMigrator(db *sql.DB, log logger.Logger) *Migrator {
+func NewMigrator(cfg *MigratorConfig) *Migrator {
 	return &Migrator{
-		db:     db,
-		logger: log,
+		db:     cfg.DB,
+		logger: cfg.Logger,
 	}
 }
 
