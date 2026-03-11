@@ -58,9 +58,18 @@ type server struct {
 {{- end}}
 }
 
+// ServerConfig is the configuration data for the server
+type ServerConfig struct {
+	Config     *config.Config
+	Logger     logger.Logger
+{{- if .WithObservability}}
+	Metrics    *observability.PrometheusMetrics
+{{- end}}
+}
+
 // New creates and configures a new Chi HTTP server.
 // Middleware and routes are wired here, keeping cmd/run.go framework-agnostic.
-func New(cfg *config.Config, log logger.Logger{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) srv.Server {
+func New(cfg *ServerConfig) srv.Server {
 	router := chi.NewRouter()
 
 	// Middleware
@@ -70,16 +79,16 @@ func New(cfg *config.Config, log logger.Logger{{if .WithObservability}}, metrics
 	s := &server{
 		router: router,
 		httpSrv: &http.Server{
-			Addr:         fmt.Sprintf(":%d", cfg.Server.Port),
+			Addr:         fmt.Sprintf(":%d", cfg.Config.Server.Port),
 			Handler:      router,
-			ReadTimeout:  cfg.Server.ReadTimeout,
-			WriteTimeout: cfg.Server.WriteTimeout,
-			IdleTimeout:  cfg.Server.IdleTimeout,
+			ReadTimeout:  cfg.Config.Server.ReadTimeout,
+			WriteTimeout: cfg.Config.Server.WriteTimeout,
+			IdleTimeout:  cfg.Config.Server.IdleTimeout,
 		},
-		cfg: cfg,
-		log: log,
+		cfg:     cfg.Config,
+		log:     cfg.Logger,
 {{- if .WithObservability}}
-		metrics: metrics,
+		metrics: cfg.Metrics,
 {{- end}}
 	}
 
