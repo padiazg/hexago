@@ -11,7 +11,8 @@ import (
 
 // ProjectGenerator handles the generation of new projects
 type ProjectGenerator struct {
-	config *ProjectConfig
+	config      *ProjectConfig
+	projectPath string
 }
 
 // NewProjectGenerator creates a new ProjectGenerator
@@ -23,62 +24,62 @@ func NewProjectGenerator(config *ProjectConfig) *ProjectGenerator {
 
 // Generate creates the complete project structure
 func (g *ProjectGenerator) Generate() error {
-	var projectPath string
+	// var projectPath string
 	if g.config.InPlace {
-		projectPath = g.config.OutputDir
+		g.projectPath = g.config.OutputDir
 	} else {
-		projectPath = filepath.Join(g.config.OutputDir, g.config.ProjectName)
+		g.projectPath = filepath.Join(g.config.OutputDir, g.config.ProjectName)
 		// Check if directory already exists (in-place always uses an existing dir)
-		if utils.FileExists(projectPath) {
-			return fmt.Errorf("directory %s already exists", projectPath)
+		if utils.FileExists(g.projectPath) {
+			return fmt.Errorf("directory %s already exists", g.projectPath)
 		}
 	}
 
 	fmt.Printf("🚀 Generating project %s...\n", g.config.ProjectName)
 
 	// Create base directory (no-op when in-place, dir already exists)
-	if err := utils.CreateDir(projectPath); err != nil {
+	if err := utils.CreateDir(g.projectPath); err != nil {
 		return fmt.Errorf("failed to create project directory: %w", err)
 	}
 
 	// Generate directory structure
-	if err := g.generateDirectoryStructure(projectPath); err != nil {
+	if err := g.generateDirectoryStructure(); err != nil {
 		return fmt.Errorf("failed to create directory structure: %w", err)
 	}
 
 	// Generate files from templates
-	if err := g.generateFiles(projectPath); err != nil {
+	if err := g.generateFiles(); err != nil {
 		return fmt.Errorf("failed to generate files: %w", err)
 	}
 
 	// Initialize go.mod
-	if err := g.initGoModule(projectPath); err != nil {
+	if err := g.initGoModule(); err != nil {
 		return fmt.Errorf("failed to initialize go module: %w", err)
 	}
 
 	// Run go mod tidy
-	if err := g.runGoModTidy(projectPath); err != nil {
+	if err := g.runGoModTidy(); err != nil {
 		return fmt.Errorf("failed to run go mod tidy: %w", err)
 	}
 
 	// Format generated code
-	if err := g.formatCode(projectPath); err != nil {
+	if err := g.formatCode(); err != nil {
 		// Non-fatal - just warn
 		fmt.Printf("⚠️  Warning: failed to format code: %v\n", err)
 	}
 
 	// Write .hexago.yaml to persist init-time settings
-	if err := g.saveHexagoConfig(projectPath); err != nil {
+	if err := g.saveHexagoConfig(); err != nil {
 		fmt.Printf("⚠️  Warning: failed to write .hexago.yaml: %v\n", err)
 		// non-fatal — project is still fully usable
 	}
 
-	g.printSuccess(projectPath)
+	g.printSuccess()
 	return nil
 }
 
 // generateDirectoryStructure creates the directory structure
-func (g *ProjectGenerator) generateDirectoryStructure(projectPath string) error {
+func (g *ProjectGenerator) generateDirectoryStructure() error {
 	fmt.Println("📁 Creating directory structure...")
 
 	dirs := []string{
@@ -112,73 +113,98 @@ func (g *ProjectGenerator) generateDirectoryStructure(projectPath string) error 
 	}
 
 	// Create all directories
-	return utils.CreateDirs(projectPath, dirs)
+	return utils.CreateDirs(g.projectPath, dirs)
 }
 
 // generateFiles generates all files from templates
-func (g *ProjectGenerator) generateFiles(projectPath string) error {
+func (g *ProjectGenerator) generateFiles() error {
 	fmt.Println("📝 Generating files...")
 
 	// Generate main.go
-	if err := g.generateMainFile(projectPath); err != nil {
+	if err := g.generateFile(mainTemplate); err != nil {
 		return err
 	}
 
 	// Generate cmd/root.go
-	if err := g.generateRootCommand(projectPath); err != nil {
+	if err := g.generateFile(rootTemplate); err != nil {
 		return err
 	}
 
 	// Generate cmd/run.go
-	if err := g.generateRunCommand(projectPath); err != nil {
+	if err := g.generateFile(runTemplate); err != nil {
 		return err
 	}
 
-	// Generate internal/adapters/{inbound}/http/server.go (http-server type only)
-	if g.config.ProjectType == "http-server" {
-		if err := g.generateHTTPServerInterface(projectPath); err != nil {
+	switch g.config.ProjectType {
+
+	// Generate processor for service type
+	case "service":
+		if err := g.generateFile(processorTemplate); err != nil {
 			return err
 		}
 
-		if err := g.generateHTTPServerFile(projectPath); err != nil {
+		// Generate internal/adapters/{inbound}/http/server.go (http-server type only)
+	case "http-server":
+		if err := g.generateFile(httpServerInterfaceTemplate); err != nil {
+			return err
+		}
+
+		if err := g.generateFile(httpServerFileTemplate); err != nil {
 			return err
 		}
 	}
 
 	// Generate config
-	if err := g.generateConfig(projectPath); err != nil {
+	if err := g.generateFile(configTemplate); err != nil {
 		return err
 	}
 
 	// Generate logger
-	if err := g.generateLogger(projectPath); err != nil {
+	if err := g.generateFile(loggerTemplate); err != nil {
 		return err
 	}
 
 	// Generate Makefile
-	if err := g.generateMakefile(projectPath); err != nil {
+	if err := g.generateFile(makefileTemplate); err != nil {
 		return err
 	}
 
 	// Generate .gitignore
-	if err := g.generateGitignore(projectPath); err != nil {
+	if err := g.generateFile(gitignoreTemplate); err != nil {
 		return err
 	}
 
 	// Generate README
-	if err := g.generateReadme(projectPath); err != nil {
+	if err := g.generateFile(readmeTemplate); err != nil {
 		return err
 	}
 
 	// Optional files
 	if g.config.WithDocker {
-		if err := g.generateDockerFiles(projectPath); err != nil {
+		// Generate Dockerfile
+		if err := g.generateFile(dockerFileTemplate); err != nil {
+			return err
+		}
+		// Generate compose.yaml
+		if err := g.generateFile(composeTemplate); err != nil {
 			return err
 		}
 	}
 
 	if g.config.WithObservability {
-		if err := g.generateObservability(projectPath); err != nil {
+		// if err := g.generateObservability(); err != nil {
+		// 	return err
+		// }
+		// Generate health.go
+		if err := g.generateFile(healthTemplate); err != nil {
+			return err
+		}
+		// Generate metrics.go
+		if err := g.generateFile(metricsTemplate); err != nil {
+			return err
+		}
+		// Generate server.go
+		if err := g.generateFile(observabilityServerTemplate); err != nil {
 			return err
 		}
 	}
@@ -187,11 +213,11 @@ func (g *ProjectGenerator) generateFiles(projectPath string) error {
 }
 
 // initGoModule initializes the go.mod file
-func (g *ProjectGenerator) initGoModule(projectPath string) error {
+func (g *ProjectGenerator) initGoModule() error {
 	fmt.Println("📦 Initializing go module...")
 
 	cmd := exec.Command("go", "mod", "init", g.config.ModuleName)
-	cmd.Dir = projectPath
+	cmd.Dir = g.projectPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -200,11 +226,12 @@ func (g *ProjectGenerator) initGoModule(projectPath string) error {
 	}
 
 	// Add required dependencies
-	return g.addDependencies(projectPath)
+	return g.addDependencies()
 }
 
 // addDependencies adds required dependencies to go.mod
-func (g *ProjectGenerator) addDependencies(projectPath string) error {
+// TODO: make dependency list configurable/updatable
+func (g *ProjectGenerator) addDependencies() error {
 	fmt.Println("📦 Adding dependencies...")
 
 	dependencies := []string{
@@ -231,7 +258,7 @@ func (g *ProjectGenerator) addDependencies(projectPath string) error {
 
 	for _, dep := range dependencies {
 		cmd := exec.Command("go", "get", dep)
-		cmd.Dir = projectPath
+		cmd.Dir = g.projectPath
 		if err := cmd.Run(); err != nil {
 			fmt.Printf("⚠️  Warning: failed to add dependency %s: %v\n", dep, err)
 		}
@@ -241,11 +268,11 @@ func (g *ProjectGenerator) addDependencies(projectPath string) error {
 }
 
 // runGoModTidy runs go mod tidy
-func (g *ProjectGenerator) runGoModTidy(projectPath string) error {
+func (g *ProjectGenerator) runGoModTidy() error {
 	fmt.Println("🧹 Running go mod tidy...")
 
 	cmd := exec.Command("go", "mod", "tidy")
-	cmd.Dir = projectPath
+	cmd.Dir = g.projectPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -257,11 +284,11 @@ func (g *ProjectGenerator) runGoModTidy(projectPath string) error {
 }
 
 // formatCode runs go fmt on the generated code
-func (g *ProjectGenerator) formatCode(projectPath string) error {
+func (g *ProjectGenerator) formatCode() error {
 	fmt.Println("✨ Formatting code...")
 
 	cmd := exec.Command("go", "fmt", "./...")
-	cmd.Dir = projectPath
+	cmd.Dir = g.projectPath
 
 	if err := cmd.Run(); err != nil {
 		return err
@@ -271,13 +298,13 @@ func (g *ProjectGenerator) formatCode(projectPath string) error {
 }
 
 // saveHexagoConfig writes .hexago.yaml with the current project settings.
-func (g *ProjectGenerator) saveHexagoConfig(projectPath string) error {
+func (g *ProjectGenerator) saveHexagoConfig() error {
 	cfg := HexagoConfigFromProject(g.config)
-	return SaveHexagoConfig(projectPath, cfg)
+	return SaveHexagoConfig(g.projectPath, cfg)
 }
 
 // printSuccess prints success message with next steps
-func (g *ProjectGenerator) printSuccess(projectPath string) {
+func (g *ProjectGenerator) printSuccess() {
 	fmt.Println("\n✅ Project generated successfully!")
 	fmt.Println("\n📚 Next steps:")
 	fmt.Printf("  cd %s\n", g.config.ProjectName)

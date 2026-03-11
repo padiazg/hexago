@@ -55,19 +55,28 @@ type server struct {
 {{- end}}
 }
 
+// ServerConfig is the configuration data for the server
+type ServerConfig struct {
+	Config     *config.Config
+	Logger     logger.Logger
+{{- if .WithObservability}}
+	Metrics    *observability.PrometheusMetrics
+{{- end}}
+}
+
 // New creates and configures a new Fiber HTTP server.
 // Middleware and routes are wired here, keeping cmd/run.go framework-agnostic.
-func New(cfg *config.Config, log logger.Logger{{if .WithObservability}}, metrics *observability.PrometheusMetrics{{end}}) srv.Server {
+func New(cfg *ServerConfig) srv.Server {
 	app := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
 	})
 
 	s := &server{
 		app: app,
-		cfg: cfg,
-		log: log,
+		cfg:     cfg.Config,
+		log:     cfg.Logger,	
 {{- if .WithObservability}}
-		metrics: metrics,
+		metrics: cfg.Metrics,
 {{- end}}
 	}
 

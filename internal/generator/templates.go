@@ -9,113 +9,163 @@ import (
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
-// generateMainFile generates the main.go file
-func (g *ProjectGenerator) generateMainFile(projectPath string) error {
-	content, err := g.config.templateLoader.Render("project/main.go.tmpl", g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render main.go template: %w", err)
-	}
+const (
+	makefileTemplate            string = "makefile"
+	gitignoreTemplate           string = "gitignore"
+	mainTemplate                string = "main"
+	runTemplate                 string = "run"
+	rootTemplate                string = "root"
+	processorTemplate           string = "processor"
+	configTemplate              string = "config"
+	loggerTemplate              string = "logger"
+	httpServerInterfaceTemplate string = "http-server-interface"
+	httpServerFileTemplate      string = "http-server-file"
+	readmeTemplate              string = "readme"
+	dockerFileTemplate          string = "dockerfile"
+	composeTemplate             string = "compose"
+	healthTemplate              string = "health"
+	metricsTemplate             string = "metrics"
+	observabilityServerTemplate string = "observability-server"
+)
 
-	return utils.WriteFile(filepath.Join(projectPath, "main.go"), content)
+type templateItem struct {
+	source string
+	target string
 }
 
-// generateRootCommand generates cmd/root.go
-func (g *ProjectGenerator) generateRootCommand(projectPath string) error {
-	content, err := g.config.templateLoader.Render("project/root_cmd.go.tmpl", g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render root_cmd.go template: %w", err)
-	}
+type templateFn func(g *ProjectGenerator) templateItem
 
-	return utils.WriteFile(filepath.Join(projectPath, "cmd", "root.go"), content)
-}
-
-// generateRunCommand generates cmd/run.go using the appropriate template for project type
-func (g *ProjectGenerator) generateRunCommand(projectPath string) error {
-	// Select template based on project type
-	var templateName string
-	switch g.config.ProjectType {
-	case "http-server":
-		templateName = "project/run_cmd_http_server.go.tmpl"
-	case "service":
-		templateName = "project/run_cmd_service.go.tmpl"
-		// Also generate processor for service type
-		if err := g.generateProcessor(projectPath); err != nil {
-			return fmt.Errorf("failed to generate processor: %w", err)
+var templateMap = map[string]templateFn{
+	makefileTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "misc/makefile.tmpl",
+			target: "Makefile",
 		}
-	default:
-		// Fallback to http-server for backward compatibility
-		templateName = "project/run_cmd.go.tmpl"
-	}
+	},
+	gitignoreTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "misc/gitignore.tmpl",
+			target: ".gitignore",
+		}
+	},
+	mainTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "project/main.go.tmpl",
+			target: "main.go",
+		}
+	},
+	runTemplate: func(g *ProjectGenerator) templateItem {
+		var templateName string
+		switch g.config.ProjectType {
+		case "http-server":
+			templateName = "cmd/run_http_server.go.tmpl"
+		case "service":
+			templateName = "cmd/run_service.go.tmpl"
+		default:
+			// Fallback to http-server for backward compatibility
+			templateName = "cmd/run.go.tmpl"
+		}
 
-	content, err := g.config.templateLoader.Render(templateName, g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render %s template: %w", templateName, err)
-	}
+		return templateItem{
+			source: templateName,
+			target: filepath.Join("cmd", "run.go"),
+		}
+	},
+	rootTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "cmd/root.go.tmpl",
+			target: filepath.Join("cmd", "root.go"),
+		}
+	},
+	processorTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "service/processor.go.tmpl",
+			target: filepath.Join("internal", "core", g.config.CoreLogicDir(), "processor.go"),
+		}
+	},
+	configTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "project/config.go.tmpl",
+			target: filepath.Join("internal", "config", "config.go"),
+		}
+	},
+	loggerTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "project/logger.go.tmpl",
+			target: filepath.Join("pkg", "logger", "logger.go"),
+		}
+	},
+	httpServerInterfaceTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "project/http_server_interface.go.tmpl",
+			target: filepath.Join("pkg", "server", "server.go"),
+		}
+	},
+	httpServerFileTemplate: func(g *ProjectGenerator) templateItem {
+		// TODO: manage this at the config package
+		framework := g.config.Framework
+		if framework == "" {
+			framework = "stdlib"
+		}
 
-	return utils.WriteFile(filepath.Join(projectPath, "cmd", "run.go"), content)
+		return templateItem{
+			source: fmt.Sprintf("project/http_server_%s.go.tmpl", framework),
+			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "server.go"),
+		}
+	},
+	readmeTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "misc/readme.md.tmpl",
+			target: "README.md",
+		}
+	},
+	dockerFileTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "misc/dockerfile.tmpl",
+			target: "Dockerfile",
+		}
+	},
+	composeTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "misc/compose.yaml.tmpl",
+			target: "compose.yaml",
+		}
+	},
+	healthTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "observability/health.go.tmpl",
+			target: filepath.Join("internal", "observability", "health.go"),
+		}
+	},
+	metricsTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "observability/metrics.go.tmpl",
+			target: filepath.Join("internal", "observability", "metrics.go"),
+		}
+	},
+	observabilityServerTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "observability/server.go.tmpl",
+			target: filepath.Join("internal", "observability", "server.go"),
+		}
+	},
 }
 
-// generateProcessor generates internal/core/services/processor.go for service type
-func (g *ProjectGenerator) generateProcessor(projectPath string) error {
-	content, err := g.config.templateLoader.Render("service/processor.go.tmpl", g.config)
+// generatefile generates a given file
+func (g *ProjectGenerator) generateFile(name string) error {
+	item, ok := templateMap[name]
+	if !ok {
+		return fmt.Errorf("undefined %s template", name)
+	}
+
+	templ := item(g)
+
+	content, err := g.config.templateLoader.Render(templ.source, g.config)
 	if err != nil {
-		return fmt.Errorf("failed to render processor.go template: %w", err)
+		return fmt.Errorf("failed to render %s template: %w", templ.source, err)
 	}
 
-	return utils.WriteFile(
-		filepath.Join(projectPath, "internal", "core", g.config.CoreLogicDir(), "processor.go"),
-		content,
-	)
-}
-
-// generateConfig generates internal/config/config.go
-func (g *ProjectGenerator) generateConfig(projectPath string) error {
-	content, err := g.config.templateLoader.Render("project/config.go.tmpl", g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render config.go template: %w", err)
-	}
-
-	return utils.WriteFile(filepath.Join(projectPath, "internal", "config", "config.go"), content)
-}
-
-// generateLogger generates pkg/logger/logger.go
-func (g *ProjectGenerator) generateLogger(projectPath string) error {
-	content, err := g.config.templateLoader.Render("project/logger.go.tmpl", g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render logger.go template: %w", err)
-	}
-
-	return utils.WriteFile(filepath.Join(projectPath, "pkg", "logger", "logger.go"), content)
-}
-
-// generateServerInterface generates pkg/server/server.go
-func (g *ProjectGenerator) generateHTTPServerInterface(projectPath string) error {
-	content, err := g.config.templateLoader.Render("project/http_server_interface.go.tmpl", g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render http_server_interface.go template: %w", err)
-	}
-
-	return utils.WriteFile(filepath.Join(projectPath, "pkg", "server", "server.go"), content)
-}
-
-// generateHTTPServerFile generates internal/adapters/{inbound}/http/server.go
-// using the framework-specific template.
-func (g *ProjectGenerator) generateHTTPServerFile(projectPath string) error {
-	framework := g.config.Framework
-	if framework == "" {
-		framework = "stdlib"
-	}
-
-	templateName := fmt.Sprintf("project/http_server_%s.go.tmpl", framework)
-	content, err := g.config.templateLoader.Render(templateName, g.config)
-	if err != nil {
-		return fmt.Errorf("failed to render %s template: %w", templateName, err)
-	}
-
-	return utils.WriteFile(
-		filepath.Join(projectPath, "internal", "adapters", g.config.AdapterInboundDir(), "http", "server.go"),
-		content,
-	)
+	return utils.WriteFile(filepath.Join(g.projectPath, templ.target), content)
 }
 
 // renderTemplate renders a template with the given data
