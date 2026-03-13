@@ -21,32 +21,55 @@ When you provide a custom template, HexaGo uses it instead of the built-in defau
 
 ## Template Structure
 
+The template directory mirrors the generated project structure — the path of a template tells you exactly where its output lands.
+
 ```
 templates/
-├── project/                    # Project initialization files
-│   ├── main.go.tmpl
-│   ├── root_cmd.go.tmpl
-│   ├── run_cmd.go.tmpl
-│   ├── run_cmd_http_server.go.tmpl
-│   ├── run_cmd_service.go.tmpl
-│   ├── config.go.tmpl
-│   ├── logger.go.tmpl
-│   ├── http_server_interface.go.tmpl
-│   ├── http_server_echo.go.tmpl
-│   ├── http_server_gin.go.tmpl
-│   ├── http_server_chi.go.tmpl
-│   ├── http_server_fiber.go.tmpl
-│   └── http_server_stdlib.go.tmpl
+├── cmd/                        # CLI commands
+│   ├── root.go.tmpl            → cmd/root.go
+│   ├── run_http_server.go.tmpl → cmd/run.go  (http-server type)
+│   └── run_service.go.tmpl     → cmd/run.go  (service type)
+│
+├── pkg/
+│   ├── server/
+│   │   └── server_interface.go.tmpl  → pkg/server/server.go
+│   ├── httpserver/             # Framework-specific server + handler base
+│   │   ├── http_server_chi.go.tmpl    → pkg/httpserver/server.go
+│   │   ├── http_server_echo.go.tmpl
+│   │   ├── http_server_gin.go.tmpl
+│   │   ├── http_server_fiber.go.tmpl
+│   │   └── http_server_stdlib.go.tmpl
+│   └── logger/
+│       └── logger.go.tmpl      → pkg/logger/logger.go
+│
+├── adapter/
+│   └── primary/
+│       └── http/               # One sub-directory per framework
+│           ├── chi/
+│           │   ├── http_adapter.go.tmpl  → internal/adapters/{inbound}/http/http.go
+│           │   ├── http_ping.go.tmpl     → .../http/ping/ping.go
+│           │   ├── http_health.go.tmpl   → .../http/health/health.go
+│           │   └── http_metrics.go.tmpl  → .../http/metrics/metrics.go
+│           ├── echo/   (same set)
+│           ├── gin/    (same set)
+│           ├── fiber/  (same set)
+│           └── stdlib/ (same set)
+│
+├── project/                    # Misc project-root files
+│   ├── main.go.tmpl            → main.go
+│   └── config.go.tmpl          → internal/config/config.go
+│
 ├── misc/                       # Project support files
-│   ├── makefile.tmpl
-│   ├── readme.md.tmpl
-│   ├── dockerfile.tmpl
-│   ├── compose.yaml.tmpl
-│   └── gitignore.tmpl
-├── observability/              # Observability files (health, metrics, server)
-│   ├── health.go.tmpl
-│   ├── metrics.go.tmpl
-│   └── server.go.tmpl
+│   ├── makefile.tmpl           → Makefile
+│   ├── readme.md.tmpl          → README.md
+│   ├── dockerfile.tmpl         → Dockerfile
+│   ├── compose.yaml.tmpl       → compose.yaml
+│   └── gitignore.tmpl          → .gitignore
+│
+├── observability/              # Health / metrics helpers
+│   ├── health.go.tmpl          → internal/observability/health.go
+│   └── metrics.go.tmpl         → internal/observability/metrics.go
+│
 ├── service/                    # Business logic templates
 │   ├── service.go.tmpl
 │   ├── service_test.go.tmpl
@@ -56,14 +79,6 @@ templates/
 │   ├── entity_test.go.tmpl
 │   ├── value_object.go.tmpl
 │   └── value_object_test.go.tmpl
-├── adapter/                    # Adapter templates (flat, framework-agnostic)
-│   ├── http.go.tmpl
-│   ├── grpc.go.tmpl
-│   ├── queue.go.tmpl
-│   ├── database.go.tmpl
-│   ├── external.go.tmpl
-│   ├── cache.go.tmpl
-│   └── adapter_test.go.tmpl
 ├── worker/                     # Background worker templates
 │   ├── queue.go.tmpl
 │   ├── periodic.go.tmpl

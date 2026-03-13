@@ -1,0 +1,92 @@
+{{/*
+Template: project/http_adapter_stdlib.go
+Description: stdlib HTTP adapter wiring — registers all route handlers on the server.
+             To add a new route: create a package under this directory and
+             register it with srv.Use(yourhandler.New(...)).
+Variables:
+  - Year: string - Copyright year
+  - Author: string - Author name
+  - ModuleName: string - Go module name
+  - AdapterInboundDir: string - primary or driver
+  - AdapterOutboundDir: string - secondary or driven
+  - CoreLogic: string - services or usecases
+  - WithObservability: bool - include observability support
+*/}}
+/*
+Copyright © {{.Year}} {{.Author}}
+*/
+// Package http wires the stdlib HTTP server with all route handlers.
+//
+// This is a {{if eq .AdapterStyle "driver-driven"}}DRIVER{{else}}PRIMARY{{end}} adapter (inbound).
+// Add new route handlers here: create a sub-package and register it with
+// srv.Use(yourhandler.New(...)).
+//
+// Allowed imports:
+//   - internal/core/ports/inbound (interfaces, if using explicit ports)
+//   - internal/core/{{.CoreLogic}} (business logic)
+//   - internal/config
+//   - pkg/httpserver
+//
+// Forbidden:
+//   - internal/adapters/{{.AdapterOutboundDir}}/* (outbound adapters — use ports instead)
+package http
+
+import (
+{{- if .WithObservability}}
+	"context"
+
+	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http/health"
+	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http/metrics"
+{{- end}}
+	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http/ping"
+{{- if .WithObservability}}
+	"{{.ModuleName}}/internal/observability"
+{{- end}}
+	httpsrv "{{.ModuleName}}/pkg/httpserver"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// New creates and wires the HTTP server with all registered route handlers.
+// Framework-specific server mechanics live in pkg/httpserver.
+func New(cfg *httpsrv.ServerConfig) server.Server {
+	srv := httpsrv.New(cfg).(*httpsrv.Server)
+
+	// Register ping handler
+	srv.Use(ping.New(&ping.Config{
+		Path: "/ping",
+		Mux:  srv.Mux,
+	}))
+
+{{- if .WithObservability}}
+
+	// Register observability handlers
+	healthChecker := observability.NewHealthChecker()
+	healthChecker.RegisterCheck("api", func(ctx context.Context) observability.ComponentHealth {
+		return observability.ComponentHealth{
+			Status:  observability.StatusHealthy,
+			Message: "API server running",
+		}
+	})
+
+	srv.Use(health.New(&health.Config{
+		Path:          "/health",
+		Mux:           srv.Mux,
+		HealthChecker: healthChecker,
+	}))
+
+	srv.Use(metrics.New(&metrics.Config{
+		Path: "/metrics",
+		Mux:  srv.Mux,
+	}))
+{{- end}}
+
+	// TODO: Register your application handlers here
+	// Example:
+	// srv.Use(user.New(&user.Config{
+	//     Path:        "/api/v1/users",
+	//     Mux:         srv.Mux,
+	//     UserService: yourService,
+	// }))
+
+	return srv
+}

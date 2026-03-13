@@ -1,0 +1,41 @@
+{{/*
+Template: project/http_health_stdlib.go
+Description: Health handler for stdlib net/http — registers /health, /health/ready, /health/live.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package health
+
+import (
+	"net/http"
+
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the health handler.
+type Config struct {
+	Path          string
+	Mux           *http.ServeMux
+	HealthChecker *observability.HealthChecker
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new health handler.
+func New(config *Config) *handler {
+	if config.HealthChecker == nil {
+		config.HealthChecker = observability.NewHealthChecker()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the health routes on the ServeMux.
+func (h *handler) Configure(srv server.Server) {
+	h.Mux.Handle(h.Path, h.HealthChecker.HTTPHandler())
+	h.Mux.Handle(h.Path+"/ready", h.HealthChecker.ReadinessHandler())
+	h.Mux.Handle(h.Path+"/live", observability.LivenessHandler())
+}

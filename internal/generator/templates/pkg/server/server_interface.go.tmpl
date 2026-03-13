@@ -24,4 +24,15 @@ type Server interface {
 
 	// Stop performs a graceful shutdown, respecting the context deadline.
 	Stop(ctx context.Context) error
+
+	// Use registers a ServerHandler that configures routes or middleware on
+	// the server. Returns the server for chaining.
+	Use(ServerHandler) Server
+}
+
+// ServerHandler is implemented by any type that registers routes or
+// middleware on the Server. Each handler is self-contained and mounts
+// its own routes when Configure is called.
+type ServerHandler interface {
+	Configure(Server)
 }

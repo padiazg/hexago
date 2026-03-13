@@ -1,0 +1,39 @@
+{{/*
+Template: project/http_metrics_echo.go
+Description: Prometheus metrics handler for Echo — registers GET /metrics.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package metrics
+
+import (
+	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the metrics handler.
+type Config struct {
+	Path    string
+	Echo    *echo.Echo
+	Metrics *observability.PrometheusMetrics
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new metrics handler.
+func New(config *Config) *handler {
+	if config.Metrics == nil {
+		config.Metrics = observability.NewPrometheusMetrics()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the metrics route on the Echo instance.
+func (h *handler) Configure(srv server.Server) {
+	h.Echo.GET(h.Path, echo.WrapHandler(promhttp.Handler()))
+}

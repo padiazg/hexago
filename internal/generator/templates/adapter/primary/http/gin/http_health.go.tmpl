@@ -1,0 +1,41 @@
+{{/*
+Template: project/http_health_gin.go
+Description: Health handler for Gin — registers /health, /health/ready, /health/live.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package health
+
+import (
+	"github.com/gin-gonic/gin"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the health handler.
+type Config struct {
+	Path          string
+	Router        *gin.Engine
+	HealthChecker *observability.HealthChecker
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new health handler.
+func New(config *Config) *handler {
+	if config.HealthChecker == nil {
+		config.HealthChecker = observability.NewHealthChecker()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the health routes on the Gin engine.
+func (h *handler) Configure(srv server.Server) {
+	g := h.Router.Group(h.Path)
+	g.GET("", gin.WrapH(h.HealthChecker.HTTPHandler()))
+	g.GET("/ready", gin.WrapH(h.HealthChecker.ReadinessHandler()))
+	g.GET("/live", gin.WrapH(observability.LivenessHandler()))
+}

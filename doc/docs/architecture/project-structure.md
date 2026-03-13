@@ -10,7 +10,7 @@ HexaGo generates a well-organized directory structure that enforces hexagonal ar
 my-app/
 ├── cmd/                          # CLI commands (Cobra)
 │   ├── root.go                   # Root command + Viper configuration
-│   └── run.go                    # Server startup with graceful shutdown
+│   └── run.go                    # Framework-agnostic startup + graceful shutdown
 │
 ├── internal/                     # Private application code
 │   ├── core/                     # 🎯 CORE — No external dependencies
@@ -21,8 +21,14 @@ my-app/
 │   │
 │   ├── adapters/                 # 🔌 ADAPTERS — External interfaces
 │   │   ├── primary/              # Inbound (drives the application)
-│   │   │   └── http/             # HTTP handlers
-│   │   │       └── .gitkeep
+│   │   │   └── http/             # HTTP adapter wiring
+│   │   │       ├── http.go       # Wires server + registers all route handlers
+│   │   │       ├── ping/         # GET /ping handler
+│   │   │       │   └── ping.go
+│   │   │       ├── health/       # (with --with-observability) /health endpoints
+│   │   │       │   └── health.go
+│   │   │       └── metrics/      # (with --with-observability) /metrics endpoint
+│   │   │           └── metrics.go
 │   │   └── secondary/            # Outbound (driven by the application)
 │   │       └── database/         # Database repositories
 │   │           └── .gitkeep
@@ -31,10 +37,14 @@ my-app/
 │   │   └── config.go             # Viper config struct and loader
 │   │
 │   └── observability/            # (with --with-observability)
-│       ├── health.go             # Health check endpoints
-│       └── metrics.go            # Prometheus metrics
+│       ├── health.go             # HealthChecker — component registration + probes
+│       └── metrics.go            # Prometheus metrics helpers
 │
 ├── pkg/                          # Reusable packages (safe to import by others)
+│   ├── httpserver/               # (http-server type) Framework-specific server
+│   │   └── server.go             # Server struct with exported router + Use() method
+│   ├── server/                   # (http-server type) Framework-agnostic interface
+│   │   └── server.go             # Server + ServerHandler interfaces
 │   └── logger/
 │       └── logger.go             # Structured logger interface + implementation
 │
@@ -84,7 +94,32 @@ Connects the core to the outside world.
 
 ### `pkg/`
 
-Reusable packages that are safe to import by external projects. Currently contains the logger.
+Reusable packages that are safe to import by external projects.
+
+| Package | Contents |
+|---------|----------|
+| `pkg/server/` | `Server` and `ServerHandler` interfaces — framework-agnostic contracts |
+| `pkg/httpserver/` | Framework-specific server implementation with exported router and `Use()` method |
+| `pkg/logger/` | Structured logger interface + implementation |
+
+#### Handler plugin pattern
+
+`pkg/httpserver.Server` implements `Use(ServerHandler) Server`. Any type with a `Configure(Server)` method can be registered as a handler — each handler mounts its own routes when called:
+
+```go
+// internal/adapters/primary/http/http.go
+func New(cfg *httpsrv.ServerConfig) server.Server {
+    srv := httpsrv.New(cfg).(*httpsrv.Server)
+
+    srv.Use(ping.New(&ping.Config{Path: "/ping", Router: srv.Router}))
+    srv.Use(health.New(&health.Config{Path: "/health", Router: srv.Router, HealthChecker: checker}))
+    srv.Use(metrics.New(&metrics.Config{Path: "/metrics", Router: srv.Router}))
+
+    return srv
+}
+```
+
+Each handler sub-package (`ping/`, `health/`, `metrics/`) is self-contained: it declares its own `Config` struct and `Configure(Server)` method and registers its routes when called.
 
 ### `migrations/`
 
