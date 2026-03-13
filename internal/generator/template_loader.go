@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -13,7 +14,7 @@ import (
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
-//go:embed templates/**/*.tmpl
+//go:embed templates
 var embeddedTemplates embed.FS
 
 // TemplateLoader handles loading and rendering templates
@@ -70,13 +71,14 @@ func NewTemplateLoader() *TemplateLoader {
 			Name:     "embedded",
 			Priority: 4,
 			exists: func(name string) bool {
-				path := filepath.Join("templates", name)
-				_, err := embeddedTemplates.ReadFile(path)
+				// embed.FS always uses forward slashes — use path.Join, not filepath.Join
+				p := path.Join("templates", name)
+				_, err := embeddedTemplates.ReadFile(p)
 				return err == nil
 			},
 			read: func(name string) ([]byte, error) {
-				path := filepath.Join("templates", name)
-				return embeddedTemplates.ReadFile(path)
+				p := path.Join("templates", name)
+				return embeddedTemplates.ReadFile(p)
 			},
 		},
 	}
@@ -182,17 +184,22 @@ func (l *TemplateLoader) Which(name string) (string, error) {
 
 // List returns all available templates
 func (l *TemplateLoader) List() ([]string, error) {
-	templates := make(map[string]bool)
+	var (
+		templates = make(map[string]bool)
+		sub, err  = fs.Sub(embeddedTemplates, "templates")
+	)
+
+	if err != nil {
+		return nil, err
+	}
 
 	// Walk embedded templates
-	err := fs.WalkDir(embeddedTemplates, "templates", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(sub, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if !d.IsDir() && strings.HasSuffix(path, ".tmpl") {
-			// Remove "templates/" prefix
-			name := strings.TrimPrefix(path, "templates/")
-			templates[name] = true
+			templates[path] = true
 		}
 		return nil
 	})

@@ -20,12 +20,16 @@ const (
 	loggerTemplate              string = "logger"
 	httpServerInterfaceTemplate string = "http-server-interface"
 	httpServerFileTemplate      string = "http-server-file"
+	httpServerHandlerTemplate   string = "http-server-handler"
+	httpAdapterTemplate         string = "http-adapter"
+	httpPingTemplate            string = "http-ping"
+	httpHealthTemplate          string = "http-health"
+	httpMetricsTemplate         string = "http-metrics"
 	readmeTemplate              string = "readme"
 	dockerFileTemplate          string = "dockerfile"
 	composeTemplate             string = "compose"
 	healthTemplate              string = "health"
 	metricsTemplate             string = "metrics"
-	observabilityServerTemplate string = "observability-server"
 )
 
 type templateItem struct {
@@ -97,7 +101,7 @@ var templateMap = map[string]templateFn{
 	},
 	httpServerInterfaceTemplate: func(g *ProjectGenerator) templateItem {
 		return templateItem{
-			source: "project/http_server_interface.go.tmpl",
+			source: "pkg/server/server_interface.go.tmpl",
 			target: filepath.Join("pkg", "server", "server.go"),
 		}
 	},
@@ -109,8 +113,63 @@ var templateMap = map[string]templateFn{
 		}
 
 		return templateItem{
-			source: fmt.Sprintf("project/http_server_%s.go.tmpl", framework),
-			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "server.go"),
+			source: fmt.Sprintf("pkg/httpserver/http_server_%s.go.tmpl", framework),
+			target: filepath.Join("pkg", "httpserver", "server.go"),
+		}
+	},
+	// httpServerHandlerTemplate: func(g *ProjectGenerator) templateItem {
+	// 	framework := g.config.Framework
+	// 	if framework == "" {
+	// 		framework = "stdlib"
+	// 	}
+
+	// 	return templateItem{
+	// 		source: fmt.Sprintf("pkg/httpserver/http_server_handler_%s.go.tmpl", framework),
+	// 		target: filepath.Join("pkg", "httpserver", "handler.go"),
+	// 	}
+	// },
+	httpAdapterTemplate: func(g *ProjectGenerator) templateItem {
+		framework := g.config.Framework
+		if framework == "" {
+			framework = "stdlib"
+		}
+
+		return templateItem{
+			source: fmt.Sprintf("adapter/primary/http/%s/http_adapter.go.tmpl", framework),
+			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "http.go"),
+		}
+	},
+	httpPingTemplate: func(g *ProjectGenerator) templateItem {
+		framework := g.config.Framework
+		if framework == "" {
+			framework = "stdlib"
+		}
+
+		return templateItem{
+			source: fmt.Sprintf("adapter/primary/http/%s/http_ping.go.tmpl", framework),
+			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "ping", "ping.go"),
+		}
+	},
+	httpHealthTemplate: func(g *ProjectGenerator) templateItem {
+		framework := g.config.Framework
+		if framework == "" {
+			framework = "stdlib"
+		}
+
+		return templateItem{
+			source: fmt.Sprintf("adapter/primary/http/%s/http_health.go.tmpl", framework),
+			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "health", "health.go"),
+		}
+	},
+	httpMetricsTemplate: func(g *ProjectGenerator) templateItem {
+		framework := g.config.Framework
+		if framework == "" {
+			framework = "stdlib"
+		}
+
+		return templateItem{
+			source: fmt.Sprintf("adapter/primary/http/%s/http_metrics.go.tmpl", framework),
+			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "metrics", "metrics.go"),
 		}
 	},
 	readmeTemplate: func(g *ProjectGenerator) templateItem {
@@ -141,12 +200,6 @@ var templateMap = map[string]templateFn{
 		return templateItem{
 			source: "observability/metrics.go.tmpl",
 			target: filepath.Join("internal", "observability", "metrics.go"),
-		}
-	},
-	observabilityServerTemplate: func(g *ProjectGenerator) templateItem {
-		return templateItem{
-			source: "observability/server.go.tmpl",
-			target: filepath.Join("internal", "observability", "server.go"),
 		}
 	},
 }

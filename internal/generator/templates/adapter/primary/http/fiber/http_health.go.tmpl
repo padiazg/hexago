@@ -1,0 +1,42 @@
+{{/*
+Template: project/http_health_fiber.go
+Description: Health handler for Fiber — registers /health, /health/ready, /health/live.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package health
+
+import (
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the health handler.
+type Config struct {
+	Path          string
+	App           *fiber.App
+	HealthChecker *observability.HealthChecker
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new health handler.
+func New(config *Config) *handler {
+	if config.HealthChecker == nil {
+		config.HealthChecker = observability.NewHealthChecker()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the health routes on the Fiber app.
+func (h *handler) Configure(srv server.Server) {
+	g := h.App.Group(h.Path)
+	g.Get("/", adaptor.HTTPHandler(h.HealthChecker.HTTPHandler()))
+	g.Get("/ready", adaptor.HTTPHandler(h.HealthChecker.ReadinessHandler()))
+	g.Get("/live", adaptor.HTTPHandler(observability.LivenessHandler()))
+}

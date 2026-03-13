@@ -1,14 +1,14 @@
 {{/*
 Template: project/run_cmd_http_server.go
 Description: Run command for HTTP API server — framework-agnostic orchestrator.
-             Framework-specific code lives in internal/adapters/{inbound}/http/server.go.
+             Framework-specific server lives in pkg/httpserver.
+             Route handler wiring lives in internal/adapters/{inbound}/http/http.go.
 Variables:
   - Year: string - Copyright year
   - Author: string - Author name
   - ProjectName: string - Project name
   - ModuleName: string - Go module name
   - AdapterInboundDir: string - primary or driver
-  - WithObservability: bool - include observability support
 */}}
 /*
 Copyright © {{.Year}} {{.Author}}
@@ -21,11 +21,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http"
+	httpsrv "{{.ModuleName}}/pkg/httpserver"
 	"{{.ModuleName}}/pkg/logger"
-	httpserver "{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http"
-{{- if .WithObservability}}
-	"{{.ModuleName}}/internal/observability"
-{{- end}}
 	"github.com/spf13/cobra"
 )
 
@@ -48,38 +46,13 @@ and perform a graceful shutdown with a configurable timeout.`,
 
 		log.Info("Starting {{.ProjectName}} HTTP server...")
 
-{{- if .WithObservability}}
-		// Start observability server (separate from main API) if enabled
-		enableObservability, _ := cmd.Flags().GetBool("observability")
-		var shutdownObservability func()
-		var metrics *observability.PrometheusMetrics
-
-		if enableObservability {
-			healthChecker := observability.NewHealthChecker()
-			metrics = observability.NewPrometheusMetrics()
-
-			// Register health checks
-			healthChecker.RegisterCheck("api", func(ctx context.Context) observability.ComponentHealth {
-				return observability.ComponentHealth{
-					Status:  observability.StatusHealthy,
-					Message: "API server running",
-				}
-			})
-
-			obsAddr, _ := cmd.Flags().GetString("observability-addr")
-			obsServer := observability.NewServer(obsAddr, healthChecker, metrics)
-			shutdownObservability = obsServer.StartInBackground(log)
-			defer shutdownObservability()
-		}
-{{- end}}
-
 		// Create and configure the HTTP server.
-		// Framework-specific setup (middleware, routes) lives in
-		// internal/adapters/{{.AdapterInboundDir}}/http/server.go.
-		srv := httpserver.New(&httpserver.ServerConfig{
-			Config:  cfg,
-			Logger:  log,
-			{{if .WithObservability}}Metrics: metrics,{{end}}
+		// Framework-specific server mechanics live in pkg/httpserver.
+		// Route handler wiring (ping, health, metrics, ...) lives in
+		// internal/adapters/{{.AdapterInboundDir}}/http/http.go.
+		srv := http.New(&httpsrv.ServerConfig{
+			Config: cfg,
+			Logger: log,
 		})
 
 		// Channel to capture OS signals
@@ -122,10 +95,4 @@ and perform a graceful shutdown with a configurable timeout.`,
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-
-{{- if .WithObservability}}
-	// Observability flags (separate server from main API)
-	runCmd.Flags().Bool("observability", false, "Enable observability server (health + metrics)")
-	runCmd.Flags().String("observability-addr", ":8081", "Observability server address")
-{{- end}}
 }

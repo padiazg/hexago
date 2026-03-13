@@ -1,0 +1,46 @@
+{{/*
+Template: project/http_health_chi.go
+Description: Health handler for Chi — mounts /health, /health/ready, /health/live.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package health
+
+import (
+	"github.com/go-chi/chi/v5"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the health handler.
+type Config struct {
+	Path          string
+	Router        chi.Router
+	HealthChecker *observability.HealthChecker
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new health handler.
+func New(config *Config) *handler {
+	if config.HealthChecker == nil {
+		config.HealthChecker = observability.NewHealthChecker()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure mounts the health routes on the router.
+func (h *handler) Configure(srv server.Server) {
+	r := chi.NewRouter()
+
+	r.Route("/", func(r chi.Router) {
+		r.Get("/", h.HealthChecker.HTTPHandler().ServeHTTP)
+		r.Get("/ready", h.HealthChecker.ReadinessHandler().ServeHTTP)
+		r.Get("/live", observability.LivenessHandler().ServeHTTP)
+	})
+
+	h.Router.Mount(h.Path, r)
+}

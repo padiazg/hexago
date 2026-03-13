@@ -1,0 +1,39 @@
+{{/*
+Template: project/http_metrics_gin.go
+Description: Prometheus metrics handler for Gin — registers GET /metrics.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package metrics
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the metrics handler.
+type Config struct {
+	Path    string
+	Router  *gin.Engine
+	Metrics *observability.PrometheusMetrics
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new metrics handler.
+func New(config *Config) *handler {
+	if config.Metrics == nil {
+		config.Metrics = observability.NewPrometheusMetrics()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the metrics route on the Gin engine.
+func (h *handler) Configure(srv server.Server) {
+	h.Router.GET(h.Path, gin.WrapH(promhttp.Handler()))
+}

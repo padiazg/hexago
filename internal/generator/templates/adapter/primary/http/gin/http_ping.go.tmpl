@@ -1,0 +1,40 @@
+{{/*
+Template: project/http_ping_gin.go
+Description: Ping handler for Gin — registers GET /ping returning a health JSON.
+Variables:
+  - ProjectName: string - Project name
+  - ModuleName: string - Go module name
+*/}}
+package ping
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the ping handler.
+type Config struct {
+	Path   string
+	Router *gin.Engine
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new ping handler.
+func New(config *Config) *handler {
+	return &handler{Config: config}
+}
+
+// Configure registers the ping route on the Gin engine.
+func (h *handler) Configure(srv server.Server) {
+	h.Router.GET(h.Path, func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "healthy",
+			"service": "{{.ProjectName}}",
+		})
+	})
+}

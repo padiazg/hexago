@@ -1,0 +1,41 @@
+{{/*
+Template: project/http_health_echo.go
+Description: Health handler for Echo — registers /health, /health/ready, /health/live.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package health
+
+import (
+	"github.com/labstack/echo/v4"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the health handler.
+type Config struct {
+	Path          string
+	Echo          *echo.Echo
+	HealthChecker *observability.HealthChecker
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new health handler.
+func New(config *Config) *handler {
+	if config.HealthChecker == nil {
+		config.HealthChecker = observability.NewHealthChecker()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the health routes on the Echo instance.
+func (h *handler) Configure(srv server.Server) {
+	g := h.Echo.Group(h.Path)
+	g.GET("", echo.WrapHandler(h.HealthChecker.HTTPHandler()))
+	g.GET("/ready", echo.WrapHandler(h.HealthChecker.ReadinessHandler()))
+	g.GET("/live", echo.WrapHandler(observability.LivenessHandler()))
+}

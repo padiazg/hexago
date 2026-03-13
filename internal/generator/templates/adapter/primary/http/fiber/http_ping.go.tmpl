@@ -1,0 +1,38 @@
+{{/*
+Template: project/http_ping_fiber.go
+Description: Ping handler for Fiber — registers GET /ping returning a health JSON.
+Variables:
+  - ProjectName: string - Project name
+  - ModuleName: string - Go module name
+*/}}
+package ping
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the ping handler.
+type Config struct {
+	Path string
+	App  *fiber.App
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new ping handler.
+func New(config *Config) *handler {
+	return &handler{Config: config}
+}
+
+// Configure registers the ping route on the Fiber app.
+func (h *handler) Configure(srv server.Server) {
+	h.App.Get(h.Path, func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "healthy",
+			"service": "{{.ProjectName}}",
+		})
+	})
+}

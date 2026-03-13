@@ -1,0 +1,121 @@
+{{/*
+Template: project/http_server_echo.go
+Description: Echo HTTP server — lives in pkg/httpserver.
+             Exposes Echo for handler wiring via Use() in
+             internal/adapters/{inbound}/http/http.go.
+Variables:
+  - Year: string - Copyright year
+  - Author: string - Author name
+  - ModuleName: string - Go module name
+  - AdapterInboundDir: string - primary or driver
+  - AdapterOutboundDir: string - secondary or driven
+  - CoreLogic: string - services or usecases
+  - WithObservability: bool - include observability support
+*/}}
+/*
+Copyright © {{.Year}} {{.Author}}
+*/
+// Package httpserver provides the reusable Echo HTTP server.
+//
+// Route registration is handled by handlers in
+// internal/adapters/{{.AdapterInboundDir}}/http/ via the Use method.
+package httpserver
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"{{.ModuleName}}/internal/config"
+	"{{.ModuleName}}/pkg/logger"
+	srv "{{.ModuleName}}/pkg/server"
+{{- if .WithObservability}}
+	"{{.ModuleName}}/internal/observability"
+{{- end}}
+)
+
+var _ srv.Server = (*Server)(nil)
+
+// Server is the Echo-backed implementation of srv.Server.
+// Echo is exported so that handlers registered via Use can mount routes.
+type Server struct {
+	Echo    *echo.Echo
+	httpSrv *http.Server
+	cfg     *config.Config
+	log     logger.Logger
+{{- if .WithObservability}}
+	Metrics *observability.PrometheusMetrics
+{{- end}}
+}
+
+// ServerConfig is the configuration data for the server.
+type ServerConfig struct {
+	Config *config.Config
+	Logger logger.Logger
+{{- if .WithObservability}}
+	Metrics *observability.PrometheusMetrics
+{{- end}}
+}
+
+// New creates a new Echo HTTP server with standard middleware applied.
+// Route registration happens in internal/adapters/{{.AdapterInboundDir}}/http/http.go
+// via srv.Use(handler).
+func New(cfg *ServerConfig) srv.Server {
+	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	s := &Server{
+		Echo: e,
+		httpSrv: &http.Server{
+			Addr:         fmt.Sprintf(":%d", cfg.Config.Server.Port),
+			Handler:      e,
+			ReadTimeout:  cfg.Config.Server.ReadTimeout,
+			WriteTimeout: cfg.Config.Server.WriteTimeout,
+			IdleTimeout:  cfg.Config.Server.IdleTimeout,
+		},
+		cfg: cfg.Config,
+		log: cfg.Logger,
+{{- if .WithObservability}}
+		Metrics: cfg.Metrics,
+{{- end}}
+	}
+
+	return s
+}
+
+// Run starts the HTTP server in a non-blocking goroutine.
+func (s *Server) Run(errChan chan<- error) {
+	go func() {
+		s.log.Info("Server listening on port %d", s.cfg.Server.Port)
+		if err := s.Echo.StartServer(s.httpSrv); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+}
+
+// Stop gracefully shuts down the Echo server.
+func (s *Server) Stop(ctx context.Context) error {
+	return s.Echo.Shutdown(ctx)
+}
+
+// Use registers a handler that configures routes or middleware on this server.
+// Returns the server for chaining.
+func (s *Server) Use(handler srv.ServerHandler) srv.Server {
+	handler.Configure(s)
+	return s
+}
+
+// Handler provides the base fields for route handlers registered via Use.
+// Embed this struct or reference it in your own Config when building a handler
+// that mounts routes on the Echo instance.
+type Handler struct {
+	Path string
+	Echo *echo.Echo
+}

@@ -5,6 +5,71 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.1.3 - [unreleased]
+
+### Added
+
+#### Handler Plugin Pattern (`Use(ServerHandler) Server`)
+- **`Server` interface** in `pkg/server/server.go` extended with `Use(ServerHandler) Server` — a fluent
+  registration method that accepts any type implementing `ServerHandler`
+- **`ServerHandler` interface**: a single `Configure(Server)` method — each handler package mounts its
+  own routes when called, enabling self-contained, isolated handler units
+- Route handlers are now registered on the main server through `Use()` instead of being wired directly
+  inside the adapter constructor
+
+#### `pkg/httpserver` — Exported Framework Server
+- Framework-specific server implementations moved from `internal/adapters/{inbound}/http/` to
+  `pkg/httpserver/` (package name `httpsrv`)
+- Each framework server (`chi`, `echo`, `gin`, `fiber`, `stdlib`) exposes its underlying router/engine
+  as a **public field** so handlers can register routes without casting:
+  - Chi → `Server.Router chi.Router`
+  - Echo → `Server.Echo *echo.Echo`
+  - Gin → `Server.Router *gin.Engine`
+  - Fiber → `Server.App *fiber.App`
+  - stdlib → `Server.Mux *http.ServeMux`
+- `Use(handler srv.ServerHandler) srv.Server` implemented on every framework server
+- `ServerConfig.Metrics` field removed — metrics are now registered as a regular handler
+
+#### Observability Integrated into Main Server (No Separate Port)
+- Health checks (`/health`, `/health/ready`, `/health/live`) and Prometheus metrics (`/metrics`) are
+  now registered as `ServerHandler` instances on the **main HTTP server** via `Use()`
+- Eliminated the separate observability server (`observability.Server`) that previously ran on a
+  dedicated port (`:8081`)
+- `--observability` / `--observability-addr` CLI flags removed from the run command
+- Templates `observability/server.go.tmpl` deleted
+
+#### Isolated Route Handler Packages
+- Each route group ships as its own sub-package inside `internal/adapters/{inbound}/http/`:
+  - `ping/` — health ping at `/ping`
+  - `health/` — Kubernetes probes at `/health`, `/health/ready`, `/health/live` (with `--with-observability`)
+  - `metrics/` — Prometheus scrape endpoint at `/metrics` (with `--with-observability`)
+- New adapter wiring file `internal/adapters/{inbound}/http/http.go` creates the server and registers
+  all handlers in one place, keeping `cmd/run.go` completely framework-agnostic
+- All five frameworks (`chi`, `echo`, `gin`, `fiber`, `stdlib`) have a full set of handler templates
+
+### Changed
+
+#### Template Directory Restructured to Mirror Generated Project
+- Template paths now mirror the generated project structure for intuitive discovery:
+
+  | Template path | Generates |
+  |---|---|
+  | `templates/pkg/server/server_interface.go.tmpl` | `pkg/server/server.go` |
+  | `templates/pkg/httpserver/http_server_{fw}.go.tmpl` | `pkg/httpserver/server.go` |
+  | `templates/adapter/primary/http/{fw}/http_adapter.go.tmpl` | `internal/adapters/{inbound}/http/http.go` |
+  | `templates/adapter/primary/http/{fw}/http_ping.go.tmpl` | `internal/adapters/{inbound}/http/ping/ping.go` |
+  | `templates/adapter/primary/http/{fw}/http_health.go.tmpl` | `internal/adapters/{inbound}/http/health/health.go` |
+  | `templates/adapter/primary/http/{fw}/http_metrics.go.tmpl` | `internal/adapters/{inbound}/http/metrics/metrics.go` |
+
+- `//go:embed` directive changed from `templates/**/*.tmpl` to `//go:embed templates` to support
+  deeply nested subdirectories (Go's `**` glob does not recurse beyond one level)
+
+#### `template_loader.go` Cross-Platform Fix
+- Embedded FS path lookups changed from `filepath.Join` to `path.Join` — `embed.FS` always uses
+  forward slashes; `filepath.Join` produces backslashes on Windows and would fail to find templates
+
+---
+
 ## v0.0.3 - 2026-03-04
 
 ### Added
