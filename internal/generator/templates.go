@@ -20,7 +20,6 @@ const (
 	loggerTemplate              string = "logger"
 	httpServerInterfaceTemplate string = "http-server-interface"
 	httpServerFileTemplate      string = "http-server-file"
-	httpServerHandlerTemplate   string = "http-server-handler"
 	httpAdapterTemplate         string = "http-adapter"
 	httpPingTemplate            string = "http-ping"
 	httpHealthTemplate          string = "http-health"
