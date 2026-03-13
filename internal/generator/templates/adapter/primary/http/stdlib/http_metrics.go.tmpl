@@ -1,0 +1,40 @@
+{{/*
+Template: project/http_metrics_stdlib.go
+Description: Prometheus metrics handler for stdlib net/http — registers GET /metrics.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package metrics
+
+import (
+	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the metrics handler.
+type Config struct {
+	Path    string
+	Mux     *http.ServeMux
+	Metrics *observability.PrometheusMetrics
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new metrics handler.
+func New(config *Config) *handler {
+	if config.Metrics == nil {
+		config.Metrics = observability.NewPrometheusMetrics()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure registers the metrics route on the ServeMux.
+func (h *handler) Configure(srv server.Server) {
+	h.Mux.Handle(h.Path, promhttp.Handler())
+}

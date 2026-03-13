@@ -143,13 +143,21 @@ func (g *ProjectGenerator) generateFiles() error {
 			return err
 		}
 
-		// Generate internal/adapters/{inbound}/http/server.go (http-server type only)
+		// Generate pkg/httpserver and adapter wiring (http-server type only)
 	case "http-server":
 		if err := g.generateFile(httpServerInterfaceTemplate); err != nil {
 			return err
 		}
 
 		if err := g.generateFile(httpServerFileTemplate); err != nil {
+			return err
+		}
+
+		if err := g.generateFile(httpAdapterTemplate); err != nil {
+			return err
+		}
+
+		if err := g.generateFile(httpPingTemplate); err != nil {
 			return err
 		}
 	}
@@ -192,20 +200,22 @@ func (g *ProjectGenerator) generateFiles() error {
 	}
 
 	if g.config.WithObservability {
-		// if err := g.generateObservability(); err != nil {
-		// 	return err
-		// }
-		// Generate health.go
+		// Generate internal/observability/health.go
 		if err := g.generateFile(healthTemplate); err != nil {
 			return err
 		}
-		// Generate metrics.go
+		// Generate internal/observability/metrics.go
 		if err := g.generateFile(metricsTemplate); err != nil {
 			return err
 		}
-		// Generate server.go
-		if err := g.generateFile(observabilityServerTemplate); err != nil {
-			return err
+		// Generate route handlers for health and metrics (http-server only)
+		if g.config.ProjectType == "http-server" {
+			if err := g.generateFile(httpHealthTemplate); err != nil {
+				return err
+			}
+			if err := g.generateFile(httpMetricsTemplate); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -251,9 +261,14 @@ func (g *ProjectGenerator) addDependencies() error {
 		dependencies = append(dependencies, "github.com/gofiber/fiber/v2@latest")
 	}
 
-	// Add metrics dependencies
-	if g.config.WithMetrics {
+	// Add metrics/observability dependencies
+	if g.config.WithMetrics || g.config.WithObservability {
 		dependencies = append(dependencies, "github.com/prometheus/client_golang@latest")
+	}
+
+	// Fiber needs the adaptor package to wrap net/http handlers
+	if g.config.Framework == "fiber" && g.config.WithObservability {
+		dependencies = append(dependencies, "github.com/gofiber/adaptor/v2@latest")
 	}
 
 	for _, dep := range dependencies {

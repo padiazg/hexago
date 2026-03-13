@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## v0.1.3 - 2026-03-13
+
+### Handler plugin pattern (`Use(ServerHandler) Server`)
+
+The `Server` interface in `pkg/server/server.go` now exposes a fluent `Use(ServerHandler) Server` method. Any type that implements `ServerHandler` (a single `Configure(Server)` method) can be registered on the server — each handler mounts its own routes when called, enabling self-contained, isolated handler packages.
+
+### `pkg/httpserver` — exported framework server
+
+Framework-specific server implementations moved to `pkg/httpserver/`. Each server exposes its underlying router/engine as a public field so handlers can register routes directly:
+
+| Framework | Public field |
+|-----------|-------------|
+| chi | `Server.Router chi.Router` |
+| echo | `Server.Echo *echo.Echo` |
+| gin | `Server.Router *gin.Engine` |
+| fiber | `Server.App *fiber.App` |
+| stdlib | `Server.Mux *http.ServeMux` |
+
+### Observability integrated into main server
+
+Health checks and Prometheus metrics are now registered as `ServerHandler` instances on the **main HTTP server** — no separate port, no extra process. The dedicated `observability.Server` (and its CLI flags `--observability` / `--observability-addr`) has been removed.
+
+### Isolated route handler packages
+
+Each route group lives in its own sub-package inside `internal/adapters/{inbound}/http/`:
+
+- `ping/` — `/ping`
+- `health/` — `/health`, `/health/ready`, `/health/live` (with `--with-observability`)
+- `metrics/` — `/metrics` (with `--with-observability`)
+
+A new wiring file `internal/adapters/{inbound}/http/http.go` creates the server and registers all handlers, keeping `cmd/run.go` fully framework-agnostic.
+
+### Template directory restructured
+
+Template paths now mirror the generated project structure for intuitive discovery. The `//go:embed` directive was changed from `templates/**/*.tmpl` to `//go:embed templates` to support deeply nested subdirectories.
+
+```shell
+hexago templates list   # shows the updated layout
+```
+
+### Cross-platform embed fix
+
+Embedded FS path lookups in `template_loader.go` changed from `filepath.Join` to `path.Join` — `embed.FS` always uses forward slashes; `filepath.Join` would fail on Windows.
+
+---
+
 ## v0.0.3 - 2026-03-04
 
 ### `--working-directory` global flag

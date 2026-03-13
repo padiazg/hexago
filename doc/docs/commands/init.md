@@ -31,7 +31,7 @@ hexago init <name> [flags]
 | `--core-logic` | | string | `services` | Business logic directory: `services` or `usecases` |
 | `--in-place` | | bool | `false` | Generate files directly into `working_directory` — no `<name>` subdirectory is created. |
 | `--with-docker` | | bool | `false` | Generate Dockerfile and docker-compose |
-| `--with-observability` | | bool | `false` | Include health checks and Prometheus metrics |
+| `--with-observability` | | bool | `false` | Include health checks (`/health`) and Prometheus metrics (`/metrics`) registered as route handlers on the main server |
 | `--with-migrations` | | bool | `false` | Include database migration setup |
 | `--with-workers` | | bool | `false` | Include background worker pattern |
 | `--with-metrics` | | bool | `false` | Include Prometheus metrics *(deprecated — use `--with-observability`)* |

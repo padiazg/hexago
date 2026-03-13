@@ -1,0 +1,39 @@
+{{/*
+Template: project/http_metrics_chi.go
+Description: Prometheus metrics handler for Chi — mounts GET /metrics.
+Variables:
+  - ModuleName: string - Go module name
+*/}}
+package metrics
+
+import (
+	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the metrics handler.
+type Config struct {
+	Path    string
+	Router  chi.Router
+	Metrics *observability.PrometheusMetrics
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new metrics handler.
+func New(config *Config) *handler {
+	if config.Metrics == nil {
+		config.Metrics = observability.NewPrometheusMetrics()
+	}
+
+	return &handler{Config: config}
+}
+
+// Configure mounts the metrics route on the router.
+func (h *handler) Configure(srv server.Server) {
+	h.Router.Get(h.Path, promhttp.Handler().ServeHTTP)
+}

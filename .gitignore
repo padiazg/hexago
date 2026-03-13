@@ -7,3 +7,6 @@ tmp
 !CHANGELOG.md
 !doc/**/*.md
 doc/site
+
+.vscode
+.claude

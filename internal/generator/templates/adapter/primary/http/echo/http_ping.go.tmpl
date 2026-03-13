@@ -1,0 +1,40 @@
+{{/*
+Template: project/http_ping_echo.go
+Description: Ping handler for Echo — registers GET /ping returning a health JSON.
+Variables:
+  - ProjectName: string - Project name
+  - ModuleName: string - Go module name
+*/}}
+package ping
+
+import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the configuration for the ping handler.
+type Config struct {
+	Path string
+	Echo *echo.Echo
+}
+
+type handler struct {
+	*Config
+}
+
+// New creates a new ping handler.
+func New(config *Config) *handler {
+	return &handler{Config: config}
+}
+
+// Configure registers the ping route on the Echo instance.
+func (h *handler) Configure(srv server.Server) {
+	h.Echo.GET(h.Path, func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"status":  "healthy",
+			"service": "{{.ProjectName}}",
+		})
+	})
+}
