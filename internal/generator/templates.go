@@ -221,7 +221,7 @@ func (g *ProjectGenerator) generateFile(name string) error {
 }
 
 // renderTemplate renders a template with the given data
-func (g *ProjectGenerator) renderTemplate(tmplStr string, data interface{}) ([]byte, error) {
+func (g *ProjectGenerator) renderTemplate(tmplStr string, data any) ([]byte, error) {
 	tmpl, err := template.New("tmpl").Funcs(template.FuncMap{
 		"upper": func(s string) string {
 			// Simple uppercase - can be enhanced

@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/padiazg/hexago/internal/generator"
 	"github.com/padiazg/hexago/pkg/utils"
@@ -48,7 +49,7 @@ func runAddTool(cmd *cobra.Command, args []string) error {
 
 	// Validate tool type
 	validTypes := []string{"logger", "validator", "mapper", "middleware"}
-	if !contains(validTypes, toolType) {
+	if !slices.Contains(validTypes, toolType) {
 		return fmt.Errorf("invalid tool type '%s'. Valid types: %v", toolType, validTypes)
 	}
 
@@ -86,13 +87,4 @@ func runAddTool(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  3. Use the tool in your services or adapters\n")
 
 	return nil
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }

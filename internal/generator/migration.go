@@ -99,7 +99,7 @@ func (g *MigrationGenerator) getNextMigrationNumber(migrationsDir string) (int, 
 
 // generateUpMigration creates the UP migration file
 func (g *MigrationGenerator) generateUpMigration(filePath, migrationName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"MigrationName": migrationName,
 		"Timestamp":     "now", // Could use time.Now() for actual timestamp
 	}
@@ -114,7 +114,7 @@ func (g *MigrationGenerator) generateUpMigration(filePath, migrationName string)
 
 // generateDownMigration creates the DOWN migration file
 func (g *MigrationGenerator) generateDownMigration(filePath, migrationName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"MigrationName": migrationName,
 		"Timestamp":     "now",
 	}
@@ -144,7 +144,7 @@ func (g *MigrationGenerator) ensureMigrationManager() error {
 
 	fmt.Printf("📝 Creating migration manager: %s\n", managerPath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 	}
 

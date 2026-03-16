@@ -130,7 +130,7 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields
 )`
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"EntityName": entityName,
 		"FieldDefs":  fieldDefs,
 		"Imports":    imports,
@@ -146,7 +146,7 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields
 
 // generateEntityTestFile generates entity test file
 func (g *DomainGenerator) generateEntityTestFile(filePath, entityName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"EntityName": entityName,
 	}
@@ -190,7 +190,7 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, field
 		fieldDefs = "\tvalue string\n"
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"VOName":    voName,
 		"FieldDefs": fieldDefs,
 		"Imports":   imports,
@@ -206,7 +206,7 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, field
 
 // generateValueObjectTestFile generates value object test file
 func (g *DomainGenerator) generateValueObjectTestFile(filePath, voName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"VOName":     voName,
 	}
