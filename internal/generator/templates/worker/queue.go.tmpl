@@ -13,7 +13,7 @@ import (
 type {{.WorkerName}}Job struct {
 	// TODO: Add job fields
 	ID      string
-	Payload interface{}
+	Payload any
 }
 
 // {{.WorkerName}} processes jobs asynchronously using a worker pool

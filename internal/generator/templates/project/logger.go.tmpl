@@ -13,11 +13,11 @@ import (
 
 // Logger interface defines logging methods
 type Logger interface {
-	Debug(format string, args ...interface{})
-	Info(format string, args ...interface{})
-	Warn(format string, args ...interface{})
-	Error(format string, args ...interface{})
-	Fatal(format string, args ...interface{})
+	Debug(format string, args ...any)
+	Info(format string, args ...any)
+	Warn(format string, args ...any)
+	Error(format string, args ...any)
+	Fatal(format string, args ...any)
 }
 
 // Config holds logger configuration
@@ -64,37 +64,37 @@ func parseLevel(level string) int {
 	}
 }
 
-func (l *simpleLogger) Debug(format string, args ...interface{}) {
+func (l *simpleLogger) Debug(format string, args ...any) {
 	if l.level <= levelDebug {
 		l.logger.Printf("[DEBUG] "+format, args...)
 	}
 }
 
-func (l *simpleLogger) Info(format string, args ...interface{}) {
+func (l *simpleLogger) Info(format string, args ...any) {
 	if l.level <= levelInfo {
 		l.logger.Printf("[INFO] "+format, args...)
 	}
 }
 
-func (l *simpleLogger) Warn(format string, args ...interface{}) {
+func (l *simpleLogger) Warn(format string, args ...any) {
 	if l.level <= levelWarn {
 		l.logger.Printf("[WARN] "+format, args...)
 	}
 }
 
-func (l *simpleLogger) Error(format string, args ...interface{}) {
+func (l *simpleLogger) Error(format string, args ...any) {
 	if l.level <= levelError {
 		l.logger.Printf("[ERROR] "+format, args...)
 	}
 }
 
-func (l *simpleLogger) Fatal(format string, args ...interface{}) {
+func (l *simpleLogger) Fatal(format string, args ...any) {
 	l.logger.Printf("[FATAL] "+format, args...)
 	os.Exit(1)
 }
 
 // Package-level convenience functions
-func Fatal(format string, args ...interface{}) {
+func Fatal(format string, args ...any) {
 	fmt.Fprintf(os.Stderr, "[FATAL] "+format+"\n", args...)
 	os.Exit(1)
 }

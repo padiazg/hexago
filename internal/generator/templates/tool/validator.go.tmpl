@@ -19,7 +19,7 @@ func New{{.Name}}() *{{.Name}} {
 }
 
 // Validate runs all validation rules
-func (v *{{.Name}}) Validate(data interface{}) error {
+func (v *{{.Name}}) Validate(data any) error {
 	v.errors = make([]string, 0)
 
 	// TODO: Implement validation logic

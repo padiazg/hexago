@@ -21,27 +21,27 @@ func New{{.Name}}() *{{.Name}} {
 }
 
 // Debug logs a debug message
-func (l *{{.Name}}) Debug(format string, args ...interface{}) {
+func (l *{{.Name}}) Debug(format string, args ...any) {
 	l.logger.Printf("[DEBUG] "+format, args...)
 }
 
 // Info logs an info message
-func (l *{{.Name}}) Info(format string, args ...interface{}) {
+func (l *{{.Name}}) Info(format string, args ...any) {
 	l.logger.Printf("[INFO] "+format, args...)
 }
 
 // Warn logs a warning message
-func (l *{{.Name}}) Warn(format string, args ...interface{}) {
+func (l *{{.Name}}) Warn(format string, args ...any) {
 	l.logger.Printf("[WARN] "+format, args...)
 }
 
 // Error logs an error message
-func (l *{{.Name}}) Error(format string, args ...interface{}) {
+func (l *{{.Name}}) Error(format string, args ...any) {
 	l.logger.Printf("[ERROR] "+format, args...)
 }
 
 // Fatal logs a fatal message and exits
-func (l *{{.Name}}) Fatal(format string, args ...interface{}) {
+func (l *{{.Name}}) Fatal(format string, args ...any) {
 	l.logger.Printf("[FATAL] "+format, args...)
 	os.Exit(1)
 }
@@ -53,7 +53,7 @@ func (l *{{.Name}}) WithContext(ctx context.Context) *{{.Name}} {
 }
 
 // WithFields returns a logger with additional fields
-func (l *{{.Name}}) WithFields(fields map[string]interface{}) *{{.Name}} {
+func (l *{{.Name}}) WithFields(fields map[string]any) *{{.Name}} {
 	// TODO: Add structured logging fields
 	return l
 }

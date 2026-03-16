@@ -47,7 +47,7 @@ func Test{{.Name}}_ToDomain(t *testing.T) {
 func Test{{.Name}}_ToListDTO(t *testing.T) {
 	m := mapper.New{{.Name}}()
 
-	entities := []interface{}{
+	entities := []any{
 		&struct {
 			ID   string
 			Name string
