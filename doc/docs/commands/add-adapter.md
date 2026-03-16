@@ -144,7 +144,7 @@ func NewUserRepository() *UserRepository {
 }
 
 // FindByID retrieves a user by ID
-func (r *UserRepository) FindByID(ctx context.Context, id string) (interface{}, error) {
+func (r *UserRepository) FindByID(ctx context.Context, id string) (any, error) {
     // TODO: Implement database query
     return nil, nil
 }
