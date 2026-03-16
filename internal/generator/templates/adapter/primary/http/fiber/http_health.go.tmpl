@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/pkg/logger"
 	"{{.ModuleName}}/pkg/server"
 )
 
@@ -18,6 +19,7 @@ type Config struct {
 	Path          string
 	App           *fiber.App
 	HealthChecker *observability.HealthChecker
+	Logger        logger.Logger
 }
 
 type handler struct {
@@ -27,7 +29,7 @@ type handler struct {
 // New creates a new health handler.
 func New(config *Config) *handler {
 	if config.HealthChecker == nil {
-		config.HealthChecker = observability.NewHealthChecker()
+		config.HealthChecker = observability.NewHealthChecker(config.Logger)
 	}
 
 	return &handler{Config: config}
