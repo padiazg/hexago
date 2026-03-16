@@ -24,7 +24,7 @@ func Test{{.Name}}_Info(t *testing.T) {
 func Test{{.Name}}_WithFields(t *testing.T) {
 	log := logger.New{{.Name}}()
 
-	fields := map[string]interface{}{
+	fields := map[string]any{
 		"user_id": "123",
 		"action":  "test",
 	}

@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"sync"
 	"time"
+
+	"{{.ModuleName}}/pkg/logger"
 )
 
 // HealthStatus represents the health status of a component
@@ -39,14 +42,16 @@ type HealthChecker struct {
 	components map[string]ComponentHealth
 	startTime  time.Time
 	checks     map[string]func(context.Context) ComponentHealth
+	logger     logger.Logger
 }
 
 // NewHealthChecker creates a new health checker
-func NewHealthChecker() *HealthChecker {
+func NewHealthChecker(logger logger.Logger) *HealthChecker {
 	return &HealthChecker{
 		components: make(map[string]ComponentHealth),
 		startTime:  time.Now(),
 		checks:     make(map[string]func(context.Context) ComponentHealth),
+		logger:     logger,
 	}
 }
 
@@ -89,9 +94,7 @@ func (h *HealthChecker) GetHealthReport(ctx context.Context) HealthReport {
 
 	// Copy components to avoid exposing internal map
 	componentsCopy := make(map[string]ComponentHealth, len(h.components))
-	for k, v := range h.components {
-		componentsCopy[k] = v
-	}
+	maps.Copy(componentsCopy, h.components)
 
 	return HealthReport{
 		Status:     overallStatus,
@@ -112,15 +115,18 @@ func (h *HealthChecker) HTTPHandler() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 
 		// HTTP status code based on health
-		if report.Status == StatusHealthy {
+		switch report.Status {
+		case StatusHealthy:
 			w.WriteHeader(http.StatusOK)
-		} else if report.Status == StatusUnhealthy {
+		case StatusUnhealthy:
 			w.WriteHeader(http.StatusServiceUnavailable)
-		} else {
-			w.WriteHeader(http.StatusOK) // Unknown still responds 200
+		default:
+			w.WriteHeader(http.StatusOK)
 		}
 
-		json.NewEncoder(w).Encode(report)
+		if err := json.NewEncoder(w).Encode(report); err != nil {
+			h.logger.Error("encoding health report: %v", err)
+		}
 	})
 }
 

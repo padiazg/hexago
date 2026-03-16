@@ -23,7 +23,7 @@ func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}} {
 }
 
 // CallExternalAPI makes a call to the external service
-func (s *{{.ServiceName}}) CallExternalAPI(ctx context.Context, params interface{}) (interface{}, error) {
+func (s *{{.ServiceName}}) CallExternalAPI(ctx context.Context, params any) (any, error) {
 	// TODO: Implement external API call
 	// 1. Build request
 	// 2. Add authentication headers

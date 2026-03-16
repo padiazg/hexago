@@ -19,13 +19,13 @@ func New{{.CacheName}}( /* TODO: Add dependencies */ ) *{{.CacheName}} {
 }
 
 // Get retrieves a value from cache
-func (c *{{.CacheName}}) Get(ctx context.Context, key string) (interface{}, error) {
+func (c *{{.CacheName}}) Get(ctx context.Context, key string) (any, error) {
 	// TODO: Implement cache get
 	return nil, fmt.Errorf("not implemented")
 }
 
 // Set stores a value in cache
-func (c *{{.CacheName}}) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+func (c *{{.CacheName}}) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
 	// TODO: Implement cache set
 	return fmt.Errorf("not implemented")
 }
