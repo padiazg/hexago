@@ -156,9 +156,9 @@ func parseFields(fieldsStr string) ([]generator.Field, error) {
 	}
 
 	var fields []generator.Field
-	parts := strings.Split(fieldsStr, ",")
+	parts := strings.SplitSeq(fieldsStr, ",")
 
-	for _, part := range parts {
+	for part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

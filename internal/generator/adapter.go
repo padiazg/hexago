@@ -148,7 +148,7 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName 
 
 // generateHTTPAdapter generates an HTTP handler adapter
 func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName":  g.config.ModuleName,
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"HandlerName": handlerName,
@@ -164,7 +164,7 @@ func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) err
 
 // generateGRPCAdapter generates a gRPC handler adapter
 func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName":  g.config.ModuleName,
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"HandlerName": handlerName,
@@ -180,7 +180,7 @@ func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) err
 
 // generateQueueAdapter generates a message queue consumer adapter
 func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName":   g.config.ModuleName,
 		"CoreLogic":    g.config.CoreLogicDir(),
 		"ConsumerName": consumerName,
@@ -196,7 +196,7 @@ func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) e
 
 // generateDatabaseAdapter generates a database repository adapter
 func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, portName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"RepoName":   repoName,
 	}
@@ -211,7 +211,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, portName 
 
 // generateExternalAdapter generates an external service adapter
 func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ServiceName": serviceName,
 	}
 
@@ -225,7 +225,7 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 
 // generateCacheAdapter generates a cache adapter
 func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"CacheName": cacheName,
 	}
 
@@ -246,7 +246,7 @@ func (g *AdapterGenerator) generatePortInterface(portName, adapterName string) e
 
 // generateAdapterTestFile generates test file for adapters
 func (g *AdapterGenerator) generateAdapterTestFile(filePath, adapterName, adapterType string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Package":     adapterType,
 		"AdapterName": adapterName,
 	}

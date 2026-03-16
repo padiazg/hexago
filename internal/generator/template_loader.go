@@ -134,7 +134,7 @@ func (l *TemplateLoader) parseTemplate(name string, content []byte, source strin
 }
 
 // Render renders a template with the given data
-func (l *TemplateLoader) Render(name string, data interface{}) ([]byte, error) {
+func (l *TemplateLoader) Render(name string, data any) ([]byte, error) {
 	tmpl, err := l.Load(name)
 	if err != nil {
 		return nil, err

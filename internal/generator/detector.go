@@ -90,11 +90,11 @@ func (d *ProjectDetector) detectModuleName() (string, error) {
 		return "", fmt.Errorf("failed to read go.mod: %w", err)
 	}
 
-	lines := strings.Split(string(content), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(string(content), "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "module ") {
-			return strings.TrimPrefix(line, "module "), nil
+		if after, ok := strings.CutPrefix(line, "module "); ok {
+			return after, nil
 		}
 	}
 

@@ -83,7 +83,7 @@ func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig)
 
 // generateQueueWorker generates a queue-based worker
 func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, config WorkerConfig) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"WorkerName": workerName,
 		"Workers":    config.Workers,
@@ -100,7 +100,7 @@ func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, confi
 
 // generatePeriodicWorker generates a periodic worker
 func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, config WorkerConfig) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"WorkerName": workerName,
 		"Interval":   config.Interval,
@@ -116,7 +116,7 @@ func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, co
 
 // generateEventWorker generates an event-driven worker
 func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, config WorkerConfig) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"WorkerName": workerName,
 	}
@@ -131,7 +131,7 @@ func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, confi
 
 // generateWorkerTestFile generates test file for worker
 func (g *WorkerGenerator) generateWorkerTestFile(filePath, workerName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 		"WorkerName": workerName,
 	}
@@ -156,7 +156,7 @@ func (g *WorkerGenerator) ensureWorkerManager(workersDir string) error {
 
 	fmt.Printf("📝 Creating worker manager: %s\n", managerPath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"ModuleName": g.config.ModuleName,
 	}
 
