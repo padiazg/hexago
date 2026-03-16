@@ -15,7 +15,8 @@ HexaGo is an opinionated CLI tool to scaffold for Go applications following the 
 - 🐳 **Docker Ready** - Multi-stage Dockerfile + docker-compose
 - 🔄 **Graceful Shutdown** - Context-based with signal handling
 - ⚙️ **Configuration** - Viper with YAML + environment variables
-- 📊 **Observability** - Health checks and Prometheus metrics
+- 📊 **Observability** - Health checks and Prometheus metrics on the main server (no separate port)
+- 🔌 **Handler Plugin Pattern** - Self-contained route packages registered via `Use(ServerHandler)`
 - 🧪 **Testing** - Test files with testify structure
 
 ### 🧩 Component Generation (Phase 2)
@@ -139,7 +140,7 @@ Generated projects follow strict hexagonal architecture:
 my-app/
 ├── cmd/                    # Cobra commands
 │   ├── root.go            # Root command + config
-│   └── run.go             # Server with graceful shutdown
+│   └── run.go             # Framework-agnostic server + graceful shutdown
 ├── internal/
 │   ├── core/              # 🎯 CORE - No external dependencies
 │   │   ├── domain/        # Domain entities
@@ -147,11 +148,17 @@ my-app/
 │   ├── adapters/          # 🔌 ADAPTERS - External interfaces
 │   │   ├── primary/       # Inbound (or driver/)
 │   │   │   └── http/
+│   │   │       ├── http.go      # Wires server + registers all route handlers
+│   │   │       ├── ping/        # GET /ping handler
+│   │   │       ├── health/      # /health endpoints (with --with-observability)
+│   │   │       └── metrics/     # /metrics endpoint (with --with-observability)
 │   │   └── secondary/     # Outbound (or driven/)
 │   │       └── database/
 │   ├── config/            # Configuration
-│   └── observability/     # Health + metrics
+│   └── observability/     # Health checker + Prometheus metrics helpers
 ├── pkg/                   # Reusable packages
+│   ├── server/            # Server + ServerHandler interfaces
+│   ├── httpserver/        # Framework-specific server with exported router + Use()
 │   └── logger/
 ├── main.go                # Minimal entry point
 ├── .hexago.yaml           # HexaGo project config (init-time settings)

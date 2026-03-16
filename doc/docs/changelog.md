@@ -51,6 +51,10 @@ hexago templates list   # shows the updated layout
 
 Embedded FS path lookups in `template_loader.go` changed from `filepath.Join` to `path.Join` — `embed.FS` always uses forward slashes; `filepath.Join` would fail on Windows.
 
+### Template code style (`interface{}` → `any`)
+
+All generated code templates use the `any` type alias (Go 1.18+) instead of `interface{}` — adapter, tool, worker, observability, and project templates updated for consistency with modern Go style.
+
 ---
 
 ## v0.0.3 - 2026-03-04

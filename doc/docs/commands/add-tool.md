@@ -74,7 +74,7 @@ func NewPostValidator() *PostValidator {
 }
 
 // Validate validates the given input
-func (v *PostValidator) Validate(input interface{}) error {
+func (v *PostValidator) Validate(input any) error {
     // TODO: Implement validation logic
     return nil
 }
@@ -120,13 +120,13 @@ func NewUserMapper() *UserMapper {
 }
 
 // ToDTO converts a domain User to UserDTO
-func (m *UserMapper) ToDTO(user interface{}) interface{} {
+func (m *UserMapper) ToDTO(user any) any {
     // TODO: Implement mapping
     return nil
 }
 
 // ToDomain converts a UserDTO to domain User
-func (m *UserMapper) ToDomain(dto interface{}) interface{} {
+func (m *UserMapper) ToDomain(dto any) any {
     // TODO: Implement mapping
     return nil
 }
