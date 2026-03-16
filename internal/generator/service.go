@@ -65,7 +65,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, descriptio
 		desc = fmt.Sprintf("handles %s operations", serviceName)
 	}
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"ModuleName":  g.config.ModuleName,
 		"ServiceName": serviceName,
@@ -82,7 +82,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, descriptio
 
 // generateTestFile generates the test file
 func (g *ServiceGenerator) generateTestFile(filePath, serviceName string) error {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"ModuleName":  g.config.ModuleName,
 		"ServiceName": serviceName,
@@ -97,7 +97,7 @@ func (g *ServiceGenerator) generateTestFile(filePath, serviceName string) error 
 }
 
 // renderTemplateString is a helper to render templates
-func renderTemplateString(tmpl string, data interface{}) ([]byte, error) {
+func renderTemplateString(tmpl string, data any) ([]byte, error) {
 	// Use the existing renderTemplate from project generator
 	gen := &ProjectGenerator{}
 	return gen.renderTemplate(tmpl, data)

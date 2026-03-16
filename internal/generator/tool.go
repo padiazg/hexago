@@ -49,7 +49,7 @@ func (g *ToolGenerator) generateLogger(dir, name, description string) error {
 
 	fmt.Printf("📝 Creating logger: %s\n", filePath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Name":        name,
 		"Description": getDescription(description, "is a custom logger implementation"),
 	}
@@ -73,7 +73,7 @@ func (g *ToolGenerator) generateValidator(dir, name, description string) error {
 
 	fmt.Printf("📝 Creating validator: %s\n", filePath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Name":        name,
 		"Description": getDescription(description, "validates input data"),
 	}
@@ -97,7 +97,7 @@ func (g *ToolGenerator) generateMapper(dir, name, description string) error {
 
 	fmt.Printf("📝 Creating mapper: %s\n", filePath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Name":        name,
 		"Description": getDescription(description, "maps between domain entities and DTOs"),
 		"ModuleName":  g.config.ModuleName,
@@ -122,7 +122,7 @@ func (g *ToolGenerator) generateMiddleware(dir, name, description string) error 
 
 	fmt.Printf("📝 Creating middleware: %s\n", filePath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Name":        name,
 		"Description": getDescription(description, "is HTTP middleware"),
 		"ModuleName":  g.config.ModuleName,
@@ -147,7 +147,7 @@ func (g *ToolGenerator) generateTestFile(dir, name, toolType string) error {
 
 	fmt.Printf("📝 Creating test file: %s\n", filePath)
 
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Name":       name,
 		"ToolType":   toolType,
 		"ModuleName": g.config.ModuleName,
