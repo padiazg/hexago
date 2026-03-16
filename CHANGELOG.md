@@ -68,6 +68,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Embedded FS path lookups changed from `filepath.Join` to `path.Join` — `embed.FS` always uses
   forward slashes; `filepath.Join` produces backslashes on Windows and would fail to find templates
 
+### Fixed
+
+#### Template Code Style (`interface{}` → `any`)
+- All generated code templates updated to use the `any` type alias (Go 1.18+) in place of
+  `interface{}` — affects adapter, tool, worker, observability, and project templates
+- Matching documentation examples updated to `any` as well
+
 ---
 
 ## v0.0.3 - 2026-03-04
