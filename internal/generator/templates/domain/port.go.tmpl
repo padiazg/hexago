@@ -1,0 +1,11 @@
+package {{.PackageName}}
+
+import "context"
+
+// {{.EntityName}}Repository defines the secondary port for {{.EntityName}} persistence.
+type {{.EntityName}}Repository interface {
+	Create(ctx context.Context, entity *{{.EntityName}}) error
+	FindByID(ctx context.Context, id string) (*{{.EntityName}}, error)
+	Update(ctx context.Context, entity *{{.EntityName}}) error
+	List(ctx context.Context) ([]*{{.EntityName}}, error)
+}

@@ -47,6 +47,20 @@ Template paths now mirror the generated project structure for intuitive discover
 hexago templates list   # shows the updated layout
 ```
 
+### Route groups with middleware examples in HTTP adapter templates
+
+All five HTTP adapter templates now include a commented `/api/v1` route group with route-scoped middleware examples (request-id injection, logging, panic recovery, authorization):
+
+| Framework | Group mechanism |
+|-----------|----------------|
+| chi | `router.Route("/api/v1", func(r chi.Router) { r.Use(...) })` |
+| echo | `v1 := srv.Echo.Group("/api/v1")` + `v1.Use(...)` |
+| fiber | `v1 := srv.App.Group("/api/v1")` + `v1.Use(...)` |
+| gin | `v1 := srv.Router.Group("/api/v1")` + `v1.Use(...)` |
+| stdlib | nested `http.NewServeMux()` mounted via `http.StripPrefix("/api/v1", ...)` |
+
+For stdlib, per-group middlewares are applied by wrapping the sub-mux before mounting it on the main `ServeMux`.
+
 ### Cross-platform embed fix
 
 Embedded FS path lookups in `template_loader.go` changed from `filepath.Join` to `path.Join` — `embed.FS` always uses forward slashes; `filepath.Join` would fail on Windows.

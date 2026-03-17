@@ -1,0 +1,20 @@
+{{/*
+Template: service/services_stub.go.tmpl
+Description: Empty services aggregator generated during `hexago init`.
+             Replaced/extended by services_aggregator.go.tmpl when the first
+             service sub-package is added via `hexago add service`.
+Variables:
+  - CoreLogic: string - "services" or "usecases"
+*/}}
+package {{.CoreLogic}}
+
+// Config holds the repository dependencies required to initialise all services.
+type Config struct{}
+
+// Services aggregates all domain services.
+type Services struct{}
+
+// New wires all services using the provided repository config.
+func New(config *Config) *Services {
+	return &Services{}
+}

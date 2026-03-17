@@ -1,10 +1,8 @@
 package generator
 
 import (
-	"bytes"
 	"fmt"
 	"path/filepath"
-	"text/template"
 
 	"github.com/padiazg/hexago/pkg/utils"
 )
@@ -29,6 +27,7 @@ const (
 	composeTemplate             string = "compose"
 	healthTemplate              string = "health"
 	metricsTemplate             string = "metrics"
+	servicesStubTemplate        string = "services-stub"
 )
 
 type templateItem struct {
@@ -201,6 +200,12 @@ var templateMap = map[string]templateFn{
 			target: filepath.Join("internal", "observability", "metrics.go"),
 		}
 	},
+	servicesStubTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "service/services_stub.go.tmpl",
+			target: filepath.Join("internal", "core", g.config.CoreLogicDir(), "services.go"),
+		}
+	},
 }
 
 // generatefile generates a given file
@@ -218,30 +223,4 @@ func (g *ProjectGenerator) generateFile(name string) error {
 	}
 
 	return utils.WriteFile(filepath.Join(g.projectPath, templ.target), content)
-}
-
-// renderTemplate renders a template with the given data
-func (g *ProjectGenerator) renderTemplate(tmplStr string, data any) ([]byte, error) {
-	tmpl, err := template.New("tmpl").Funcs(template.FuncMap{
-		"upper": func(s string) string {
-			// Simple uppercase - can be enhanced
-			return s
-		},
-		"title": func(s string) string {
-			if len(s) == 0 {
-				return s
-			}
-			return string(s[0]-32) + s[1:]
-		},
-	}).Parse(tmplStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse template: %w", err)
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("failed to execute template: %w", err)
-	}
-
-	return buf.Bytes(), nil
 }

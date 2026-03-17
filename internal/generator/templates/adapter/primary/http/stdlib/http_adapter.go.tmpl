@@ -34,6 +34,7 @@ package http
 import (
 {{- if .WithObservability}}
 	"context"
+	"net/http"
 
 	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http/health"
 	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http/metrics"
@@ -42,13 +43,14 @@ import (
 {{- if .WithObservability}}
 	"{{.ModuleName}}/internal/observability"
 {{- end}}
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
 	httpsrv "{{.ModuleName}}/pkg/httpserver"
 	"{{.ModuleName}}/pkg/server"
 )
 
 // New creates and wires the HTTP server with all registered route handlers.
 // Framework-specific server mechanics live in pkg/httpserver.
-func New(cfg *httpsrv.ServerConfig) server.Server {
+func New(cfg *httpsrv.ServerConfig, services *{{.CoreLogic}}.Services) server.Server {
 	srv := httpsrv.New(cfg).(*httpsrv.Server)
 
 	// Register ping handler
@@ -60,7 +62,7 @@ func New(cfg *httpsrv.ServerConfig) server.Server {
 {{- if .WithObservability}}
 
 	// Register observability handlers
-	healthChecker := observability.NewHealthChecker()
+	healthChecker := observability.NewHealthChecker(cfg.Logger)
 	healthChecker.RegisterCheck("api", func(ctx context.Context) observability.ComponentHealth {
 		return observability.ComponentHealth{
 			Status:  observability.StatusHealthy,
@@ -80,13 +82,24 @@ func New(cfg *httpsrv.ServerConfig) server.Server {
 	}))
 {{- end}}
 
-	// TODO: Register your application handlers here
-	// Example:
-	// srv.Use(user.New(&user.Config{
-	//     Path:        "/api/v1/users",
-	//     Mux:         srv.Mux,
-	//     UserService: yourService,
+	// Route group for /api/v1 using a nested ServeMux + middleware chain
+	apiMux := http.NewServeMux()
+	// Route-specific middlewares — wrap apiMux before mounting it
+	// var apiHandler http.Handler = apiMux
+	// apiHandler = yourlogging.Middleware(apiHandler)        // structured request logging
+	// apiHandler = yourrequestid.Middleware(apiHandler)      // inject X-Request-Id header
+	// apiHandler = yourauth.Middleware(services)(apiHandler) // JWT / session authorization
+	// srv.Mux.Handle("/api/v1/", http.StripPrefix("/api/v1", apiHandler))
+	//
+	// Without extra middlewares, mount directly:
+	srv.Mux.Handle("/api/v1/", http.StripPrefix("/api/v1", apiMux))
+
+	// TODO: register your handlers into apiMux
+	// srv.Use(yourhandler.New(&yourhandler.Config{
+	//     Mux:      apiMux,
+	//     Services: services,
 	// }))
+	_ = apiMux
 
 	return srv
 }

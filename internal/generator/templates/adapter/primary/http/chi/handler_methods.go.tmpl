@@ -1,0 +1,71 @@
+package {{.PackageName}}
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	{{.ServiceImportAlias}} "{{.ModuleName}}/internal/core/{{.CoreLogic}}/{{.ServicePackage}}"
+	"{{.ModuleName}}/pkg/httphelpers"
+)
+
+// List handles GET /{{.RoutePrefix}}
+func (h *handler) List(w http.ResponseWriter, r *http.Request) {
+	items, err := h.manage.List(r.Context())
+	if err != nil {
+		httphelpers.RespondHTTPError(w, err)
+		return
+	}
+	resp := make([]{{.EntityVarName}}Response, 0, len(items))
+	for _, item := range items {
+		resp = append(resp, to{{.EntityName}}Response(item))
+	}
+	httphelpers.RespondJSON(w, http.StatusOK, resp)
+}
+
+// Create handles POST /{{.RoutePrefix}}
+func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
+	var req create{{.EntityName}}Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httphelpers.RespondError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	item, err := h.manage.Create(r.Context(), {{.ServiceImportAlias}}.Create{{.EntityName}}Input{
+		// TODO: map req fields
+	})
+	if err != nil {
+		httphelpers.RespondError(w, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+	httphelpers.RespondJSON(w, http.StatusCreated, to{{.EntityName}}Response(item))
+}
+
+// GetByID handles GET /{{.RoutePrefix}}/{id}
+func (h *handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	item, err := h.manage.GetByID(r.Context(), id)
+	if err != nil {
+		httphelpers.RespondHTTPError(w, err)
+		return
+	}
+	httphelpers.RespondJSON(w, http.StatusOK, to{{.EntityName}}Response(item))
+}
+
+// Update handles PUT /{{.RoutePrefix}}/{id}
+func (h *handler) Update(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var req update{{.EntityName}}Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httphelpers.RespondError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	item, err := h.manage.Update(r.Context(), {{.ServiceImportAlias}}.Update{{.EntityName}}Input{
+		ID: id,
+		// TODO: map req fields
+	})
+	if err != nil {
+		httphelpers.RespondHTTPError(w, err)
+		return
+	}
+	httphelpers.RespondJSON(w, http.StatusOK, to{{.EntityName}}Response(item))
+}

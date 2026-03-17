@@ -1,9 +1,9 @@
-package domain_test
+package {{.PackageName}}_test
 
 import (
 	"testing"
 
-	"{{.ModuleName}}/internal/core/domain"
+	"{{.ModuleName}}/internal/core/domain/{{.PackageName}}"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestNew{{.VOName}}(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange & Act
-			vo, err := domain.New{{.VOName}}( /* TODO: Add parameters */ )
+			vo, err := {{.PackageName}}.New{{.VOName}}( /* TODO: Add parameters */ )
 
 			// Assert
 			if tt.wantErr {
@@ -45,7 +45,7 @@ func Test{{.VOName}}_Equals(t *testing.T) {
 func Test{{.VOName}}_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
-		vo      domain.{{.VOName}}
+		vo      {{.PackageName}}.{{.VOName}}
 		wantErr bool
 	}{
 		// TODO: Add test cases

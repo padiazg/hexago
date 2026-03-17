@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/padiazg/hexago/pkg/utils"
 )
@@ -19,8 +20,10 @@ func NewAdapterGenerator(config *ProjectConfig) *AdapterGenerator {
 	}
 }
 
-// GeneratePrimary generates a primary (inbound) adapter
-func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, portName string) error {
+// GeneratePrimary generates a primary (inbound) adapter.
+// For HTTP adapters, entityName (optional) triggers sub-package generation with
+// two files: <snake_entity>.go (Config/DTOs) and handlers.go (HTTP methods).
+func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName, portName string) error {
 	// Validate adapter type
 	validTypes := map[string]bool{
 		"http":  true,
@@ -33,17 +36,19 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, portName st
 		return fmt.Errorf("invalid primary adapter type '%s'. Valid types: http, grpc, queue, cli", adapterType)
 	}
 
-	// Determine directory
-	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), adapterType)
+	// HTTP + entity → sub-package with two files
+	if adapterType == "http" && entityName != "" {
+		return g.generateHTTPHandlerPackage(adapterName, entityName)
+	}
 
-	// Create directory if it doesn't exist
+	// Default: flat directory
+	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), adapterType)
 	if err := utils.CreateDir(adapterDir); err != nil {
 		return err
 	}
 
 	fileName := utils.ToSnakeCase(adapterName) + ".go"
 	testFileName := utils.ToSnakeCase(adapterName) + "_test.go"
-
 	filePath := filepath.Join(adapterDir, fileName)
 	testFilePath := filepath.Join(adapterDir, testFileName)
 
@@ -79,8 +84,71 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, portName st
 	return nil
 }
 
-// GenerateSecondary generates a secondary (outbound) adapter
-func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName string) error {
+// generateHTTPHandlerPackage generates the two-file per-entity HTTP handler sub-package.
+func (g *AdapterGenerator) generateHTTPHandlerPackage(adapterName, entityName string) error {
+	pkgName := utils.ToPlural(strings.ToLower(entityName))
+	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", pkgName)
+
+	if err := utils.CreateDir(adapterDir); err != nil {
+		return err
+	}
+
+	configFile := filepath.Join(adapterDir, utils.ToSnakeCase(entityName)+".go")
+	handlersFile := filepath.Join(adapterDir, "handlers.go")
+
+	if utils.FileExists(configFile) {
+		return fmt.Errorf("handler file %s already exists", configFile)
+	}
+
+	entityVarName := strings.ToLower(entityName[:1]) + entityName[1:]
+	servicePkgName := pkgName
+	serviceImportAlias := pkgName + "Svc"
+	entityImportAlias := pkgName + "Domain"
+	serviceField := utils.ToTitleCase(pkgName)
+	routePrefix := pkgName
+
+	data := map[string]any{
+		"ModuleName":         g.config.ModuleName,
+		"CoreLogic":          g.config.CoreLogicDir(),
+		"PackageName":        pkgName,
+		"EntityName":         entityName,
+		"EntityVarName":      entityVarName,
+		"EntityPackage":      pkgName,
+		"EntityImportAlias":  entityImportAlias,
+		"ServicePackage":     servicePkgName,
+		"ServiceImportAlias": serviceImportAlias,
+		"ServiceName":        entityName,
+		"ServiceField":       serviceField,
+		"RoutePrefix":        routePrefix,
+	}
+
+	framework := g.config.Framework
+	if framework == "" {
+		framework = "chi"
+	}
+
+	fmt.Printf("📝 Creating handler config file: %s\n", configFile)
+	configTmpl := fmt.Sprintf("adapter/primary/http/%s/handler_config.go.tmpl", framework)
+	configContent, err := g.config.templateLoader.Render(configTmpl, data)
+	if err != nil {
+		return fmt.Errorf("failed to render handler config template: %w", err)
+	}
+	if err := utils.WriteFile(configFile, configContent); err != nil {
+		return err
+	}
+
+	fmt.Printf("📝 Creating handler methods file: %s\n", handlersFile)
+	methodsTmpl := fmt.Sprintf("adapter/primary/http/%s/handler_methods.go.tmpl", framework)
+	methodsContent, err := g.config.templateLoader.Render(methodsTmpl, data)
+	if err != nil {
+		return fmt.Errorf("failed to render handler methods template: %w", err)
+	}
+	return utils.WriteFile(handlersFile, methodsContent)
+}
+
+// GenerateSecondary generates a secondary (outbound) adapter.
+// For database adapters, entityName (optional) drives the sub-package and entity wiring.
+func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityName, portName string) error {
 	// Validate adapter type
 	validTypes := map[string]bool{
 		"database": true,
@@ -92,19 +160,30 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName 
 		return fmt.Errorf("invalid secondary adapter type '%s'. Valid types: database, external, cache", adapterType)
 	}
 
-	// Determine directory
-	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
+	var adapterDir, filePath, testFilePath string
 
-	// Create directory if it doesn't exist
-	if err := utils.CreateDir(adapterDir); err != nil {
-		return err
+	if adapterType == "database" {
+		// Always use sub-package for database adapters
+		var pkgName string
+		if entityName != "" {
+			pkgName = utils.ToPlural(strings.ToLower(entityName))
+		} else {
+			pkgName = strings.ToLower(adapterName)
+		}
+		adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), "database", pkgName)
+		if err := utils.CreateDir(adapterDir); err != nil {
+			return err
+		}
+		filePath = filepath.Join(adapterDir, pkgName+".go")
+		testFilePath = filepath.Join(adapterDir, pkgName+"_test.go")
+	} else {
+		adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
+		if err := utils.CreateDir(adapterDir); err != nil {
+			return err
+		}
+		filePath = filepath.Join(adapterDir, utils.ToSnakeCase(adapterName)+".go")
+		testFilePath = filepath.Join(adapterDir, utils.ToSnakeCase(adapterName)+"_test.go")
 	}
-
-	fileName := utils.ToSnakeCase(adapterName) + ".go"
-	testFileName := utils.ToSnakeCase(adapterName) + "_test.go"
-
-	filePath := filepath.Join(adapterDir, fileName)
-	testFilePath := filepath.Join(adapterDir, testFileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("adapter file %s already exists", filePath)
@@ -122,7 +201,7 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, portName 
 
 	switch adapterType {
 	case "database":
-		if err := g.generateDatabaseAdapter(filePath, adapterName, portName); err != nil {
+		if err := g.generateDatabaseAdapter(filePath, adapterName, entityName, portName); err != nil {
 			return err
 		}
 	case "external":
@@ -195,10 +274,25 @@ func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) e
 }
 
 // generateDatabaseAdapter generates a database repository adapter
-func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, portName string) error {
+func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityName, portName string) error {
+	// Derive entity-related template variables
+	var resolvedEntity, pkgName, entityImportAlias string
+	if entityName != "" {
+		resolvedEntity = entityName
+		pkgName = utils.ToPlural(strings.ToLower(entityName))
+	} else {
+		resolvedEntity = repoName
+		pkgName = strings.ToLower(repoName)
+	}
+	entityImportAlias = pkgName + "Domain"
+
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
-		"RepoName":   repoName,
+		"ModuleName":        g.config.ModuleName,
+		"PackageName":       pkgName,
+		"RepoName":          repoName,
+		"EntityName":        resolvedEntity,
+		"EntityPackage":     pkgName,
+		"EntityImportAlias": entityImportAlias,
 	}
 
 	content, err := g.config.templateLoader.Render("adapter/database.go.tmpl", data)
