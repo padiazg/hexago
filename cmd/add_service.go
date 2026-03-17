@@ -13,6 +13,7 @@ import (
 
 var (
 	serviceDescription string
+	serviceEntity      string
 )
 
 // addServiceCmd represents the add service command
@@ -43,6 +44,7 @@ func init() {
 	addCmd.AddCommand(addServiceCmd)
 
 	addServiceCmd.Flags().StringVarP(&serviceDescription, "description", "d", "", "Service description")
+	addServiceCmd.Flags().StringVarP(&serviceEntity, "entity", "e", "", "Domain entity this service manages (PascalCase); determines sub-package name")
 }
 
 func runAddService(cmd *cobra.Command, args []string) error {
@@ -66,7 +68,7 @@ func runAddService(cmd *cobra.Command, args []string) error {
 
 	// Generate service
 	gen := generator.NewServiceGenerator(config)
-	if err := gen.Generate(serviceName, serviceDescription); err != nil {
+	if err := gen.Generate(serviceName, serviceEntity, serviceDescription); err != nil {
 		return fmt.Errorf("failed to generate service: %w", err)
 	}
 

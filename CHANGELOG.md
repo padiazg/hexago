@@ -47,6 +47,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   all handlers in one place, keeping `cmd/run.go` completely framework-agnostic
 - All five frameworks (`chi`, `echo`, `gin`, `fiber`, `stdlib`) have a full set of handler templates
 
+#### Idiomatic Route Groups with Middleware Examples in HTTP Adapter Templates
+- All five HTTP adapter templates now include a commented `/api/v1` route group with route-scoped
+  middleware examples (request-id, logging, panic recovery, authorization):
+  - **chi** — `router.Route("/api/v1", func(r chi.Router) { r.Use(...) })` (idiomatic sub-router)
+  - **echo** — `v1 := srv.Echo.Group("/api/v1"); v1.Use(...)`
+  - **fiber** — `v1 := srv.App.Group("/api/v1"); v1.Use(...)`
+  - **gin** — `v1 := srv.Router.Group("/api/v1"); v1.Use(...)`
+  - **stdlib** — nested `http.NewServeMux()` mounted with `http.StripPrefix("/api/v1", ...)`;
+    per-group middlewares applied by wrapping the sub-mux before mounting
+
 ### Changed
 
 #### Template Directory Restructured to Mirror Generated Project

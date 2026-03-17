@@ -1,0 +1,47 @@
+{{/*
+Template: service/services_aggregator.go.tmpl
+Description: Services aggregator — wires all service sub-packages into a single
+             Config/Services struct for use by adapters (e.g. HTTP handlers).
+Variables:
+  - ModuleName: string - Go module name
+  - CoreLogic: string - "services" or "usecases"
+  - Entries: []ServiceEntry - one entry per discovered service sub-package
+    - Package: string - e.g. "categories"
+    - Alias: string - e.g. "categoriesSvc"
+    - DomainAlias: string - e.g. "categoriesDomain"
+    - RepoField: string - e.g. "CategoriesRepository"
+    - RepoInterface: string - e.g. "CategoryRepository"
+    - ServiceField: string - e.g. "Categories"
+    - ServiceType: string - e.g. "CategoryService"
+*/}}
+package {{.CoreLogic}}
+
+import (
+{{- range .Entries}}
+	{{.Alias}} "{{$.ModuleName}}/internal/core/{{$.CoreLogic}}/{{.Package}}"
+	{{.DomainAlias}} "{{$.ModuleName}}/internal/core/domain/{{.Package}}"
+{{- end}}
+)
+
+// Config holds the repository dependencies required to initialise all services.
+type Config struct {
+{{- range .Entries}}
+	{{.RepoField}} {{.DomainAlias}}.{{.RepoInterface}}
+{{- end}}
+}
+
+// Services aggregates all domain services.
+type Services struct {
+{{- range .Entries}}
+	{{.ServiceField}} *{{.Alias}}.{{.ServiceType}}
+{{- end}}
+}
+
+// New wires all services using the provided repository config.
+func New(config *Config) *Services {
+	return &Services{
+{{- range .Entries}}
+		{{.ServiceField}}: {{.Alias}}.New{{.ServiceType}}(config.{{.RepoField}}),
+{{- end}}
+	}
+}

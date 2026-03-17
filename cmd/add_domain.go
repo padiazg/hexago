@@ -13,6 +13,7 @@ import (
 
 var (
 	entityFields string
+	voEntity     string
 )
 
 // addDomainCmd represents the add domain command
@@ -74,6 +75,7 @@ func init() {
 
 	// Flags for value object
 	addDomainValueObjectCmd.Flags().StringVarP(&entityFields, "fields", "f", "", "Comma-separated field definitions (name:type)")
+	addDomainValueObjectCmd.Flags().StringVarP(&voEntity, "entity", "e", "", "Entity name to co-locate with (entity-bound); omit for standalone sub-package")
 }
 
 func runAddDomainEntity(cmd *cobra.Command, args []string) error {
@@ -135,7 +137,7 @@ func runAddDomainValueObject(cmd *cobra.Command, args []string) error {
 
 	// Generate value object
 	gen := generator.NewDomainGenerator(config)
-	if err := gen.GenerateValueObject(voName, fields); err != nil {
+	if err := gen.GenerateValueObject(voName, voEntity, fields); err != nil {
 		return fmt.Errorf("failed to generate value object: %w", err)
 	}
 

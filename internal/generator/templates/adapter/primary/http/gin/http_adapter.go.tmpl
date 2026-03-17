@@ -42,13 +42,14 @@ import (
 {{- if .WithObservability}}
 	"{{.ModuleName}}/internal/observability"
 {{- end}}
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
 	httpsrv "{{.ModuleName}}/pkg/httpserver"
 	"{{.ModuleName}}/pkg/server"
 )
 
 // New creates and wires the HTTP server with all registered route handlers.
 // Framework-specific server mechanics live in pkg/httpserver.
-func New(cfg *httpsrv.ServerConfig) server.Server {
+func New(cfg *httpsrv.ServerConfig, services *{{.CoreLogic}}.Services) server.Server {
 	srv := httpsrv.New(cfg).(*httpsrv.Server)
 
 	// Register ping handler
@@ -60,7 +61,7 @@ func New(cfg *httpsrv.ServerConfig) server.Server {
 {{- if .WithObservability}}
 
 	// Register observability handlers
-	healthChecker := observability.NewHealthChecker()
+	healthChecker := observability.NewHealthChecker(cfg.Logger)
 	healthChecker.RegisterCheck("api", func(ctx context.Context) observability.ComponentHealth {
 		return observability.ComponentHealth{
 			Status:  observability.StatusHealthy,
@@ -80,13 +81,19 @@ func New(cfg *httpsrv.ServerConfig) server.Server {
 	}))
 {{- end}}
 
-	// TODO: Register your application handlers here
-	// Example:
-	// srv.Use(user.New(&user.Config{
-	//     Path:        "/api/v1/users",
-	//     Router:      srv.Router,
-	//     UserService: yourService,
+	// Route group for /api/v1 with group-scoped middlewares
+	v1 := srv.Router.Group("/api/v1")
+	// Route-specific middlewares (apply only to /api/v1/* routes)
+	// v1.Use(gin.Logger())                        // structured request logging
+	// v1.Use(gin.Recovery())                      // recover from panics
+	// v1.Use(yourauth.Middleware(services))        // JWT / session authorization
+
+	// TODO: register your handlers here
+	// srv.Use(yourhandler.New(&yourhandler.Config{
+	//     Group:    v1,
+	//     Services: services,
 	// }))
+	_ = v1
 
 	return srv
 }
