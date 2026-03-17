@@ -1,0 +1,62 @@
+package {{.PackageName}}
+
+import (
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	{{.EntityImportAlias}} "{{.ModuleName}}/internal/core/domain/{{.EntityPackage}}"
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
+	{{.ServiceImportAlias}} "{{.ModuleName}}/internal/core/{{.CoreLogic}}/{{.ServicePackage}}"
+	"{{.ModuleName}}/pkg/server"
+)
+
+// Config holds the dependencies for the {{.EntityName}} HTTP handler.
+type Config struct {
+	Router   chi.Router
+	Services *{{.CoreLogic}}.Services
+}
+
+type handler struct {
+	*Config
+	manage *{{.ServiceImportAlias}}.{{.ServiceName}}Service
+}
+
+// New creates a new {{.EntityName}} HTTP handler and registers its routes.
+func New(config *Config) *handler {
+	return &handler{
+		Config: config,
+		manage: config.Services.{{.ServiceField}},
+	}
+}
+
+// Configure registers the {{.EntityName}} routes on the server.
+func (h *handler) Configure(srv server.Server) {
+	h.Router.Route("/{{.RoutePrefix}}", func(r chi.Router) {
+		r.Get("/", h.List)
+		r.Post("/", h.Create)
+		r.Get("/{id}", h.GetByID)
+		r.Put("/{id}", h.Update)
+	})
+}
+
+// --- DTOs ---
+
+type create{{.EntityName}}Request struct {
+	// TODO: Add request fields
+}
+
+type update{{.EntityName}}Request struct {
+	// TODO: Add request fields
+}
+
+type {{.EntityVarName}}Response struct {
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	// TODO: Add response fields
+}
+
+func to{{.EntityName}}Response(e *{{.EntityImportAlias}}.{{.EntityName}}) {{.EntityVarName}}Response {
+	return {{.EntityVarName}}Response{
+		// TODO: Map fields
+	}
+}

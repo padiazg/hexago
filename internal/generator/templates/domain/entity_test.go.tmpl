@@ -1,9 +1,9 @@
-package domain_test
+package {{.PackageName}}_test
 
 import (
 	"testing"
 
-	"{{.ModuleName}}/internal/core/domain"
+	"{{.ModuleName}}/internal/core/domain/{{.PackageName}}"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestNew{{.EntityName}}(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange & Act
-			entity, err := domain.New{{.EntityName}}( /* TODO: Add parameters */ )
+			entity, err := {{.PackageName}}.New{{.EntityName}}( /* TODO: Add parameters */ )
 
 			// Assert
 			if tt.wantErr {
@@ -40,7 +40,7 @@ func TestNew{{.EntityName}}(t *testing.T) {
 func Test{{.EntityName}}_Validate(t *testing.T) {
 	tests := []struct {
 		name    string
-		entity  *domain.{{.EntityName}}
+		entity  *{{.PackageName}}.{{.EntityName}}
 		wantErr bool
 	}{
 		// TODO: Add test cases

@@ -4,51 +4,78 @@ Description: Service/UseCase business logic implementation
 Variables:
   - CoreLogic: string - Core logic directory name (services/usecases)
   - ModuleName: string - Go module name
-  - ServiceName: string - Service name
+  - ServiceName: string - Service name (PascalCase)
+  - PackageName: string - Sub-package name (e.g. categories)
+  - EntityName: string - Domain entity name (PascalCase)
+  - EntityPackage: string - Domain sub-package name (e.g. categories)
+  - EntityImportAlias: string - Import alias for domain package (e.g. categoriesDomain)
   - Description: string - Service description
 */}}
-package {{.CoreLogic}}
+package {{.PackageName}}
 
 import (
 	"context"
 	"fmt"
 
-	"{{.ModuleName}}/internal/core/domain"
+	"github.com/google/uuid"
+	{{.EntityImportAlias}} "{{.ModuleName}}/internal/core/domain/{{.EntityPackage}}"
 )
 
-// {{.ServiceName}}Input represents the input for {{.ServiceName}}
-type {{.ServiceName}}Input struct {
-	// TODO: Add input fields
+// Create{{.EntityName}}Input holds the data needed to create a new {{.EntityName}}.
+type Create{{.EntityName}}Input struct {
+	// TODO: Add fields
 }
 
-// {{.ServiceName}}Output represents the output for {{.ServiceName}}
-type {{.ServiceName}}Output struct {
-	// TODO: Add output fields
+// Update{{.EntityName}}Input holds the data needed to update an existing {{.EntityName}}.
+type Update{{.EntityName}}Input struct {
+	ID string
+	// TODO: Add fields
 }
 
 // {{.ServiceName}}Service {{.Description}}
 type {{.ServiceName}}Service struct {
-	// TODO: Add dependencies (repositories, external services, etc.)
-	// Example:
-	// userRepo driven.UserRepository
+	repo {{.EntityImportAlias}}.{{.EntityName}}Repository
 }
 
-// New{{.ServiceName}}Service creates a new instance of {{.ServiceName}}Service
-func New{{.ServiceName}}Service( /* TODO: Add dependencies */ ) *{{.ServiceName}}Service {
-	return &{{.ServiceName}}Service{
-		// TODO: Initialize dependencies
+// New{{.ServiceName}}Service creates a new {{.ServiceName}}Service.
+func New{{.ServiceName}}Service(repo {{.EntityImportAlias}}.{{.EntityName}}Repository) *{{.ServiceName}}Service {
+	return &{{.ServiceName}}Service{repo: repo}
+}
+
+// Create validates and persists a new {{.EntityName}}.
+func (s *{{.ServiceName}}Service) Create(ctx context.Context, input Create{{.EntityName}}Input) (*{{.EntityImportAlias}}.{{.EntityName}}, error) {
+	entity, err := {{.EntityImportAlias}}.New{{.EntityName}}(uuid.NewString() /* TODO: map input fields */)
+	if err != nil {
+		return nil, fmt.Errorf("invalid {{.EntityName}}: %w", err)
 	}
+	if err := s.repo.Create(ctx, entity); err != nil {
+		return nil, fmt.Errorf("creating {{.EntityName}}: %w", err)
+	}
+	return entity, nil
 }
 
-// Execute runs the {{.ServiceName}} use case
-func (s *{{.ServiceName}}Service) Execute(ctx context.Context, input {{.ServiceName}}Input) (*{{.ServiceName}}Output, error) {
-	// TODO: Implement business logic
-	//
-	// Example structure:
-	// 1. Validate input
-	// 2. Call domain logic
-	// 3. Interact with repositories/external services
-	// 4. Return output or error
+// GetByID returns a single {{.EntityName}} by its ID.
+func (s *{{.ServiceName}}Service) GetByID(ctx context.Context, id string) (*{{.EntityImportAlias}}.{{.EntityName}}, error) {
+	return s.repo.FindByID(ctx, id)
+}
 
-	return nil, fmt.Errorf("not implemented")
+// Update replaces the mutable fields of an existing {{.EntityName}}.
+func (s *{{.ServiceName}}Service) Update(ctx context.Context, input Update{{.EntityName}}Input) (*{{.EntityImportAlias}}.{{.EntityName}}, error) {
+	entity, err := s.repo.FindByID(ctx, input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("finding {{.EntityName}}: %w", err)
+	}
+	// TODO: apply input fields to entity
+	if err := entity.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid {{.EntityName}}: %w", err)
+	}
+	if err := s.repo.Update(ctx, entity); err != nil {
+		return nil, fmt.Errorf("updating {{.EntityName}}: %w", err)
+	}
+	return entity, nil
+}
+
+// List returns all {{.EntityName}} records.
+func (s *{{.ServiceName}}Service) List(ctx context.Context) ([]*{{.EntityImportAlias}}.{{.EntityName}}, error) {
+	return s.repo.List(ctx)
 }

@@ -5,27 +5,28 @@ Variables:
   - CoreLogic: string - Core logic directory name
   - ModuleName: string - Go module name
   - ServiceName: string - Service name
+  - PackageName: string - Sub-package name (e.g. categories)
 */}}
-package {{.CoreLogic}}_test
+package {{.PackageName}}_test
 
 import (
 	"context"
 	"testing"
 
-	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}/{{.PackageName}}"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func Test{{.ServiceName}}Service_Execute(t *testing.T) {
+func Test{{.ServiceName}}Service_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		input   {{.CoreLogic}}.{{.ServiceName}}Input
+		input   {{.PackageName}}.Create{{.ServiceName}}Input
 		wantErr bool
 	}{
 		{
-			name: "successful execution",
-			input: {{.CoreLogic}}.{{.ServiceName}}Input{
+			name:    "successful create",
+			input:   {{.PackageName}}.Create{{.ServiceName}}Input{
 				// TODO: Add test input
 			},
 			wantErr: false,
@@ -35,22 +36,34 @@ func Test{{.ServiceName}}Service_Execute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := {{.CoreLogic}}.New{{.ServiceName}}Service( /* TODO: Add mock dependencies */ )
+			// Arrange — TODO: inject mock repository
+			service := {{.PackageName}}.New{{.ServiceName}}Service( /* TODO: mock repo */ )
 			ctx := context.Background()
 
 			// Act
-			output, err := service.Execute(ctx, tt.input)
+			result, err := service.Create(ctx, tt.input)
 
 			// Assert
 			if tt.wantErr {
 				require.Error(t, err)
-				assert.Nil(t, output)
+				assert.Nil(t, result)
 			} else {
 				require.NoError(t, err)
-				assert.NotNil(t, output)
-				// TODO: Add more assertions
+				assert.NotNil(t, result)
 			}
 		})
 	}
+}
+
+func Test{{.ServiceName}}Service_List(t *testing.T) {
+	// Arrange — TODO: inject mock repository
+	service := {{.PackageName}}.New{{.ServiceName}}Service( /* TODO: mock repo */ )
+	ctx := context.Background()
+
+	// Act
+	results, err := service.List(ctx)
+
+	// Assert
+	require.NoError(t, err)
+	assert.NotNil(t, results)
 }

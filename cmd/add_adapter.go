@@ -11,7 +11,9 @@ import (
 )
 
 var (
-	adapterPort string
+	adapterPort          string
+	adapterEntity        string
+	adapterPrimaryEntity string
 )
 
 // addAdapterCmd represents the add adapter command
@@ -72,7 +74,9 @@ func init() {
 
 	// Flags
 	addAdapterPrimaryCmd.Flags().StringVarP(&adapterPort, "port", "p", "", "Port interface name (if using explicit ports)")
+	addAdapterPrimaryCmd.Flags().StringVarP(&adapterPrimaryEntity, "entity", "e", "", "Domain entity this handler serves (PascalCase); generates sub-package with config+handlers files")
 	addAdapterSecondaryCmd.Flags().StringVarP(&adapterPort, "port", "p", "", "Port interface name (if using explicit ports)")
+	addAdapterSecondaryCmd.Flags().StringVarP(&adapterEntity, "entity", "e", "", "Domain entity this adapter implements (PascalCase); determines sub-package for database adapters")
 }
 
 func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
@@ -93,7 +97,7 @@ func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterInboundDir())
 
 	gen := generator.NewAdapterGenerator(config)
-	if err := gen.GeneratePrimary(adapterType, adapterName, adapterPort); err != nil {
+	if err := gen.GeneratePrimary(adapterType, adapterName, adapterPrimaryEntity, adapterPort); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}
 
@@ -124,7 +128,7 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterOutboundDir())
 
 	gen := generator.NewAdapterGenerator(config)
-	if err := gen.GenerateSecondary(adapterType, adapterName, adapterPort); err != nil {
+	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, adapterPort); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}
 

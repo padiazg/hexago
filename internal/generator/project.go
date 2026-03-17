@@ -145,6 +145,10 @@ func (g *ProjectGenerator) generateFiles() error {
 
 		// Generate pkg/httpserver and adapter wiring (http-server type only)
 	case "http-server":
+		if err := g.generateFile(servicesStubTemplate); err != nil {
+			return err
+		}
+
 		if err := g.generateFile(httpServerInterfaceTemplate); err != nil {
 			return err
 		}

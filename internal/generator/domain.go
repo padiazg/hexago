@@ -28,14 +28,20 @@ func NewDomainGenerator(config *ProjectConfig) *DomainGenerator {
 
 // GenerateEntity creates a new domain entity
 func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) error {
-	domainDir := filepath.Join("internal", "core", "domain")
-
-	if !utils.FileExists(domainDir) {
-		return fmt.Errorf("directory %s does not exist", domainDir)
+	baseDomainDir := filepath.Join("internal", "core", "domain")
+	if !utils.FileExists(baseDomainDir) {
+		return fmt.Errorf("directory %s does not exist", baseDomainDir)
 	}
 
-	fileName := utils.ToSnakeCase(entityName) + ".go"
-	testFileName := utils.ToSnakeCase(entityName) + "_test.go"
+	pkgName := utils.ToPlural(strings.ToLower(entityName))
+	domainDir := filepath.Join(baseDomainDir, pkgName)
+
+	if err := utils.CreateDir(domainDir); err != nil {
+		return fmt.Errorf("creating directory %s: %w", domainDir, err)
+	}
+
+	fileName := pkgName + ".go"
+	testFileName := pkgName + "_test.go"
 
 	filePath := filepath.Join(domainDir, fileName)
 	testFilePath := filepath.Join(domainDir, testFileName)
@@ -46,32 +52,56 @@ func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) erro
 
 	fmt.Printf("📝 Creating entity file: %s\n", filePath)
 
-	if err := g.generateEntityFile(filePath, entityName, fields); err != nil {
+	if err := g.generateEntityFile(filePath, entityName, pkgName, fields); err != nil {
+		return err
+	}
+
+	fmt.Printf("📝 Creating port file: %s\n", filepath.Join(domainDir, "port.go"))
+
+	if err := g.generatePortFile(filepath.Join(domainDir, "port.go"), entityName, pkgName); err != nil {
 		return err
 	}
 
 	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
 
-	if err := g.generateEntityTestFile(testFilePath, entityName); err != nil {
+	if err := g.generateEntityTestFile(testFilePath, entityName, pkgName); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// GenerateValueObject creates a new value object
-func (g *DomainGenerator) GenerateValueObject(voName string, fields []Field) error {
-	domainDir := filepath.Join("internal", "core", "domain")
+// GenerateValueObject creates a new value object.
+// If entityName is non-empty, the VO is co-located inside that entity's sub-package.
+// If entityName is empty, the VO gets its own standalone sub-package.
+func (g *DomainGenerator) GenerateValueObject(voName, entityName string, fields []Field) error {
+	baseDomainDir := filepath.Join("internal", "core", "domain")
+	if !utils.FileExists(baseDomainDir) {
+		return fmt.Errorf("directory %s does not exist", baseDomainDir)
+	}
 
-	if !utils.FileExists(domainDir) {
-		return fmt.Errorf("directory %s does not exist", domainDir)
+	var pkgName, voDir string
+	if entityName != "" {
+		// Entity-bound: co-locate inside the entity's sub-package (must already exist)
+		pkgName = utils.ToPlural(strings.ToLower(entityName))
+		voDir = filepath.Join(baseDomainDir, pkgName)
+		if !utils.FileExists(voDir) {
+			return fmt.Errorf("entity directory %s does not exist; create the entity first", voDir)
+		}
+	} else {
+		// Standalone: own sub-package named after the VO
+		pkgName = strings.ToLower(voName)
+		voDir = filepath.Join(baseDomainDir, pkgName)
+		if err := utils.CreateDir(voDir); err != nil {
+			return fmt.Errorf("creating directory %s: %w", voDir, err)
+		}
 	}
 
 	fileName := utils.ToSnakeCase(voName) + ".go"
 	testFileName := utils.ToSnakeCase(voName) + "_test.go"
 
-	filePath := filepath.Join(domainDir, fileName)
-	testFilePath := filepath.Join(domainDir, testFileName)
+	filePath := filepath.Join(voDir, fileName)
+	testFilePath := filepath.Join(voDir, testFileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("value object file %s already exists", filePath)
@@ -79,13 +109,13 @@ func (g *DomainGenerator) GenerateValueObject(voName string, fields []Field) err
 
 	fmt.Printf("📝 Creating value object file: %s\n", filePath)
 
-	if err := g.generateValueObjectFile(filePath, voName, fields); err != nil {
+	if err := g.generateValueObjectFile(filePath, voName, pkgName, fields); err != nil {
 		return err
 	}
 
 	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
 
-	if err := g.generateValueObjectTestFile(testFilePath, voName); err != nil {
+	if err := g.generateValueObjectTestFile(testFilePath, voName, pkgName); err != nil {
 		return err
 	}
 
@@ -93,7 +123,7 @@ func (g *DomainGenerator) GenerateValueObject(voName string, fields []Field) err
 }
 
 // generateEntityFile generates the entity implementation
-func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields []Field) error {
+func (g *DomainGenerator) generateEntityFile(filePath, entityName, pkgName string, fields []Field) error {
 	hasTimeField := false
 	for _, f := range fields {
 		if strings.Contains(f.Type, "time.Time") {
@@ -131,9 +161,10 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields
 	}
 
 	data := map[string]any{
-		"EntityName": entityName,
-		"FieldDefs":  fieldDefs,
-		"Imports":    imports,
+		"EntityName":  entityName,
+		"PackageName": pkgName,
+		"FieldDefs":   fieldDefs,
+		"Imports":     imports,
 	}
 
 	content, err := g.config.templateLoader.Render("domain/entity.go.tmpl", data)
@@ -144,11 +175,27 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName string, fields
 	return utils.WriteFile(filePath, content)
 }
 
-// generateEntityTestFile generates entity test file
-func (g *DomainGenerator) generateEntityTestFile(filePath, entityName string) error {
+// generatePortFile generates the repository port interface for an entity
+func (g *DomainGenerator) generatePortFile(filePath, entityName, pkgName string) error {
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
-		"EntityName": entityName,
+		"PackageName": pkgName,
+		"EntityName":  entityName,
+	}
+
+	content, err := g.config.templateLoader.Render("domain/port.go.tmpl", data)
+	if err != nil {
+		return fmt.Errorf("failed to render port template: %w", err)
+	}
+
+	return utils.WriteFile(filePath, content)
+}
+
+// generateEntityTestFile generates entity test file
+func (g *DomainGenerator) generateEntityTestFile(filePath, entityName, pkgName string) error {
+	data := map[string]any{
+		"ModuleName":  g.config.ModuleName,
+		"EntityName":  entityName,
+		"PackageName": pkgName,
 	}
 
 	content, err := g.config.templateLoader.Render("domain/entity_test.go.tmpl", data)
@@ -160,7 +207,7 @@ func (g *DomainGenerator) generateEntityTestFile(filePath, entityName string) er
 }
 
 // generateValueObjectFile generates the value object implementation
-func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, fields []Field) error {
+func (g *DomainGenerator) generateValueObjectFile(filePath, voName, pkgName string, fields []Field) error {
 	hasTimeField := false
 	for _, f := range fields {
 		if strings.Contains(f.Type, "time.Time") {
@@ -191,9 +238,10 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, field
 	}
 
 	data := map[string]any{
-		"VOName":    voName,
-		"FieldDefs": fieldDefs,
-		"Imports":   imports,
+		"VOName":      voName,
+		"PackageName": pkgName,
+		"FieldDefs":   fieldDefs,
+		"Imports":     imports,
 	}
 
 	content, err := g.config.templateLoader.Render("domain/value_object.go.tmpl", data)
@@ -205,10 +253,11 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName string, field
 }
 
 // generateValueObjectTestFile generates value object test file
-func (g *DomainGenerator) generateValueObjectTestFile(filePath, voName string) error {
+func (g *DomainGenerator) generateValueObjectTestFile(filePath, voName, pkgName string) error {
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
-		"VOName":     voName,
+		"ModuleName":  g.config.ModuleName,
+		"VOName":      voName,
+		"PackageName": pkgName,
 	}
 
 	content, err := g.config.templateLoader.Render("domain/value_object_test.go.tmpl", data)

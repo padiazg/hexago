@@ -9,6 +9,7 @@ Variables:
   - ProjectName: string - Project name
   - ModuleName: string - Go module name
   - AdapterInboundDir: string - primary or driver
+  - CoreLogic: string - services or usecases
 */}}
 /*
 Copyright © {{.Year}} {{.Author}}
@@ -22,6 +23,7 @@ import (
 	"syscall"
 
 	"{{.ModuleName}}/internal/adapters/{{.AdapterInboundDir}}/http"
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
 	httpsrv "{{.ModuleName}}/pkg/httpserver"
 	"{{.ModuleName}}/pkg/logger"
 	"github.com/spf13/cobra"
@@ -46,6 +48,25 @@ and perform a graceful shutdown with a configurable timeout.`,
 
 		log.Info("Starting {{.ProjectName}} HTTP server...")
 
+		// ── Database ──────────────────────────────────────────────────────
+		// TODO: open your database connection here if needed, e.g.:
+		// db, err := sql.Open("postgres", cfg.Database.URL)
+		// if err != nil {
+		// 	return fmt.Errorf("opening database: %w", err)
+		// }
+		// defer db.Close()
+
+		// ── Repositories (secondary adapters) ────────────────────────────
+		// TODO: instantiate repositories, e.g.:
+		// exampleRepo := exampleRepo.NewExampleRepository(db)
+
+		// ── Services (core) ───────────────────────────────────────────────
+		// TODO: wire services, e.g.:
+		// services := {{.CoreLogic}}.New(&{{.CoreLogic}}.Config{
+		//     ExampleRepository: exampleRepo,
+		// })
+		var services *{{.CoreLogic}}.Services
+
 		// Create and configure the HTTP server.
 		// Framework-specific server mechanics live in pkg/httpserver.
 		// Route handler wiring (ping, health, metrics, ...) lives in
@@ -53,7 +74,7 @@ and perform a graceful shutdown with a configurable timeout.`,
 		srv := http.New(&httpsrv.ServerConfig{
 			Config: cfg,
 			Logger: log,
-		})
+		}, services)
 
 		// Channel to capture OS signals
 		sigChan := make(chan os.Signal, 1)

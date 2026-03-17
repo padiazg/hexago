@@ -81,11 +81,12 @@ Feature flags (all bool, default false):
 ## hexago_add_service — add a business-logic use case
 ────────────────────────────────────────────────────────────────────────────────
 
-Generated: internal/core/<core_logic>/<name>.go + <name>_test.go
+Generated: internal/core/<core_logic>/<pkg>/<pkg>.go + <pkg>_test.go
 
-Required:  working_directory, name  (PascalCase, e.g. "CreateUser", "GetOrderByID")
+Required:  working_directory, name  (PascalCase, e.g. "Category", "Order")
 Optional:
-  description     One-line comment embedded in the generated file.
+  entity        Domain entity this service manages. Determines sub-package name (e.g. "Category" → categories/).
+  description   One-line comment embedded in the generated file.
 
 ────────────────────────────────────────────────────────────────────────────────
 ## hexago_add_domain_entity — add a domain entity
@@ -105,12 +106,14 @@ Optional:
 ## hexago_add_domain_valueobject — add a domain value object
 ────────────────────────────────────────────────────────────────────────────────
 
-Generated: internal/core/domain/<name>.go + <name>_test.go
+Generated (standalone):  internal/core/domain/<name>/<name>.go + <name>_test.go
+Generated (entity-bound): internal/core/domain/<entities>/<snake_name>.go + <snake_name>_test.go
 A value object is immutable, has no identity, and is compared by value (e.g. Email, Money).
 
 Required:  working_directory, name  (PascalCase)
 Optional:
   fields     Same format as domain entity. E.g. "value:string" or "amount:float64,currency:string"
+  entity     Entity name to co-locate with (entity-bound VO). Omit for a standalone sub-package.
 
 ────────────────────────────────────────────────────────────────────────────────
 ## hexago_add_adapter — add an inbound or outbound adapter
@@ -358,23 +361,33 @@ Example call:
 		mcp.NewTool("hexago_add_service",
 			mcp.WithDescription(`Add a business-logic service (use case) to internal/core/services/ (or usecases/).
 
+Each service lives in its own sub-package with named CRUD methods wired to the domain repository port.
+
 Generates:
-  - internal/core/services/<name>.go      — Input/Output structs, service struct, constructor, Execute()
-  - internal/core/services/<name>_test.go — test skeleton
+  - internal/core/services/<pkg>/<pkg>.go      — Create/GetByID/Update/List methods, service struct
+  - internal/core/services/<pkg>/<pkg>_test.go — test skeleton
 
 The generated code belongs to the core layer and must not import from adapters/.
 
-Example call:
+Example call (with entity):
   working_directory: "/home/user/projects/my-api"
-  name: "CreateUser"
-  description: "Creates a new user account"`),
+  name: "Category"
+  entity: "Category"
+  description: "manages category records"
+
+Example call (no entity):
+  working_directory: "/home/user/projects/my-api"
+  name: "Notification"`),
 			mcp.WithString("working_directory",
 				mcp.Description("Absolute path to the project root (the directory containing go.mod and internal/)."),
 				mcp.Required(),
 			),
 			mcp.WithString("name",
-				mcp.Description("Service name in PascalCase. Describes the use case. E.g. CreateUser, GetOrderByID, SendWelcomeEmail."),
+				mcp.Description("Service name in PascalCase. E.g. Category, Order, Product."),
 				mcp.Required(),
+			),
+			mcp.WithString("entity",
+				mcp.Description("Domain entity this service manages (PascalCase). Determines sub-package name. E.g. Category → categories/."),
 			),
 			mcp.WithString("description",
 				mcp.Description("One-line description embedded as a comment in the generated file."),
@@ -385,6 +398,9 @@ Example call:
 			wd, _ := args["working_directory"].(string)
 			name, _ := args["name"].(string)
 			cliArgs := []string{"--working-directory", wd, "add", "service", name}
+			if v, _ := args["entity"].(string); v != "" {
+				cliArgs = append(cliArgs, "--entity", v)
+			}
 			if v, _ := args["description"].(string); v != "" {
 				cliArgs = append(cliArgs, "--description", v)
 			}
@@ -447,18 +463,28 @@ Supported types: any valid Go type (string, int, int64, float64, bool, time.Time
 A value object is an immutable object defined only by its attributes, with no unique identity
 (e.g. Email, Money, Address, PhoneNumber). It is compared by value, not by reference.
 
-Generates:
-  - internal/core/domain/<name>.go      — immutable struct, constructor with validation, Equals()
-  - internal/core/domain/<name>_test.go — test skeleton
+Standalone (no entity):
+  - internal/core/domain/<name>/<name>.go      — own sub-package
+  - internal/core/domain/<name>/<name>_test.go
+
+Entity-bound (with entity):
+  - internal/core/domain/<entities>/<snake_name>.go  — co-located with entity
+  - internal/core/domain/<entities>/<snake_name>_test.go
 
 Fields format: comma-separated name:type pairs.
   "value:string"
   "amount:float64,currency:string"
 
-Example call:
+Example call (standalone):
   working_directory: "/home/user/projects/my-api"
   name: "Email"
-  fields: "value:string"`),
+  fields: "value:string"
+
+Example call (entity-bound):
+  working_directory: "/home/user/projects/my-api"
+  name: "StockLevel"
+  fields: "value:float64"
+  entity: "Product"`),
 			mcp.WithString("working_directory",
 				mcp.Description("Absolute path to the project root (the directory containing go.mod and internal/)."),
 				mcp.Required(),
@@ -471,6 +497,9 @@ Example call:
 				mcp.Description(`Comma-separated field definitions as name:type pairs.
 E.g. "value:string" or "amount:float64,currency:string"`),
 			),
+			mcp.WithString("entity",
+				mcp.Description("Entity name (PascalCase) to co-locate this VO with. Omit for a standalone sub-package."),
+			),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := req.GetArguments()
@@ -479,6 +508,9 @@ E.g. "value:string" or "amount:float64,currency:string"`),
 			cliArgs := []string{"--working-directory", wd, "add", "domain", "valueobject", name}
 			if v, _ := args["fields"].(string); v != "" {
 				cliArgs = append(cliArgs, "--fields", v)
+			}
+			if v, _ := args["entity"].(string); v != "" {
+				cliArgs = append(cliArgs, "--entity", v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))
 		},
@@ -528,8 +560,13 @@ Example calls:
 				mcp.Required(),
 			),
 			mcp.WithString("name",
-				mcp.Description("Adapter name in PascalCase. E.g. UserHandler, UserRepository, EmailClient."),
+				mcp.Description("Adapter name in PascalCase. E.g. UserHandler, CategoryRepository, EmailClient."),
 				mcp.Required(),
+			),
+			mcp.WithString("entity",
+				mcp.Description(`Domain entity this adapter serves (PascalCase). Behaviour by direction:
+  primary   http — generates sub-package with two files: <snake_entity>.go (Config/DTOs) + handlers.go (List/Create/GetByID/Update)
+  secondary database — generates sub-package implementing the entity's Repository port`),
 			),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -539,6 +576,9 @@ Example calls:
 			adapterType, _ := args["adapter_type"].(string)
 			name, _ := args["name"].(string)
 			cliArgs := []string{"--working-directory", wd, "add", "adapter", direction, adapterType, name}
+			if v, _ := args["entity"].(string); v != "" {
+				cliArgs = append(cliArgs, "--entity", v)
+			}
 			return toolResult(runSelf(ctx, cliArgs...))
 		},
 	)
