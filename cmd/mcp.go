@@ -568,6 +568,9 @@ Example calls:
   primary   http — generates sub-package with two files: <snake_entity>.go (Config/DTOs) + handlers.go (List/Create/GetByID/Update)
   secondary database — generates sub-package implementing the entity's Repository port`),
 			),
+			mcp.WithString("port",
+				mcp.Description("Port interface name to implement (only used with explicit_ports projects). E.g. UserRepository, EmailSender."),
+			),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := req.GetArguments()
@@ -578,6 +581,9 @@ Example calls:
 			cliArgs := []string{"--working-directory", wd, "add", "adapter", direction, adapterType, name}
 			if v, _ := args["entity"].(string); v != "" {
 				cliArgs = append(cliArgs, "--entity", v)
+			}
+			if v, _ := args["port"].(string); v != "" {
+				cliArgs = append(cliArgs, "--port", v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))
 		},
