@@ -238,6 +238,7 @@ All tools require a `working_directory` absolute path parameter:
 | `direction` | ✓ | string | `primary` (inbound) \| `secondary` (outbound) |
 | `adapter_type` | ✓ | string | For primary: `http`, `grpc`, `queue`. For secondary: `database`, `external`, `cache` |
 | `name` | ✓ | string | PascalCase name (e.g. `UserHandler`, `UserRepository`) |
+| `port` | | string | Port interface name to implement (only for projects with `explicit_ports`). E.g. `UserRepository`, `EmailSender` |
 
 ### `hexago_add_worker`
 
@@ -272,6 +273,49 @@ All tools require a `working_directory` absolute path parameter:
 | Parameter | Required | Type | Description |
 |-----------|----------|------|-------------|
 | `working_directory` | ✓ | string | Project root |
+
+---
+
+## Updating the MCP After a Binary Upgrade
+
+The MCP server is a **long-running process** started once when the AI client launches.
+Replacing the binary on disk does not affect the already-running server — you must
+restart it so the new binary is loaded.
+
+=== "Claude Code"
+
+    The MCP server process stays alive for the duration of the Claude Code session.
+    The simplest way to reload it is to **exit and restart Claude Code**:
+
+    ```shell
+    # Exit the current session (Ctrl+D or /exit), then restart
+    claude
+    ```
+
+    To verify you are on the new version without restarting, run inside a session:
+
+    ```shell
+    ! hexago version
+    ```
+
+    If that shows the new version but the MCP tools still behave like the old one,
+    restart the session.
+
+    **Tip:** `claude mcp list` shows which servers are registered but not which binary
+    version they are running. Always restart after upgrading.
+
+=== "Claude Desktop"
+
+    Fully quit and reopen the application — menu bar icon → Quit, **not** just close the window.
+
+=== "VS Code / Cursor / Windsurf"
+
+    Use the editor's MCP panel to **Stop** and **Start** (or **Restart**) the hexago server,
+    or reload the window (`Ctrl+Shift+P` → **Developer: Reload Window**).
+
+=== "Zed"
+
+    Restart the Agent Panel or reload Zed.
 
 ---
 

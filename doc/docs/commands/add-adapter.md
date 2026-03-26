@@ -163,6 +163,29 @@ HexaGo auto-detects your project's naming convention.
 
 ---
 
+## Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--port` | `-p` | Port interface name this adapter implements. Only used when the project was initialized with `--explicit-ports`. |
+| `--working-directory` | `-w` | Project root (defaults to the current directory). |
+
+### `--port` — explicit port binding
+
+When your project has an explicit `internal/core/ports/` directory (initialized with
+`hexago init --explicit-ports`), pass the port interface name so the generated adapter
+references it correctly:
+
+```shell
+hexago add adapter secondary database UserRepository --port UserRepository
+hexago add adapter secondary external EmailService   --port EmailSender
+```
+
+If `--port` is omitted, the adapter is generated without a port reference and you can
+wire it manually.
+
+---
+
 ## Architecture Notes
 
 Adapters belong to the **adapters layer** and must:
