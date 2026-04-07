@@ -7,7 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## v0.1.3 - 2026-03-13
+## v0.1.3 - 2026-04-06
+
+### Version command included in base generation
+
+All generated projects now include a `version` command with ASCII art splash output:
+
+```shell
+$ myapp version
+┓┏      ┏┓    Version: 1.0.0
+┣┫┏┓┓┏┏┓┃┓┏┓  Build: 2026-04-06T12:00:00Z
+┛┗┗ ┛┗┗┻┗┛┗┛  Commit: abc1234
+```
+
+The `--simple` flag outputs just the version string for scripting:
+
+```shell
+$ myapp version --simple
+v1.0.0
+```
+
+Version info is injected at build time via Makefile ldflags:
+
+```makefile
+build: pkg={{.ModuleName}}/pkg/version
+build: ldflags = -X $(pkg).version=$(shell git describe --tags --always --dirty)
+build: ldflags += -X $(pkg).commit=$(shell git rev-parse HEAD)
+build: ldflags += -X $(pkg).buildDate=$(shell date -Iseconds)
+```
 
 ### Handler plugin pattern (`Use(ServerHandler) Server`)
 
@@ -68,6 +95,10 @@ Embedded FS path lookups in `template_loader.go` changed from `filepath.Join` to
 ### Template code style (`interface{}` → `any`)
 
 All generated code templates use the `any` type alias (Go 1.18+) instead of `interface{}` — adapter, tool, worker, observability, and project templates updated for consistency with modern Go style.
+
+### Enhanced service generation
+
+Service generation now distinguishes between entity-bound services (requiring repository dependencies) and standalone services. Entity-bound services generate CRUD methods (Create, GetByID, Update, List), while standalone services generate an Execute method for custom business logic. The services aggregator has been updated to correctly handle both service types during initialization.
 
 ---
 
