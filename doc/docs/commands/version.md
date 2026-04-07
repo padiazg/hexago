@@ -36,7 +36,7 @@ Prints only the bare version string — no newline decoration:
 
 ```shell
 hexago version --simple
-# → v0.0.3
+# → v0.1.3
 ```
 
 Useful in CI scripts or Makefiles:
@@ -52,6 +52,6 @@ docker build -t myapp:$VERSION .
 
 ```shell
 hexago version          # Full splash with build info
-hexago version --simple # Version string only (e.g. v0.0.3)
+hexago version --simple # Version string only (e.g. v0.1.3)
 hexago version -s       # Same, short flag
 ```

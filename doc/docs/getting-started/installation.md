@@ -15,7 +15,7 @@ go install github.com/padiazg/hexago@latest
 To install a specific version:
 
 ```shell
-go install github.com/padiazg/hexago@v0.0.2
+go install github.com/padiazg/hexago@v0.1.3
 ```
 
 !!! tip
@@ -71,6 +71,7 @@ Available Commands:
   init        Initialize a new hexagonal architecture project
   add         Add components to an existing project
   validate    Validate hexagonal architecture compliance
+  version     Show version information
 
 Flags:
   -h, --help      help for hexago

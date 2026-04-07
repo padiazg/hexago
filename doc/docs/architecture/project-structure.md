@@ -45,8 +45,12 @@ my-app/
 │   │   └── server.go             # Server struct with exported router + Use() method
 │   ├── server/                   # (http-server type) Framework-agnostic interface
 │   │   └── server.go             # Server + ServerHandler interfaces
-│   └── logger/
-│       └── logger.go             # Structured logger interface + implementation
+│   ├── logger/
+│   │   └── logger.go             # Structured logger interface + implementation
+│   └── version/
+│       ├── version.go            # Version info with build-time ldflags injection
+│       ├── splash.go             # ASCII art splash for `version` command
+│       └── version_test.go       # Unit tests
 │
 ├── migrations/                   # (with --with-migrations)
 │   └── .gitkeep
@@ -69,6 +73,7 @@ Contains [Cobra](https://github.com/spf13/cobra) commands:
 
 - **`root.go`** — Initializes Viper configuration, reads `.my-app.yaml` and environment variables
 - **`run.go`** — Starts the HTTP server with context-based graceful shutdown. Listens for SIGINT/SIGTERM.
+- **`version.go`** — Shows version information with ASCII art splash
 
 ### `internal/core/`
 
