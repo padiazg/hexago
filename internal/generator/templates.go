@@ -13,6 +13,10 @@ const (
 	mainTemplate                string = "main"
 	runTemplate                 string = "run"
 	rootTemplate                string = "root"
+	versionTemplate             string = "version"
+	versionSplashTemplate       string = "version-splash"
+	versionTestTemplate         string = "version-test"
+	versionCmdTemplate          string = "version-cmd"
 	processorTemplate           string = "processor"
 	configTemplate              string = "config"
 	loggerTemplate              string = "logger"
@@ -77,6 +81,30 @@ var templateMap = map[string]templateFn{
 		return templateItem{
 			source: "cmd/root.go.tmpl",
 			target: filepath.Join("cmd", "root.go"),
+		}
+	},
+	versionTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "pkg/version/version.go.tmpl",
+			target: filepath.Join("pkg", "version", "version.go"),
+		}
+	},
+	versionSplashTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "pkg/version/splash.go.tmpl",
+			target: filepath.Join("pkg", "version", "splash.go"),
+		}
+	},
+	versionTestTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "pkg/version/version_test.go.tmpl",
+			target: filepath.Join("pkg", "version", "version_test.go"),
+		}
+	},
+	versionCmdTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "cmd/version.go.tmpl",
+			target: filepath.Join("cmd", "version.go"),
 		}
 	},
 	processorTemplate: func(g *ProjectGenerator) templateItem {

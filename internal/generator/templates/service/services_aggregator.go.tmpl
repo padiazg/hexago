@@ -13,20 +13,25 @@ Variables:
     - RepoInterface: string - e.g. "CategoryRepository"
     - ServiceField: string - e.g. "Categories"
     - ServiceType: string - e.g. "CategoryService"
+    - HasEntity: bool - true when service has a domain entity dependency
 */}}
 package {{.CoreLogic}}
 
 import (
 {{- range .Entries}}
 	{{.Alias}} "{{$.ModuleName}}/internal/core/{{$.CoreLogic}}/{{.Package}}"
+	{{- if .HasEntity}}
 	{{.DomainAlias}} "{{$.ModuleName}}/internal/core/domain/{{.Package}}"
+	{{- end}}
 {{- end}}
 )
 
-// Config holds the repository dependencies required to initialise all services.
+// Config holds the repository dependencies required to initialise entity-bound services.
 type Config struct {
 {{- range .Entries}}
+	{{- if .HasEntity}}
 	{{.RepoField}} {{.DomainAlias}}.{{.RepoInterface}}
+	{{- end}}
 {{- end}}
 }
 
@@ -41,7 +46,11 @@ type Services struct {
 func New(config *Config) *Services {
 	return &Services{
 {{- range .Entries}}
+		{{- if .HasEntity}}
 		{{.ServiceField}}: {{.Alias}}.New{{.ServiceType}}(config.{{.RepoField}}),
+		{{- else}}
+		{{.ServiceField}}: {{.Alias}}.New{{.ServiceType}}(),
+		{{- end}}
 {{- end}}
 	}
 }

@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	workerType     string
-	workerInterval string
-	workerWorkers  int
+	workerType      string
+	workerInterval  string
+	workerWorkers   int
 	workerQueueSize int
 )
 
