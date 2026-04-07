@@ -81,6 +81,7 @@ nav:
     - add tool: commands/add-tool.md
     - validate: commands/validate.md
     - mcp: commands/mcp.md
+    - templates: customization/templates.md
     - version: commands/version.md
   - Architecture:
     - architecture/index.md
@@ -89,6 +90,19 @@ nav:
   - Customization:
     - customization/index.md
     - Templates: customization/templates.md
+    - Version Command: customization/version.md
+  - Development Guide:
+    - development-guide/index.md
+    - Build and Run: development-guide/build-and-run.md
+    - Coding Conventions: development-guide/coding-conventions.md
+    - Hexagonal Architecture: development-guide/hexagonal-architecture.md
+    - Configuration: development-guide/configuration.md
+    - Testing: development-guide/testing.md
+    - Debugging & Profiling: development-guide/debugging-profiling.md
+    - Adapters: development-guide/adapters.md
+    - HTTP Plugin Adapter: development-guide/http-plugins-adapter.md
+    - Database Adapter: development-guide/secondary-database-adapter.md
+    - External API Adapter: development-guide/secondary-external-api-adapter.md
   - Changelog: changelog.md
 
 extra:
