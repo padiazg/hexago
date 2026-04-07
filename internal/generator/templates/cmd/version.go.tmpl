@@ -1,0 +1,43 @@
+{{/*
+Template: cmd/version.go
+Description: Version command with Splash output
+Variables:
+  - ModuleName: string - Go module name
+  - Year: string - Copyright year
+  - Author: string - Author name
+*/}}
+/*
+Copyright © {{.Year}} {{.Author}}
+*/
+package cmd
+
+import (
+	"fmt"
+
+	"{{.ModuleName}}/pkg/version"
+	"github.com/spf13/cobra"
+)
+
+var (
+	simple     bool
+	versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Show version information",
+		Long:  `Display application version, build date, and commit information.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			simple, _ := cmd.Flags().GetBool("simple")
+			if simple {
+				fmt.Printf("%s", version.CurrentVersion().Version)
+				return
+			}
+
+			version.Splash()
+		},
+	}
+)
+
+func init() {
+	rootCmd.AddCommand(versionCmd)
+
+	versionCmd.Flags().BoolP("simple", "s", false, "Prints only the version, useful for scripting")
+}

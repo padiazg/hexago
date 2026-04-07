@@ -295,9 +295,11 @@ func (l *TemplateLoader) loadRawTemplate(name string) ([]byte, error) {
 // createTemplateFuncMap creates custom template functions
 func createTemplateFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"upper": strings.ToUpper,
-		"lower": strings.ToLower,
-		"title": utils.ToTitleCase,
-		"snake": utils.ToSnakeCase,
+		"upper":  strings.ToUpper,
+		"lower":  strings.ToLower,
+		"title":  utils.ToTitleCase,
+		"snake":  utils.ToSnakeCase,
+		"lbrace": func() string { return "{{" },
+		"rbrace": func() string { return "}}" },
 	}
 }

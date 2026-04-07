@@ -90,6 +90,7 @@ func (g *ProjectGenerator) generateDirectoryStructure() error {
 		fmt.Sprintf("internal/adapters/%s/database", g.config.AdapterOutboundDir()),
 		"internal/config",
 		"pkg/logger",
+		"pkg/version",
 	}
 
 	// Add optional directories
@@ -127,6 +128,11 @@ func (g *ProjectGenerator) generateFiles() error {
 
 	// Generate cmd/root.go
 	if err := g.generateFile(rootTemplate); err != nil {
+		return err
+	}
+
+	// Generate cmd/version.go
+	if err := g.generateFile(versionCmdTemplate); err != nil {
 		return err
 	}
 
@@ -173,6 +179,17 @@ func (g *ProjectGenerator) generateFiles() error {
 
 	// Generate logger
 	if err := g.generateFile(loggerTemplate); err != nil {
+		return err
+	}
+
+	// Generate version package
+	if err := g.generateFile(versionTemplate); err != nil {
+		return err
+	}
+	if err := g.generateFile(versionSplashTemplate); err != nil {
+		return err
+	}
+	if err := g.generateFile(versionTestTemplate); err != nil {
 		return err
 	}
 

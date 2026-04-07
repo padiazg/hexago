@@ -6,12 +6,15 @@ Variables:
   - ModuleName: string - Go module name
   - ServiceName: string - Service name (PascalCase)
   - PackageName: string - Sub-package name (e.g. categories)
-  - EntityName: string - Domain entity name (PascalCase)
-  - EntityPackage: string - Domain sub-package name (e.g. categories)
-  - EntityImportAlias: string - Import alias for domain package (e.g. categoriesDomain)
+  - HasEntity: bool - true when service is bound to a domain entity
+  - EntityName: string - Domain entity name (PascalCase) — only used when HasEntity=true
+  - EntityPackage: string - Domain sub-package name (e.g. categories) — only used when HasEntity=true
+  - EntityImportAlias: string - Import alias for domain package — only used when HasEntity=true
   - Description: string - Service description
 */}}
 package {{.PackageName}}
+
+{{- if .HasEntity}}
 
 import (
 	"context"
@@ -79,3 +82,28 @@ func (s *{{.ServiceName}}Service) Update(ctx context.Context, input Update{{.Ent
 func (s *{{.ServiceName}}Service) List(ctx context.Context) ([]*{{.EntityImportAlias}}.{{.EntityName}}, error) {
 	return s.repo.List(ctx)
 }
+
+{{- else}}
+
+import (
+	"context"
+)
+
+// {{.ServiceName}}Service {{.Description}}
+type {{.ServiceName}}Service struct {
+	// TODO: Add dependencies
+}
+
+// New{{.ServiceName}}Service creates a new {{.ServiceName}}Service.
+func New{{.ServiceName}}Service() *{{.ServiceName}}Service {
+	return &{{.ServiceName}}Service{}
+}
+
+// Execute runs the service logic.
+// TODO: Replace or extend with domain-specific methods.
+func (s *{{.ServiceName}}Service) Execute(ctx context.Context) error {
+	// TODO: implement
+	return nil
+}
+
+{{- end}}

@@ -19,6 +19,7 @@ type ServiceEntry struct {
 	RepoInterface string // e.g. "CategoryRepository"
 	ServiceField  string // e.g. "Categories"
 	ServiceType   string // e.g. "CategoryService"
+	HasEntity     bool   // true when service is bound to a domain entity (has repo dependency)
 }
 
 // ServiceGenerator generates service/usecase files
@@ -44,13 +45,14 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 	}
 
 	// Derive package name and entity name
+	hasEntity := entityName != ""
 	var pkgName, resolvedEntity string
-	if entityName != "" {
+	if hasEntity {
 		pkgName = utils.ToPlural(strings.ToLower(entityName))
 		resolvedEntity = entityName
 	} else {
 		pkgName = strings.ToLower(serviceName)
-		resolvedEntity = serviceName
+		resolvedEntity = ""
 	}
 
 	serviceDir := filepath.Join(baseServiceDir, pkgName)
@@ -70,7 +72,7 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 
 	fmt.Printf("📝 Creating service file: %s\n", filePath)
 
-	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description); err != nil {
+	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description, hasEntity); err != nil {
 		return err
 	}
 
@@ -89,10 +91,14 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 }
 
 // generateServiceFile generates the service implementation file
-func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName, pkgName, description string) error {
+func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName, pkgName, description string, hasEntity bool) error {
 	desc := description
 	if desc == "" {
-		desc = fmt.Sprintf("handles %s operations", entityName)
+		if hasEntity {
+			desc = fmt.Sprintf("handles %s operations", entityName)
+		} else {
+			desc = fmt.Sprintf("implements %s logic", serviceName)
+		}
 	}
 
 	entityImportAlias := pkgName + "Domain"
@@ -102,6 +108,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 		"ModuleName":        g.config.ModuleName,
 		"ServiceName":       serviceName,
 		"PackageName":       pkgName,
+		"HasEntity":         hasEntity,
 		"EntityName":        entityName,
 		"EntityPackage":     pkgName,
 		"EntityImportAlias": entityImportAlias,
@@ -147,7 +154,7 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 		}
 		pkgName := entry.Name()
 		srcFile := filepath.Join(baseServiceDir, pkgName, pkgName+".go")
-		entityName, err := g.extractEntityName(srcFile)
+		entityName, hasEntity, err := g.extractServiceInfo(srcFile)
 		if err != nil {
 			continue // not a service package — skip silently
 		}
@@ -159,6 +166,7 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 			RepoInterface: entityName + "Repository",
 			ServiceField:  utils.ToTitleCase(pkgName),
 			ServiceType:   entityName + "Service",
+			HasEntity:     hasEntity,
 		})
 	}
 
@@ -182,18 +190,20 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 	return utils.WriteFile(aggregatorPath, content)
 }
 
-// extractEntityName scans a service Go file for the first `type XxxService struct`
-// declaration and returns "Xxx" as the entity name.
-func (g *ServiceGenerator) extractEntityName(filePath string) (string, error) {
+// extractServiceInfo scans a service Go file for the first `type XxxService struct`
+// declaration and returns the entity name ("Xxx") plus whether the service is
+// entity-bound (i.e. it imports from internal/core/domain/).
+func (g *ServiceGenerator) extractServiceInfo(filePath string) (entityName string, hasEntity bool, err error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	re := regexp.MustCompile(`type (\w+)Service struct`)
 	matches := re.FindSubmatch(content)
 	if len(matches) < 2 {
-		return "", fmt.Errorf("no XxxService struct found in %s", filePath)
+		return "", false, fmt.Errorf("no XxxService struct found in %s", filePath)
 	}
-	return string(matches[1]), nil
+	entityName = string(matches[1])
+	hasEntity = strings.Contains(string(content), `/internal/core/domain/`)
+	return entityName, hasEntity, nil
 }
-
