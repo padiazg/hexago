@@ -9,8 +9,8 @@ Understanding the architecture pattern and dependency rules in HexaGo-generated 
 The dependency rule: **adapters → services → domain**
 
 ```
-External World     Adapters      Services      Domain
-  (HTTP, DB)  →  (primary/  →  (services/  →  (domain/
+External World     Adapters      Services       Domain
+  (HTTP, DB)    →  (primary/  →  (services/  →  (domain/
                    secondary)    ports/)        entities)
 ```
 
@@ -44,6 +44,7 @@ func (u *User) Validate() error {
 ```
 
 Contains:
+
 - Entities (objects with unique identity)
 - Value objects (immutable, compared by value)
 - Domain errors
@@ -65,6 +66,7 @@ type Store interface {
 ```
 
 Contains:
+
 - Service structs with business logic
 - Port interfaces (what the core needs from outside)
 - Use case implementations
@@ -74,7 +76,7 @@ Contains:
 External interfaces — implements ports defined by services.
 
 | Direction | Type | Examples |
-|-----------|------|----------|
+| --- | --- | --- |
 | **Primary** (inbound) | Driven by external actors | HTTP handlers, gRPC servers, CLI commands, queue consumers |
 | **Secondary** (outbound) | Drives external systems | Database repositories, external API clients, cache adapters, notifiers |
 
@@ -107,7 +109,7 @@ func (r *SQLiteUserRepository) GetUser(ctx context.Context, id string) (*User, e
 Ports are interfaces defined in the services layer:
 
 ```go
-// internal/core/services/ports/store.go
+// internal/core/ports/store.go
 package ports
 
 type Store interface {
@@ -144,7 +146,7 @@ var _ ports.Store = (*UserRepository)(nil)  // Compile-time interface check
 These are common port interfaces in HexaGo projects:
 
 | Interface | Purpose | Methods |
-|-----------|---------|---------|
+| --- | --- | --- |
 | `Store` | Data persistence | Get, Save, List, Delete |
 | `FeedProvider` | External data feeds | History, Subscribe, Ping |
 | `Notifier` | Notifications | SendSignal, SendUpdate, SendError |
@@ -196,6 +198,7 @@ hexago validate
 ```
 
 Checks performed:
+
 - ✓ Core domain has no external dependencies
 - ✓ Services only depend on domain and ports
 - ✓ Adapters don't import from other adapters
@@ -208,7 +211,7 @@ Checks performed:
 
 ### Default (primary-secondary)
 
-```
+```shell
 internal/
 ├── adapters/
 │   ├── primary/    # Inbound adapters
@@ -219,7 +222,7 @@ internal/
 
 When using `--adapter-style driver-driven`:
 
-```
+```shell
 internal/
 ├── adapters/
 │   ├── driver/     # Inbound (drives the application)
@@ -231,8 +234,8 @@ internal/
 ## Anti-Patterns to Avoid
 
 | Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| Core imports adapters | Violates dependency rule | Define port in services, implement in adapter |
+| --- | --- | --- |
+| Core imports adapters | Violates dependency rule | Define port in domain, implement in adapter |
 | Business logic in handlers | Leaky abstraction | Move to services |
 | Database types in domain | External dependency in core | Use domain types, map in adapter |
 | Direct HTTP calls in services | Tight coupling | Create external client adapter |

@@ -14,13 +14,13 @@ Secondary adapters (outbound) implement interfaces defined by the core services.
 
 Use the `hexago add adapter` command:
 
-```bash
+```shell
 hexago add adapter secondary database UserRepository \
-  --entity User \
-  --working_directory /path/to/project
+  --entity User
 ```
 
 This generates:
+
 - `internal/adapters/secondary/database/user_repository.go`
 - `internal/adapters/secondary/database/user_repository_test.go`
 
@@ -133,12 +133,12 @@ func (r *UserRepository) SaveUser(ctx context.Context, user *domain.User) error 
 
 Add database migrations for your tables:
 
-```bash
-hexago add migration create_users \
-  --working_directory /path/to/project
+```shell
+hexago add migration create_users
 ```
 
 This creates:
+
 - `migrations/000001_create_users.up.sql`
 - `migrations/000001_create_users.down.sql`
 
@@ -269,7 +269,7 @@ type MockDB struct {
     mock.Mock
 }
 
-func (m *MockDB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+func (m *MockDB) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
     return nil // simplified
 }
 
@@ -313,7 +313,7 @@ func TestIntegration_UserRepository(t *testing.T) {
 ## Best Practices
 
 | Practice | Description |
-|----------|-------------|
+| --- | --- |
 | **Compile-time interface check** | Add `var _ ports.UserStore = (*UserRepository)(nil)` |
 | **Context propagation** | All DB methods take `context.Context` |
 | **Error wrapping** | Wrap errors with operation context |

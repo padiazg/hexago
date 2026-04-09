@@ -21,6 +21,7 @@ func (s *Service) GetUser(id string) (*User, error) {
 ```
 
 This enables:
+
 - Cancellation propagation
 - Timeout management
 - Tracing correlation
@@ -90,7 +91,7 @@ log.Printf("request failed: %v", err)
 ### Log Levels
 
 | Level | Use For |
-|-------|---------|
+| --- | --- |
 | `Debug` | Development info, verbose state |
 | `Info` | Normal operation events |
 | `Warn` | Recoverable issues, degraded behavior |
@@ -125,6 +126,7 @@ func init() {
 ```
 
 Benefits:
+
 - Dependencies are explicit and testable
 - No hidden initialization order
 - Easy to create multiple instances
@@ -172,7 +174,7 @@ func TestService_Create(t *testing.T) {
 ## Naming Conventions
 
 | Element | Convention | Example |
-|---------|------------|---------|
+| --- | --- | --- |
 | Packages | lowercase, short | `domain`, `services` |
 | Interfaces | PascalCase, ending with er | `Store`, `Provider` |
 | Structs | PascalCase | `UserService`, `OrderHandler` |

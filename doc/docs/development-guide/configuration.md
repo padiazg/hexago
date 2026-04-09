@@ -9,7 +9,7 @@ How to configure your HexaGo-generated application.
 The generated project uses a YAML config file named after the project:
 
 | Project Name | Config File |
-|--------------|-------------|
+| --- | --- |
 | `my-app` | `.my-app.yaml` |
 | `trading-bot` | `.trading-bot.yaml` |
 
@@ -60,7 +60,7 @@ observability:
 All config values can be overridden with environment variables using the `PROJECT_PREFIX_` format:
 
 | Config Path | Environment Variable |
-|-------------|---------------------|
+| --- | --- |
 | `server.port` | `MY_APP_SERVER_PORT` |
 | `server.readtimeout` | `MY_APP_SERVER_READTIMEOUT` |
 | `loglevel` | `MY_APP_LOGLEVEL` |

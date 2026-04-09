@@ -103,6 +103,7 @@ nav:
     - HTTP Plugin Adapter: development-guide/http-plugins-adapter.md
     - Database Adapter: development-guide/secondary-database-adapter.md
     - External API Adapter: development-guide/secondary-external-api-adapter.md
+    - URL Shortener with QR Code: development-guide/url-shortener-full-example.md
   - Changelog: changelog.md
 
 extra:

@@ -7,7 +7,7 @@ How to write and run tests in HexaGo-generated projects.
 ## Test Types
 
 | Type | Description | How to Run |
-|------|-------------|------------|
+| --- | --- | --- |
 | **Unit tests** | Test isolated components, no external deps | `go test ./...` |
 | **Integration tests** | Test with real external services | `go test -tags=integration ./...` |
 
@@ -67,7 +67,7 @@ Integration tests require API keys or database connections configured in `.env`.
 
 ### File Naming
 
-```
+```shell
 internal/core/domain/
 ├── user.go
 ├── user_test.go      ← unit tests
@@ -117,7 +117,7 @@ import (
 ```
 
 | Package | Use Case |
-|---------|----------|
+| --- | --- |
 | `assert` | Continue on failure, good for multiple checks |
 | `require` | Stop on failure, good for prerequisites |
 | `mock` | Create mock objects for interfaces |

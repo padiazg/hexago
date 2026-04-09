@@ -9,7 +9,7 @@ Commands for building, testing, and running your HexaGo-generated application.
 The generated `Makefile` provides convenient targets for common operations:
 
 | Target | Description |
-|--------|-------------|
+| --- | --- |
 | `make build` | Compile the application binary |
 | `make clean` | Remove build artifacts |
 | `make test` | Run unit tests with race detection |
@@ -110,6 +110,7 @@ hexago validate
 ```
 
 This checks:
+
 - Core domain has no external dependencies
 - Services only depend on domain and ports
 - Adapters don't import from other adapters
