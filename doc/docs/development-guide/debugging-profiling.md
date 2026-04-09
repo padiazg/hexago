@@ -9,12 +9,14 @@ Tools and techniques for debugging and profiling Go applications.
 ### Delve Debugger
 
 Install Delve:
-```bash
+
+```shell
 go install github.com/go-delve/delve/cmd/dlv@latest
 ```
 
 Start debugging:
-```bash
+
+```shell
 # Debug the entire package
 dlv debug ./...
 
@@ -28,7 +30,7 @@ dlv attach <pid>
 ### Common Delve Commands
 
 | Command | Shortcut | Description |
-|--------|----------|-------------|
+| --- | --- | --- |
 | `break main.go:10` | `b` | Set breakpoint |
 | `break foo.go:15` | | Set breakpoint at line |
 | `continue` | `c` | Run until breakpoint |
@@ -42,7 +44,7 @@ dlv attach <pid>
 
 ### Example Debug Session
 
-```bash
+```shell
 (dlv) break internal/core/services/user.go:25
 (dlv) continue
 > internal/core/services/user.go:25
@@ -61,7 +63,7 @@ id = "123"
 
 ### CPU Profiling
 
-```bash
+```shell
 # Run with CPU profiling enabled
 go test -cpuprofile=cpu.prof -bench=.
 
@@ -70,7 +72,8 @@ go run -cpuprofile=cpu.prof main.go run
 ```
 
 Analyze the profile:
-```bash
+
+```shell
 go tool pprof cpu.prof
 
 # Interactive commands:
@@ -82,7 +85,7 @@ go tool pprof cpu.prof
 
 ### Memory Profiling
 
-```bash
+```shell
 # Run with memory profiling
 go test -memprofile=mem.prof -bench=.
 
@@ -97,7 +100,8 @@ go tool pprof mem.prof
 ### Block Profiling
 
 Identifies synchronization bottlenecks:
-```bash
+
+```shell
 go test -blockprofile=block.prof -bench=.
 go tool pprof block.prof
 ```
@@ -105,7 +109,8 @@ go tool pprof block.prof
 ### Mutex Profiling
 
 Find lock contention:
-```bash
+
+```shell
 go test -mutexprofile=mutex.prof -bench=.
 go tool pprof mutex.prof
 ```
@@ -116,7 +121,7 @@ go tool pprof mutex.prof
 
 ### Running Benchmarks
 
-```bash
+```shell
 # Run all benchmarks
 go test -bench=. -benchmem ./...
 
@@ -147,13 +152,13 @@ func BenchmarkUserService_Create(b *testing.B) {
 
 ```
 BenchmarkUserService_Create-8    1000000    1234 ns/op    256 B/op    3 allocs/op
-             ↑                   ↑          ↑             ↑           ↑
-         Name                  Iterations   Time/op     Memory    Allocations
+          ↑                         ↑          ↑             ↑           ↑
+        Name                    Iterations   Time/op       Memory     Allocations
 ```
 
 ### Comparing Benchmarks
 
-```bash
+```shell
 # Save baseline
 go test -bench=. -count=5 > baseline.txt
 
@@ -171,18 +176,19 @@ benchstat baseline.txt new.txt
 
 ### Generate Trace
 
-```bash
+```shell
 go test -trace=trace.out ./...
 go run -trace=trace.out main.go run
 ```
 
 ### View Trace
 
-```bash
+```shell
 go tool trace trace.out
 ```
 
 Trace shows:
+
 - Goroutine scheduling
 - Syscall blocking
 - GC events
@@ -194,12 +200,13 @@ Trace shows:
 
 Generate a profile and view in browser:
 
-```bash
+```shell
 # Start HTTP server for pprof
 go tool pprof -http=:8080 cpu.prof
 ```
 
 This opens a browser with:
+
 - Graph visualization
 - Source code view
 - Flame graph
@@ -210,7 +217,7 @@ This opens a browser with:
 ## Common Performance Issues
 
 | Issue | Profiling Type | Solution |
-|-------|---------------|----------|
+| --- | --- | --- |
 | High CPU | CPU profile | Optimize hot functions |
 | Memory leaks | Memory profile | Check retained objects |
 | Slow requests | CPU + trace | Find blocking operations |
@@ -223,7 +230,7 @@ This opens a browser with:
 
 ### GODEBUG Settings
 
-```bash
+```shell
 # Show GC trace
 GODEBUG=gctrace=1 go run main.go
 
@@ -235,7 +242,7 @@ GODEBUG=schedtrace=1000 go run main.go
 
 If observability is enabled:
 
-```bash
+```shell
 # View metrics
 curl http://localhost:9090/metrics
 
@@ -251,7 +258,8 @@ curl http://localhost:9090/metrics
 
 ### VS Code
 
-Install Go extension, then:  
+Install Go extension, then:
+
 1. Set breakpoints in code  
 2. Press F5 to start debugging  
 3. Use Debug Console to inspect variables  
@@ -267,7 +275,7 @@ Install Go extension, then:
 ## Quick Reference
 
 | Task | Command |
-|------|---------|
+| --- | --- |
 | Debug a test | `dlv test ./...` |
 | CPU profile | `go test -cpuprofile=pprof.out` |
 | Memory profile | `go test -memprofile=pprof.out` |

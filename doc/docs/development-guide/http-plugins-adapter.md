@@ -1,9 +1,3 @@
----
-title: HTTP Adapter Plugins
-description: How to extend HTTP adapters with new routes, route groups, and middleware for each supported framework.
-weight: 30
----
-
 # HTTP Adapter Plugin Pattern
 
 HexaGo generates HTTP adapters with a plugin-like architecture where each handler registers itself on the server via the `ServerHandler` interface. This guide covers how to add new routes, create route groups, and apply middleware for each supported framework.
@@ -16,7 +10,7 @@ The HTTP adapter follows a **wiring pattern** where:
 2. **`internal/adapters/primary/http/http_adapter.go`** - Wires all handlers together
 3. **Handler packages** - Each handler (ping, health, metrics, custom) implements `ServerHandler`
 
-```
+```shell
 internal/adapters/primary/http/
 ├── http_adapter.go    # Wires all handlers (main entry point)
 ├── ping/              # Example handler: GET /ping
@@ -38,12 +32,12 @@ type ServerHandler interface {
 Each framework's `httpserver.Server` exposes its native router via a `Handler` struct:
 
 | Framework | Router Field | Group Method |
-|-----------|--------------|--------------|
-| Echo      | `Echo *echo.Echo` | `Echo.Group(path)` |
-| Gin       | `Router *gin.Engine` | `Router.Group(path)` |
-| Chi       | `Router chi.Router` | `Router.Route(path, fn)` |
-| Fiber     | `App *fiber.App` | `App.Group(path)` |
-| stdlib    | `Mux *http.ServeMux` | Manual via nested `ServeMux` |
+| --- | --- | --- |
+| Echo | `Echo *echo.Echo` | `Echo.Group(path)` |
+| Gin | `Router *gin.Engine` | `Router.Group(path)` |
+| Chi | `Router chi.Router` | `Router.Route(path, fn)` |
+| Fiber | `App *fiber.App` | `App.Group(path)` |
+| stdlib | `Mux *http.ServeMux` | Manual via nested `ServeMux` |
 
 ## Adding a New Route Handler
 
