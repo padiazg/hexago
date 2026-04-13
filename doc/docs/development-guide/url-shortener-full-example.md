@@ -243,13 +243,15 @@ Update the migration SQL:
 CREATE TABLE IF NOT EXISTS urls (
     id TEXT PRIMARY KEY,
     original_url TEXT NOT NULL,
-   qr TEXT NOT NULL DEFAULT "",
+    qr TEXT NOT NULL DEFAULT "",
     created_at TEXT NOT NULL,
     click_count INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_urls_created_at ON urls(created_at DESC);
+```
 
+```sql
 -- migrations/000001_create_urls.down.sql
 DROP TABLE IF EXISTS urls;
 ```
@@ -274,7 +276,7 @@ import (
 ...
 // newMigration creates a migrate instance
 func (m *Migrator) newMigration() (*migrate.Migrate, error) {
-   driver, err := sqlitemig.WithInstance(m.db, &sqlitemig.Config{})
+   driver, err := sqlitemig.WithInstance(m.db, &sqlitemig.Config{}) // change this
    if err != nil {
       return nil, err
    }
@@ -282,7 +284,7 @@ func (m *Migrator) newMigration() (*migrate.Migrate, error) {
    // TODO: Update database name if not using postgres
    return migrate.NewWithDatabaseInstance(
       "file://migrations",
-      "sqlite",
+      "sqlite",               // change this
       driver,
    )
 ```
@@ -339,6 +341,10 @@ func New(db *sql.DB) *URLRepository {
 
 // Open opens a SQLite database at the given path.
 func Open(path string) (*sql.DB, error) {
+   if path == "" {
+		return nil, fmt.Errorf("open database: must provide a path")
+	}
+   
    db, err := sql.Open("sqlite", path)
    if err != nil {
       return nil, fmt.Errorf("open database: %w", err)
@@ -1138,7 +1144,7 @@ type Config struct {
 
 func setDefaults() {
    // Server defaults
-   viper.SetDefault("db_path", "./url_shortener.db") // add this
+   viper.SetDefault("dbpath", "./url_shortener.db") // add this
 ...
 }
 ```
