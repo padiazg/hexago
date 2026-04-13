@@ -470,6 +470,7 @@ func New(config *Config) *Services {
     }
 }
 ```
+
 ---
 
 ## Wire-up in `cmd`
