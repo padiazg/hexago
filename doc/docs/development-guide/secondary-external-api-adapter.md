@@ -16,13 +16,14 @@ Create the project with all required features:
 
 ```shell
 $ hexago init chuck-norris \
-  --module github.com/myuser/chuck-norris \
-  --framework chi
+  --project-type service \
+  --explicit-ports \             
+  --module github.com/padiazg/chuck-norris
+
 📋 Project Configuration:
   Name:              chuck-norris
-  Module:            github.com/myuser/chuck-norris
-  Project Type:      http-server
-  Framework:         chi
+  Module:            github.com/padiazg/chuck-norris
+  Project Type:      service
   Adapter Style:     primary-secondary
   Core Logic:        services
   Docker:            false
@@ -35,7 +36,7 @@ $ hexago init chuck-norris \
 📁 Creating directory structure...
 📝 Generating files...
 📦 Initializing go module...
-go: creating new go.mod: module github.com/myuser/chuck-norris
+go: creating new go.mod: module github.com/padiazg/chuck-norris
 go: to add module requirements and sums:
     go mod tidy
 📦 Adding dependencies...
@@ -59,7 +60,8 @@ $ cd chuck-norris
 ### 1. Generate the value object
 
 ```shell
-$ hexago add domain valueobject Joke --fields "id:string,url:string,value:string"
+$ hexago add domain valueobject Joke \
+  --fields "id:string,url:string,value:string"
 
 📦 Adding value object: Joke
    Project: chuck-norris
@@ -82,7 +84,7 @@ This generates:
 
 ### 2. Update the value object code
 
-Remove the `joke_test.go` for now (you can add tests later). We'll also add a **port** interface in the same package—this defines what the external API client must implement.
+You can emove the `joke_test.go` for now (you can add tests later). We'll also add a **port** interface in the same package—this defines what the external API client must implement.
 
 ```go
 // internal/core/domain/joke/joke.go
@@ -468,6 +470,7 @@ func New(config *Config) *Services {
     }
 }
 ```
+---
 
 ## Wire-up in `cmd`
 
