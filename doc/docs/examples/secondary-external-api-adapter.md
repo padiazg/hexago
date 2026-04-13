@@ -2,6 +2,8 @@
 
 How to add an external API client adapter to a HexaGo-generated project.
 
+> Anywhere you see `github.com/padiazg/chuck-norris` module replace it with yours.
+
 ---
 
 ## Overview

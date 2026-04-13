@@ -2,6 +2,8 @@
 
 How to add a database repository adapter to a HexaGo-generated project.
 
+> Anywhere you see `github.com/padiazg/user-manager` module replace it with yours.
+
 ---
 
 ## Overview
