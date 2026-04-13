@@ -2,6 +2,8 @@
 
 Complete walkthrough of building a URL shortener service with HexaGo. This guide demonstrates how to wire together domain entities, port interfaces, secondary adapters (database + external API), core services, and primary adapters.
 
+> Anywhere you see `github.com/padiazg/url-shortener` module replace it with yours.
+
 ---
 
 ## Step 1: Initialize Project
@@ -10,7 +12,7 @@ Create the project with all required features:
 
 ```shell
 $ hexago init url-shortener \
-  --module github.com/myuser/url-shortener \
+  --module github.com/padiazg/url-shortener \
   --framework chi \
   --with-docker \
   --with-migrations \
@@ -18,7 +20,7 @@ $ hexago init url-shortener \
 
 📋 Project Configuration:
   Name:              url-shortener
-  Module:            github.com/myuser/url-shortener
+  Module:            github.com/    padiazg/url-shortener
   Project Type:      http-server
   Framework:         chi
   Adapter Style:     primary-secondary
@@ -33,7 +35,7 @@ $ hexago init url-shortener \
 📁 Creating directory structure...
 📝 Generating files...
 📦 Initializing go module...
-go: creating new go.mod: module github.com/myuser/url-shortener
+go: creating new go.mod: module github.com/    padiazg/url-shortener
 go: to add module requirements and sums:
    go mod tidy
 📦 Adding dependencies...
@@ -259,7 +261,7 @@ DROP TABLE IF EXISTS urls;
 Update the migrator to use SQLite
 > By the time I write this the migrator generates code for Postgres
 
- ```go
+```go
 // internal/infrastructure/database/migrator.go
 package database
 
