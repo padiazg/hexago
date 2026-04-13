@@ -86,7 +86,7 @@ This generates:
 
 ### 2. Update the value object code
 
-You can emove the `joke_test.go` for now (you can add tests later). We'll also add a **port** interface in the same package—this defines what the external API client must implement.
+You can remove the `joke_test.go` for now (you can add tests later).
 
 ```go
 // internal/core/domain/joke/joke.go
@@ -106,16 +106,24 @@ func (v Joke) String() string {
 }
 ```
 
-```go
-// internal/core/domain/joke/port.go
-package joke
+### 3. Add the port interface
 
-import "context"
+The port interface goes in `internal/core/ports/outbound/` — this defines what the external API client must implement.
+
+```go
+// internal/core/ports/outbound/joke.go
+package outbound
+
+import (
+    "context"
+
+    domain "github.com/padiazg/chuck-norris/internal/core/domain/joke"
+)
 
 type JokeProvider interface {
     Ping(ctx context.Context) error
-    GetRandom(ctx context.Context) (*Joke, error)
-    GetByCategory(ctx context.Context, category string) (*Joke, error)
+    GetRandom(ctx context.Context) (*domain.Joke, error)
+    GetByCategory(ctx context.Context, category string) (*domain.Joke, error)
     ListCategories(ctx context.Context) ([]string, error)
     Search(ctx context.Context, query string) ([]string, error)
 }
@@ -134,8 +142,8 @@ $ hexago add adapter secondary external JokeClient --port JokeProvider
    Project: chuck-norris
    Adapter dir: secondary
 
-📝 Creating adapter file: internal/adapters/secondary/external/joke_client.go
-📝 Creating test file: internal/adapters/secondary/external/joke_client_test.go
+📝 Creating adapter file: internal/adapters/secondary/external/client.go
+📝 Creating test file: internal/adapters/secondary/external/client_test.go
 
 ✅ Secondary adapter added successfully!
 
@@ -148,7 +156,7 @@ $ hexago add adapter secondary external JokeClient --port JokeProvider
 ### 2. Update the adapter code
 
 ```go
-// internal/adapters/secondary/external/joke_client.go
+// internal/adapters/secondary/external/client.go
 package external
 
 import (
@@ -160,9 +168,10 @@ import (
     "time"
 
     domain "github.com/padiazg/chuck-norris/internal/core/domain/joke"
+    port "github.com/padiazg/chuck-norris/internal/core/ports/outbound"
 )
 
-var _ domain.JokeProvider = (*Client)(nil)
+var _ port.JokeProvider = (*Client)(nil)
 
 // Client implements communication with external service
 type Client struct {
@@ -406,15 +415,16 @@ import (
     "fmt"
 
     domain "github.com/padiazg/chuck-norris/internal/core/domain/joke"
+    port "github.com/padiazg/chuck-norris/internal/core/ports/outbound"
 )
 
 // JokeService implements Joke logic
 type Service struct {
-    provider domain.JokeProvider
+    provider port.JokeProvider
 }
 
 type Config struct {
-    Provider domain.JokeProvider
+    Provider port.JokeProvider
 }
 
 // NewJokeService creates a new JokeService.
@@ -449,13 +459,13 @@ func (s *Service) Search(ctx context.Context, query string) ([]string, error) {
 package services
 
 import (
-    domain "github.com/padiazg/chuck-norris/internal/core/domain/joke"
+    port "github.com/padiazg/chuck-norris/internal/core/ports/outbound"
     svc "github.com/padiazg/chuck-norris/internal/core/services/joke"
 )
 
 // Config holds the repository dependencies required to initialise entity-bound services.
 type Config struct {
-    JokeProvider domain.JokeProvider
+    JokeProvider port.JokeProvider
 }
 
 // Services aggregates all domain services.
@@ -840,7 +850,7 @@ This guide demonstrated how to build a CLI application that consumes an external
 | --- | --- | --- | --- |
 | 1 | - | Project initialization | `hexago init` |
 | 2 | Domain | Value object (Joke) | `hexago add domain valueobject` |
-| 3 | Domain + Ports | Port interface (JokeProvider) | Manual in `internal/core/domain/` |
+| 3 | Ports | Port interface (JokeProvider) | Manual in `internal/core/ports/outbound/` |
 | 4 | Secondary | External API Client | `hexago add adapter secondary external` |
 | 5 | Core | Service implementation | `hexago add service` |
 | 6 | Primary | CLI Commands | Manual in `cmd/` |
