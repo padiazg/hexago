@@ -1,35 +1,38 @@
 package external
 
-import (
+import(
 	"context"
 	"fmt"
 	"net/http"
 )
 
-// {{.ServiceName}} implements communication with external service
-type {{.ServiceName}} struct {
-	client  *http.Client
+type {{.ServiceName}} struct{
+	client	*http.Client
 	baseURL string
-	apiKey  string
+	apiKey	string
 }
 
-// New{{.ServiceName}} creates a new {{.ServiceName}}
-func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}} {
+{{if .PortName}}
+var _ {{.PortName}} = (*{{.ServiceName}})(nil)
+{{end}}
+
+func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}}{
 	return &{{.ServiceName}}{
-		client:  &http.Client{},
+		client:	&http.Client{},
 		baseURL: baseURL,
-		apiKey:  apiKey,
+		apiKey:	apiKey,
 	}
 }
 
-// CallExternalAPI makes a call to the external service
-func (s *{{.ServiceName}}) CallExternalAPI(ctx context.Context, params any) (any, error) {
-	// TODO: Implement external API call
-	// 1. Build request
-	// 2. Add authentication headers
-	// 3. Make HTTP request
-	// 4. Parse response
-	// 5. Handle errors
-
+{{if .Methods}}
+{{$svcName := .ServiceName}}
+{{range .Methods}}
+func(s *{{$svcName}}){{.Name}}({{range $i, $p := .Params}}{{if $i}}, {{end}}{{$p.Name}} {{$p.Type}}{{end}})({{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type}}{{end}}){
+	return {{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type | zeroVal}}{{end}}
+}
+{{end}}
+{{else}}
+func(s *{{.ServiceName}}) CallExternalAPI(ctx context.Context, params any)(any, error){
 	return nil, fmt.Errorf("not implemented")
 }
+{{end}}

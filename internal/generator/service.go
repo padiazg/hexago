@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -38,8 +39,9 @@ func NewServiceGenerator(config *ProjectConfig) *ServiceGenerator {
 // entityName (optional) is the domain entity this service manages; when provided
 // the sub-package name is derived from it (e.g. "Category" → "categories").
 // When omitted, serviceName itself is used as the package name.
-func (g *ServiceGenerator) Generate(serviceName, entityName, description string) error {
-	baseServiceDir := filepath.Join("internal", "core", g.config.CoreLogicDir())
+// portInfo (optional) provides method signatures for code generation.
+func (g *ServiceGenerator) Generate(serviceName, entityName, description string, portInfo *analyzer.PortInfo) error {
+	baseServiceDir := filepath.Join(g.config.OutputDir, "internal", "core", g.config.CoreLogicDir())
 	if !utils.FileExists(baseServiceDir) {
 		return fmt.Errorf("directory %s does not exist. Are you in a hexagonal project?", baseServiceDir)
 	}
@@ -55,7 +57,7 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 		resolvedEntity = ""
 	}
 
-	serviceDir := filepath.Join(baseServiceDir, pkgName)
+	serviceDir := filepath.Join("internal", "core", g.config.CoreLogicDir(), pkgName)
 	if err := utils.CreateDir(serviceDir); err != nil {
 		return fmt.Errorf("creating directory %s: %w", serviceDir, err)
 	}
@@ -63,8 +65,8 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 	fileName := pkgName + ".go"
 	testFileName := pkgName + "_test.go"
 
-	filePath := filepath.Join(serviceDir, fileName)
-	testFilePath := filepath.Join(serviceDir, testFileName)
+	filePath := filepath.Join(g.config.OutputDir, serviceDir, fileName)
+	testFilePath := filepath.Join(g.config.OutputDir, serviceDir, testFileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("service file %s already exists", filePath)
@@ -72,13 +74,13 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 
 	fmt.Printf("📝 Creating service file: %s\n", filePath)
 
-	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description, hasEntity); err != nil {
+	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description, hasEntity, portInfo); err != nil {
 		return err
 	}
 
 	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
 
-	if err := g.generateTestFile(testFilePath, serviceName, pkgName); err != nil {
+	if err := g.generateTestFile(testFilePath, serviceName, pkgName, portInfo); err != nil {
 		return err
 	}
 
@@ -91,7 +93,7 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string)
 }
 
 // generateServiceFile generates the service implementation file
-func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName, pkgName, description string, hasEntity bool) error {
+func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName, pkgName, description string, hasEntity bool, portInfo *analyzer.PortInfo) error {
 	desc := description
 	if desc == "" {
 		if hasEntity {
@@ -115,6 +117,11 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 		"Description":       desc,
 	}
 
+	if portInfo != nil {
+		data["Methods"] = portInfo.Methods
+		data["PortName"] = portInfo.Name
+	}
+
 	content, err := g.config.templateLoader.Render("service/service.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render service template: %w", err)
@@ -124,12 +131,17 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 }
 
 // generateTestFile generates the test file
-func (g *ServiceGenerator) generateTestFile(filePath, serviceName, pkgName string) error {
+func (g *ServiceGenerator) generateTestFile(filePath, serviceName, pkgName string, portInfo *analyzer.PortInfo) error {
 	data := map[string]any{
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"ModuleName":  g.config.ModuleName,
 		"ServiceName": serviceName,
 		"PackageName": pkgName,
+	}
+
+	if portInfo != nil {
+		data["Methods"] = portInfo.Methods
+		data["PortName"] = portInfo.Name
 	}
 
 	content, err := g.config.templateLoader.Render("service/service_test.go.tmpl", data)

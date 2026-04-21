@@ -5,8 +5,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
+	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/internal/generator"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +16,8 @@ import (
 var (
 	serviceDescription string
 	serviceEntity      string
+	serviceFromPort    string
+	serviceInferTests  bool
 )
 
 // addServiceCmd represents the add service command
@@ -45,6 +49,8 @@ func init() {
 
 	addServiceCmd.Flags().StringVarP(&serviceDescription, "description", "d", "", "Service description")
 	addServiceCmd.Flags().StringVarP(&serviceEntity, "entity", "e", "", "Domain entity this service manages (PascalCase); determines sub-package name")
+	addServiceCmd.Flags().StringVarP(&serviceFromPort, "from-port", "", "", "Port interface name to infer method signatures from")
+	addServiceCmd.Flags().BoolVarP(&serviceInferTests, "infer-tests", "", false, "Generate tests with method signatures from port")
 }
 
 func runAddService(cmd *cobra.Command, args []string) error {
@@ -66,13 +72,33 @@ func runAddService(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Module: %s\n", config.ModuleName)
 	fmt.Printf("   Logic dir: %s\n\n", config.CoreLogic)
 
+	// Load port info if --from-port is provided
+	var portInfo *analyzer.PortInfo
+	if serviceFromPort != "" {
+		pkgs, err := analyzer.LoadProject(workingDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "⚠️  Warning: failed to load project for semantic analysis: %v\n", err)
+			fmt.Fprintf(os.Stderr, "🔄 Falling back to generic generation\n")
+		} else {
+			portInfo, err = analyzer.FindInterfaceByName(pkgs, serviceFromPort)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "⚠️  Warning: port %q not found: %v\n", serviceFromPort, err)
+				fmt.Fprintf(os.Stderr, "🔄 Falling back to generic generation\n")
+				portInfo = nil
+			}
+		}
+	}
+
 	// Generate service
 	gen := generator.NewServiceGenerator(config)
-	if err := gen.Generate(serviceName, serviceEntity, serviceDescription); err != nil {
+	if err := gen.Generate(serviceName, serviceEntity, serviceDescription, portInfo); err != nil {
 		return fmt.Errorf("failed to generate service: %w", err)
 	}
 
 	fmt.Println("\n✅ Service added successfully!")
+	if serviceFromPort != "" && portInfo != nil {
+		fmt.Printf("   📋 Inferred %d method(s) from %s port\n", len(portInfo.Methods), serviceFromPort)
+	}
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the business logic in the Execute method\n")
 	fmt.Printf("  2. Add any required dependencies to the constructor\n")

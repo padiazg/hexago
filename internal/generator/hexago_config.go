@@ -81,6 +81,8 @@ func HexagoConfigFromProject(cfg *ProjectConfig) *HexagoConfig {
 func (h *HexagoConfig) ToProjectConfig() *ProjectConfig {
 	cfg := NewProjectConfig(h.Project.Name, h.Project.Module)
 
+	// OutputDir will be set by DetectConfig caller
+
 	cfg.ProjectType = h.Project.Type
 	cfg.Framework = h.Project.Framework
 	cfg.GoVersion = h.Project.GoVersion

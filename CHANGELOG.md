@@ -5,11 +5,54 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.1.4 - [unreleased]
+
+### Added
+
+#### Semantic Code Analysis via `go/packages`
+
+- **New package `internal/analyzer/`** provides Go semantic analysis without LSP dependencies
+  - `loader.go` — loads project packages using `go/packages`
+  - `interfaces.go` — discovers port interfaces in `internal/core/`
+  - `structs.go` — discovers domain structs
+  - `types.go` — core types: `PortInfo`, `MethodInfo`, `ParamInfo`, `DomainStruct`, `FieldInfo`
+
+- **New CLI flags for semantic code generation**:
+  - `--from-port <PortName>` — infers method signatures from an existing port interface
+  - `--infer-tests` — generates tests with correct method signatures (placeholder, not yet implemented)
+
+- **Templates now generate code with actual signatures**:
+  - `service/service.go.tmpl` — generates methods from port interface
+  - `adapter/external.go.tmpl` — generates methods from port interface
+  - Includes compile-time interface verification: `var _ PortName = (*Adapter)(nil)`
+
+- **Template helper function `zeroVal`** — returns correct zero values for Go types:
+  - `string` → `""`
+  - `error` → `nil`
+  - `int`, `int64` → `0`
+  - `bool` → `false`
+  - `float64` → `0`
+
+- **Fixed**: Output directory paths now correctly use `OutputDir` from project config
+
+#### Example Usage
+
+```bash
+# Generate adapter with method stubs matching the UserRepository port
+hexago add adapter secondary database UserRepository --from-port UserRepository
+
+# Generate service with method stubs inferred from port
+hexago add service SendEmail --from-port EmailSender
+```
+
+---
+
 ## v0.1.3 - [unreleased]
 
 ### Added
 
 #### Handler Plugin Pattern (`Use(ServerHandler) Server`)
+
 - **`Server` interface** in `pkg/server/server.go` extended with `Use(ServerHandler) Server` — a fluent
   registration method that accepts any type implementing `ServerHandler`
 - **`ServerHandler` interface**: a single `Configure(Server)` method — each handler package mounts its
@@ -18,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   inside the adapter constructor
 
 #### `pkg/httpserver` — Exported Framework Server
+
 - Framework-specific server implementations moved from `internal/adapters/{inbound}/http/` to
   `pkg/httpserver/` (package name `httpsrv`)
 - Each framework server (`chi`, `echo`, `gin`, `fiber`, `stdlib`) exposes its underlying router/engine
@@ -31,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ServerConfig.Metrics` field removed — metrics are now registered as a regular handler
 
 #### Observability Integrated into Main Server (No Separate Port)
+
 - Health checks (`/health`, `/health/ready`, `/health/live`) and Prometheus metrics (`/metrics`) are
   now registered as `ServerHandler` instances on the **main HTTP server** via `Use()`
 - Eliminated the separate observability server (`observability.Server`) that previously ran on a
@@ -39,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Templates `observability/server.go.tmpl` deleted
 
 #### Isolated Route Handler Packages
+
 - Each route group ships as its own sub-package inside `internal/adapters/{inbound}/http/`:
   - `ping/` — health ping at `/ping`
   - `health/` — Kubernetes probes at `/health`, `/health/ready`, `/health/live` (with `--with-observability`)

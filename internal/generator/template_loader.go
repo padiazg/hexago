@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/pkg/utils"
 )
 
@@ -295,11 +296,41 @@ func (l *TemplateLoader) loadRawTemplate(name string) ([]byte, error) {
 // createTemplateFuncMap creates custom template functions
 func createTemplateFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"upper":  strings.ToUpper,
-		"lower":  strings.ToLower,
-		"title":  utils.ToTitleCase,
-		"snake":  utils.ToSnakeCase,
-		"lbrace": func() string { return "{{" },
-		"rbrace": func() string { return "}}" },
+		"upper":       strings.ToUpper,
+		"lower":       strings.ToLower,
+		"title":       utils.ToTitleCase,
+		"snake":       utils.ToSnakeCase,
+		"lbrace":      func() string { return "{{" },
+		"rbrace":      func() string { return "}}" },
+		"zeroVal":     zeroValue,
+		"firstMethod": firstMethod,
+	}
+}
+
+// firstMethod returns the first method from a slice of MethodInfo
+func firstMethod(methods []analyzer.MethodInfo) *analyzer.MethodInfo {
+	if len(methods) == 0 {
+		return nil
+	}
+	return &methods[0]
+}
+
+// zeroValue returns the zero/empty value for a given Go type.
+func zeroValue(typeName string) string {
+	switch typeName {
+	case "string":
+		return `""`
+	case "error":
+		return "nil"
+	case "int", "int32", "int64":
+		return "0"
+	case "uint", "uint32", "uint64":
+		return "0"
+	case "bool":
+		return "false"
+	case "float32", "float64":
+		return "0"
+	default:
+		return "nil"
 	}
 }

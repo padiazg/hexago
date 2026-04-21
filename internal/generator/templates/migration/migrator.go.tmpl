@@ -33,7 +33,7 @@ func NewMigrator(cfg *MigratorConfig) *Migrator {
 
 // Up runs all pending migrations
 func (m *Migrator) Up() error {
-	migration, err := m.getMigration()
+	migration, err := m.newMigration()
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
@@ -50,7 +50,7 @@ func (m *Migrator) Up() error {
 
 // Down rolls back the last migration
 func (m *Migrator) Down() error {
-	migration, err := m.getMigration()
+	migration, err := m.newMigration()
 	if err != nil {
 		return fmt.Errorf("failed to create migration instance: %w", err)
 	}
@@ -67,7 +67,7 @@ func (m *Migrator) Down() error {
 
 // Version returns the current migration version
 func (m *Migrator) Version() (uint, bool, error) {
-	migration, err := m.getMigration()
+	migration, err := m.newMigration()
 	if err != nil {
 		return 0, false, fmt.Errorf("failed to create migration instance: %w", err)
 	}
@@ -81,8 +81,8 @@ func (m *Migrator) Version() (uint, bool, error) {
 	return version, dirty, nil
 }
 
-// getMigration creates a migrate instance
-func (m *Migrator) getMigration() (*migrate.Migrate, error) {
+// newMigration creates a migrate instance
+func (m *Migrator) newMigration() (*migrate.Migrate, error) {
 	driver, err := postgres.WithInstance(m.db, &postgres.Config{})
 	if err != nil {
 		return nil, err

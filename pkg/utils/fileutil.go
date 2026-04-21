@@ -73,6 +73,15 @@ func ReadDir(path string) ([]string, error) {
 	return names, nil
 }
 
+// ReadFile reads a file and returns its contents as string
+func ReadFile(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
 func HomeDir() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
