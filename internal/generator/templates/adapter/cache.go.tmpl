@@ -11,6 +11,11 @@ type {{.CacheName}} struct {
 	// TODO: Add cache client (Redis, Memcached, etc.)
 }
 
+{{if .PortName}}
+// compile-time check that {{.CacheName}} satisfies the {{.PortName}} port.
+var _ {{.PortName}} = (*{{.CacheName}})(nil)
+{{end}}
+
 // New{{.CacheName}} creates a new {{.CacheName}}
 func New{{.CacheName}}( /* TODO: Add dependencies */ ) *{{.CacheName}} {
 	return &{{.CacheName}}{

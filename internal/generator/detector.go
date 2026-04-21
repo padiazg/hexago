@@ -26,8 +26,9 @@ func (d *ProjectDetector) DetectConfig() (*ProjectConfig, error) {
 	// Try .hexago.yaml first — it has the full picture
 	if hexCfg, err := LoadHexagoConfig(d.projectPath); err == nil {
 		cfg := hexCfg.ToProjectConfig()
-		// Always override ProjectName with actual directory name
+		// Always override with actual project values
 		cfg.ProjectName = filepath.Base(d.projectPath)
+		cfg.OutputDir = d.projectPath
 		return cfg, nil
 	}
 
@@ -66,6 +67,9 @@ func (d *ProjectDetector) DetectConfig() (*ProjectConfig, error) {
 
 	// Check for observability
 	config.WithObservability = d.hasObservability()
+
+	// Set output directory
+	config.OutputDir = d.projectPath
 
 	return config, nil
 }

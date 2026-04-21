@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/internal/generator"
 	"github.com/spf13/cobra"
 )
@@ -14,6 +16,8 @@ var (
 	adapterPort          string
 	adapterEntity        string
 	adapterPrimaryEntity string
+	fromPort             string
+	inferTests           bool
 )
 
 // addAdapterCmd represents the add adapter command
@@ -77,6 +81,8 @@ func init() {
 	addAdapterPrimaryCmd.Flags().StringVarP(&adapterPrimaryEntity, "entity", "e", "", "Domain entity this handler serves (PascalCase); generates sub-package with config+handlers files")
 	addAdapterSecondaryCmd.Flags().StringVarP(&adapterPort, "port", "p", "", "Port interface name (if using explicit ports)")
 	addAdapterSecondaryCmd.Flags().StringVarP(&adapterEntity, "entity", "e", "", "Domain entity this adapter implements (PascalCase); determines sub-package for database adapters")
+	addAdapterSecondaryCmd.Flags().StringVarP(&fromPort, "from-port", "", "", "Port interface name to infer method signatures from")
+	addAdapterSecondaryCmd.Flags().BoolVarP(&inferTests, "infer-tests", "", false, "Generate tests with method signatures from port")
 }
 
 func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
@@ -127,12 +133,31 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Project: %s\n", config.ProjectName)
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterOutboundDir())
 
+	var portInfo *analyzer.PortInfo
+	if fromPort != "" {
+		pkgs, err := analyzer.LoadProject(workingDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "⚠️  Warning: failed to load project for semantic analysis: %v\n", err)
+			fmt.Fprintf(os.Stderr, "🔄 Falling back to generic generation\n")
+		} else {
+			portInfo, err = analyzer.FindInterfaceByName(pkgs, fromPort)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "⚠️  Warning: port %q not found: %v\n", fromPort, err)
+				fmt.Fprintf(os.Stderr, "🔄 Falling back to generic generation\n")
+				portInfo = nil
+			}
+		}
+	}
+
 	gen := generator.NewAdapterGenerator(config)
-	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, adapterPort); err != nil {
+	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, adapterPort, portInfo); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}
 
 	fmt.Println("\n✅ Secondary adapter added successfully!")
+	if fromPort != "" && portInfo != nil {
+		fmt.Printf("   📋 Inferred %d method(s) from %s port\n", len(portInfo.Methods), fromPort)
+	}
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the port interface methods\n")
 	fmt.Printf("  2. Add database queries or external API calls\n")

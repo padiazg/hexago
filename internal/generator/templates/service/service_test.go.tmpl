@@ -1,69 +1,51 @@
 {{/*
-Template: service/service_test.go
-Description: Service/UseCase test file
-Variables:
-  - CoreLogic: string - Core logic directory name
-  - ModuleName: string - Go module name
-  - ServiceName: string - Service name
-  - PackageName: string - Sub-package name (e.g. categories)
+Template: service/service_test.go.tmpl
+Description: Service test file with mocks from port
 */}}
 package {{.PackageName}}_test
 
-import (
+import(
 	"context"
 	"testing"
 
-	"{{.ModuleName}}/internal/core/{{.CoreLogic}}/{{.PackageName}}"
+	"{{.ModuleName}}/internal/core/services/{{.PackageName}}"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-func Test{{.ServiceName}}Service_Create(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   {{.PackageName}}.Create{{.ServiceName}}Input
-		wantErr bool
-	}{
-		{
-			name:    "successful create",
-			input:   {{.PackageName}}.Create{{.ServiceName}}Input{
-				// TODO: Add test input
-			},
-			wantErr: false,
-		},
-		// TODO: Add more test cases
-	}
+{{if .Methods}}
+{{$first := firstMethod .Methods}}
+{{$portName := .PortName}}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange — TODO: inject mock repository
-			service := {{.PackageName}}.New{{.ServiceName}}Service( /* TODO: mock repo */ )
-			ctx := context.Background()
-
-			// Act
-			result, err := service.Create(ctx, tt.input)
-
-			// Assert
-			if tt.wantErr {
-				require.Error(t, err)
-				assert.Nil(t, result)
-			} else {
-				require.NoError(t, err)
-				assert.NotNil(t, result)
-			}
-		})
-	}
+// {{$portName}}Mock implements {{$portName}} port for testing
+type {{$portName}}Mock struct{
+	mock.Mock
 }
 
-func Test{{.ServiceName}}Service_List(t *testing.T) {
-	// Arrange — TODO: inject mock repository
-	service := {{.PackageName}}.New{{.ServiceName}}Service( /* TODO: mock repo */ )
-	ctx := context.Background()
+func(m *{{$portName}}Mock) {{$first.Name}}(ctx context.Context{{range $p := $first.Params}}, {{$p.Name}} {{$p.Type}}{{end}})({{range $i, $r := $first.Returns}}{{if $i}}, {{end}}{{$r.Type}}{{end}}){
+	args := m.Called()
+	{{range $i, $r := $first.Returns}}return args.Get({{$i}}).({{$r.Type}}){{end}}
+}
+
+func Test{{.ServiceName}}_{{$first.Name}}(t *testing.T){
+	// TODO: Configure mock expectations
+	mockRepo := new({{$portName}}Mock)
+	mockRepo.On("{{$first.Name}}", mock.Anything{{range $p := $first.Params}}, mock.Anything{{end}}).Return({{range $r := $first.Returns}}{{$r.Type | zeroVal}}{{end}})
+
+	svc := {{.PackageName}}.New{{.ServiceName}}()
 
 	// Act
-	results, err := service.List(ctx)
+	result, err := svc.{{$first.Name}}(context.Background(){{range $p := $first.Params}}, {{$p.Name}}{{end}})
 
 	// Assert
 	require.NoError(t, err)
-	assert.NotNil(t, results)
+	mockRepo.AssertExpectations(t)
+	assert.NotNil(t, result)
 }
+{{else}}
+
+func Test{{.ServiceName}}(t *testing.T) {
+	t.Skip("Not implemented")
+}
+{{end}}

@@ -110,6 +110,12 @@ func (v Joke) String() string {
 
 The port interface goes in `internal/core/ports/outbound/` — this defines what the external API client must implement.
 
+```shell
+Service (core)  →  JokeProvider (port)  →  Client (secondary adapter)
+                                                ↓
+                                        api.chucknorris.io
+```
+
 ```go
 // internal/core/ports/outbound/joke.go
 package outbound
@@ -179,6 +185,12 @@ type Client struct {
     baseURL string
 }
 
+// ClientConfig is the client configuration
+type ClientConfig struct {
+    Client  *http.Client
+    BaseURL string
+}
+
 // Response types for Chuck Norris API
 type ChuckResponse struct {
     IconURL string `json:"icon_url"`
@@ -203,10 +215,22 @@ type SearchResult struct {
 }
 
 // NewClient creates a new Client
-func NewClient() *Client {
+func NewClient(cfg *ClientConfig) *Client {
+    if cfg == nil {
+        cfg = &ClientConfig{}
+    }
+
+    if cfg.BaseURL == "" {
+        cfg.BaseURL = "https://api.chucknorris.io/jokes"
+    }
+
+    if cfg.Client == nil {
+        cfg.Client = &http.Client{Timeout: 30 * time.Second}
+    }
+
     return &Client{
-        client:  &http.Client{Timeout: 30 * time.Second},
-        baseURL: "https://api.chucknorris.io/jokes",
+        client:  cfg.Client,
+        baseURL: cfg.BaseURL,
     }
 }
 
@@ -528,7 +552,7 @@ var jokeCmd = &cobra.Command{
         })
 
         // ── Secondary Adapters ────────────────────────────────────────────
-        provider := client.NewClient()
+        provider := client.NewClient(nil)
 
         // ── Services (core) ───────────────────────────────────────────────
         svc := services.New(&services.Config{
@@ -641,7 +665,7 @@ var categoriesCmd = &cobra.Command{
         })
 
         // ── Secondary Adapters ────────────────────────────────────────────
-        provider := client.NewClient()
+        provider := client.NewClient(nil)
 
         // ── Services (core) ───────────────────────────────────────────────
         svc := services.New(&services.Config{
@@ -770,7 +794,7 @@ Example:
         })
 
         // ── Secondary Adapters ────────────────────────────────────────────
-        provider := client.NewClient()
+        provider := client.NewClient(nil)
 
         // ── Services (core) ───────────────────────────────────────────────
         svc := services.New(&services.Config{
