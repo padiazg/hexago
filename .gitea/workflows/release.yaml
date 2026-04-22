@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    branches:
+      # - master
+      # - main
+      - RC*
+    tags:
+      - 'v*.*.*'
+      - 'rc*'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: "go.mod"
+          # go-version: '1.26'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean --auto-snapshot --parallelism 2 --config .goreleaser.local.yml
+        env:
+          GITEA_TOKEN: ${{ secrets.ACTION_TOKEN }}
+          GITEA_URL: ${{ env.GITEA_INSTANCE_URL }}
+          GITEA_API: "${{ env.GITEA_API }}"
