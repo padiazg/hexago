@@ -63,10 +63,8 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string,
 	}
 
 	fileName := pkgName + ".go"
-	testFileName := pkgName + "_test.go"
 
 	filePath := filepath.Join(g.config.OutputDir, serviceDir, fileName)
-	testFilePath := filepath.Join(g.config.OutputDir, serviceDir, testFileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("service file %s already exists", filePath)
@@ -75,12 +73,6 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string,
 	fmt.Printf("📝 Creating service file: %s\n", filePath)
 
 	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description, hasEntity, portInfo); err != nil {
-		return err
-	}
-
-	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
-
-	if err := g.generateTestFile(testFilePath, serviceName, pkgName, portInfo); err != nil {
 		return err
 	}
 
@@ -125,28 +117,6 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 	content, err := g.config.templateLoader.Render("service/service.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render service template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
-// generateTestFile generates the test file
-func (g *ServiceGenerator) generateTestFile(filePath, serviceName, pkgName string, portInfo *analyzer.PortInfo) error {
-	data := map[string]any{
-		"CoreLogic":   g.config.CoreLogicDir(),
-		"ModuleName":  g.config.ModuleName,
-		"ServiceName": serviceName,
-		"PackageName": pkgName,
-	}
-
-	if portInfo != nil {
-		data["Methods"] = portInfo.Methods
-		data["PortName"] = portInfo.Name
-	}
-
-	content, err := g.config.templateLoader.Render("service/service_test.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render service test template: %w", err)
 	}
 
 	return utils.WriteFile(filePath, content)

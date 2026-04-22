@@ -14,7 +14,8 @@ func LoadProject(dir string) ([]*packages.Package, error) {
 		Mode: packages.NeedTypes |
 			packages.NeedSyntax |
 			packages.NeedImports |
-			packages.NeedName,
+			packages.NeedName |
+			packages.NeedDeps,
 		Dir: dir,
 	}
 

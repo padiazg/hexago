@@ -120,123 +120,69 @@ func (g *ProjectGenerator) generateDirectoryStructure() error {
 // generateFiles generates all files from templates
 func (g *ProjectGenerator) generateFiles() error {
 	fmt.Println("📝 Generating files...")
-
-	// Generate main.go
-	if err := g.generateFile(mainTemplate); err != nil {
-		return err
-	}
-
-	// Generate cmd/root.go
-	if err := g.generateFile(rootTemplate); err != nil {
-		return err
-	}
-
-	// Generate cmd/version.go
-	if err := g.generateFile(versionCmdTemplate); err != nil {
-		return err
-	}
-
-	// Generate cmd/run.go
-	if err := g.generateFile(runTemplate); err != nil {
-		return err
+	queue := []string{
+		mainTemplate,
+		rootTemplate,
+		versionCmdTemplate,
+		runTemplate,
 	}
 
 	switch g.config.ProjectType {
 
 	// Generate processor for service type
 	case "service":
-		if err := g.generateFile(processorTemplate); err != nil {
-			return err
-		}
+		queue = append(queue, processorTemplate)
 
-		// Generate pkg/httpserver and adapter wiring (http-server type only)
+	// Generate pkg/httpserver and adapter wiring (http-server type only)
 	case "http-server":
-		if err := g.generateFile(servicesStubTemplate); err != nil {
-			return err
-		}
+		queue = append(queue, []string{
+			servicesStubTemplate,
+			httpServerInterfaceTemplate,
+			httpServerFileTemplate,
+			httpAdapterTemplate,
+			httpPingTemplate,
+		}...)
 
-		if err := g.generateFile(httpServerInterfaceTemplate); err != nil {
-			return err
-		}
-
-		if err := g.generateFile(httpServerFileTemplate); err != nil {
-			return err
-		}
-
-		if err := g.generateFile(httpAdapterTemplate); err != nil {
-			return err
-		}
-
-		if err := g.generateFile(httpPingTemplate); err != nil {
-			return err
-		}
 	}
 
-	// Generate config
-	if err := g.generateFile(configTemplate); err != nil {
-		return err
-	}
+	queue = append(queue, []string{
+		configTemplate,        // Generate config
+		loggerTemplate,        // Generate logger
+		versionTemplate,       // Generate version package
+		versionSplashTemplate, // Generate splash
+		versionTestTemplate,   // Generate version test
+		makefileTemplate,      // Generate Makefile
+		gitignoreTemplate,     // Generate .gitignore
+		readmeTemplate,        // Generate README
+	}...)
 
-	// Generate logger
-	if err := g.generateFile(loggerTemplate); err != nil {
-		return err
-	}
-
-	// Generate version package
-	if err := g.generateFile(versionTemplate); err != nil {
-		return err
-	}
-	if err := g.generateFile(versionSplashTemplate); err != nil {
-		return err
-	}
-	if err := g.generateFile(versionTestTemplate); err != nil {
-		return err
-	}
-
-	// Generate Makefile
-	if err := g.generateFile(makefileTemplate); err != nil {
-		return err
-	}
-
-	// Generate .gitignore
-	if err := g.generateFile(gitignoreTemplate); err != nil {
-		return err
-	}
-
-	// Generate README
-	if err := g.generateFile(readmeTemplate); err != nil {
-		return err
-	}
-
-	// Optional files
+	// Docker files
 	if g.config.WithDocker {
-		// Generate Dockerfile
-		if err := g.generateFile(dockerFileTemplate); err != nil {
-			return err
-		}
-		// Generate compose.yaml
-		if err := g.generateFile(composeTemplate); err != nil {
-			return err
-		}
+		queue = append(queue, []string{
+			dockerFileTemplate, // Generate Dockerfile
+			composeTemplate,    // Generate compose.yaml
+		}...)
 	}
 
+	// Observability files
 	if g.config.WithObservability {
-		// Generate internal/observability/health.go
-		if err := g.generateFile(healthTemplate); err != nil {
-			return err
-		}
-		// Generate internal/observability/metrics.go
-		if err := g.generateFile(metricsTemplate); err != nil {
-			return err
-		}
+		queue = append(queue, []string{
+			healthTemplate,  // Generate internal/observability/health.go
+			metricsTemplate, // Generate internal/observability/metrics.go
+		}...)
+
 		// Generate route handlers for health and metrics (http-server only)
 		if g.config.ProjectType == "http-server" {
-			if err := g.generateFile(httpHealthTemplate); err != nil {
-				return err
-			}
-			if err := g.generateFile(httpMetricsTemplate); err != nil {
-				return err
-			}
+			queue = append(queue, []string{
+				httpHealthTemplate,
+				httpMetricsTemplate,
+			}...)
+		}
+	}
+
+	for _, templ := range queue {
+		if err := g.generateFile(templ); err != nil {
+			return err
 		}
 	}
 

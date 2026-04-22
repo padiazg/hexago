@@ -13,11 +13,9 @@ import (
 )
 
 var (
-	adapterPort          string
 	adapterEntity        string
 	adapterPrimaryEntity string
 	fromPort             string
-	inferTests           bool
 )
 
 // addAdapterCmd represents the add adapter command
@@ -48,7 +46,7 @@ Types:
 
 Example:
   hexago add adapter primary http UserHandler
-  hexago add adapter primary grpc OrderService`,
+  hexago add adapter primary http UserHandler --from-port UserService`,
 	Args: cobra.ExactArgs(2),
 	RunE: runAddAdapterPrimary,
 }
@@ -77,12 +75,9 @@ func init() {
 	addAdapterCmd.AddCommand(addAdapterSecondaryCmd)
 
 	// Flags
-	addAdapterPrimaryCmd.Flags().StringVarP(&adapterPort, "port", "p", "", "Port interface name (if using explicit ports)")
 	addAdapterPrimaryCmd.Flags().StringVarP(&adapterPrimaryEntity, "entity", "e", "", "Domain entity this handler serves (PascalCase); generates sub-package with config+handlers files")
-	addAdapterSecondaryCmd.Flags().StringVarP(&adapterPort, "port", "p", "", "Port interface name (if using explicit ports)")
 	addAdapterSecondaryCmd.Flags().StringVarP(&adapterEntity, "entity", "e", "", "Domain entity this adapter implements (PascalCase); determines sub-package for database adapters")
-	addAdapterSecondaryCmd.Flags().StringVarP(&fromPort, "from-port", "", "", "Port interface name to infer method signatures from")
-	addAdapterSecondaryCmd.Flags().BoolVarP(&inferTests, "infer-tests", "", false, "Generate tests with method signatures from port")
+	addAdapterSecondaryCmd.Flags().StringVarP(&fromPort, "from-port", "p", "", "Port interface name to infer method signatures from")
 }
 
 func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
@@ -103,11 +98,12 @@ func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterInboundDir())
 
 	gen := generator.NewAdapterGenerator(config)
-	if err := gen.GeneratePrimary(adapterType, adapterName, adapterPrimaryEntity, adapterPort); err != nil {
+	if err := gen.GeneratePrimary(adapterType, adapterName, adapterPrimaryEntity, fromPort); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}
 
 	fmt.Println("\n✅ Primary adapter added successfully!")
+
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the adapter methods\n")
 	fmt.Printf("  2. Wire up dependencies in the DI container\n")
@@ -150,7 +146,7 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 	}
 
 	gen := generator.NewAdapterGenerator(config)
-	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, adapterPort, portInfo); err != nil {
+	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, fromPort, portInfo); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}
 
@@ -158,6 +154,7 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 	if fromPort != "" && portInfo != nil {
 		fmt.Printf("   📋 Inferred %d method(s) from %s port\n", len(portInfo.Methods), fromPort)
 	}
+
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the port interface methods\n")
 	fmt.Printf("  2. Add database queries or external API calls\n")
