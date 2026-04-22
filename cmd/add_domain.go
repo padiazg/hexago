@@ -13,7 +13,7 @@ import (
 
 var (
 	entityFields string
-	voEntity     string
+	voEntity   string
 )
 
 // addDomainCmd represents the add domain command
@@ -106,6 +106,7 @@ func runAddDomainEntity(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("\n✅ Domain entity added successfully!")
+
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Add business logic methods to the entity\n")
 	fmt.Printf("  2. Add validation rules\n")
@@ -142,6 +143,7 @@ func runAddDomainValueObject(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("\n✅ Value object added successfully!")
+
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Ensure immutability (no setter methods)\n")
 	fmt.Printf("  2. Implement validation in constructor\n")

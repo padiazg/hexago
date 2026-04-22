@@ -89,8 +89,9 @@ func extractParams(tuple *types.Tuple) []ParamInfo {
 		param := tuple.At(i)
 
 		params = append(params, ParamInfo{
-			Name: param.Name(),
-			Type: typeToString(param.Type()),
+			Name:       param.Name(),
+			Type:       typeToString(param.Type()),
+			ImportPath: getTypeImportPath(param.Type()),
 		})
 	}
 
@@ -145,4 +146,38 @@ func typeToString(t types.Type) string {
 	default:
 		return t.String()
 	}
+}
+
+// getTypeImportPath extracts the import path from a types.Type.
+// Returns empty string for built-in types.
+func getTypeImportPath(t types.Type) string {
+	if t == nil {
+		return ""
+	}
+
+	switch v := t.(type) {
+	case *types.Named:
+		obj := v.Obj()
+		if obj.Pkg() != nil {
+			pkgPath := obj.Pkg().Path()
+			// Skip standard library packages
+			switch pkgPath {
+			case "context", "errors", "fmt", "os", "io", "time", "sync", "net/http":
+				return ""
+			}
+			return pkgPath
+		}
+	case *types.Pointer:
+		return getTypeImportPath(v.Elem())
+	case *types.Slice:
+		return getTypeImportPath(v.Elem())
+	case *types.Array:
+		return getTypeImportPath(v.Elem())
+	case *types.Map:
+		if pk := getTypeImportPath(v.Key()); pk != "" {
+			return pk
+		}
+		return getTypeImportPath(v.Elem())
+	}
+	return ""
 }

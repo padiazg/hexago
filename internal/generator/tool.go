@@ -63,7 +63,7 @@ func (g *ToolGenerator) generateLogger(dir, name, description string) error {
 		return err
 	}
 
-	return g.generateTestFile(dir, name, "logger")
+	return nil
 }
 
 // generateValidator generates an input validation utility
@@ -87,7 +87,7 @@ func (g *ToolGenerator) generateValidator(dir, name, description string) error {
 		return err
 	}
 
-	return g.generateTestFile(dir, name, "validator")
+	return nil
 }
 
 // generateMapper generates a DTO mapping utility
@@ -112,7 +112,7 @@ func (g *ToolGenerator) generateMapper(dir, name, description string) error {
 		return err
 	}
 
-	return g.generateTestFile(dir, name, "mapper")
+	return nil
 }
 
 // generateMiddleware generates HTTP middleware
@@ -137,42 +137,7 @@ func (g *ToolGenerator) generateMiddleware(dir, name, description string) error 
 		return err
 	}
 
-	return g.generateTestFile(dir, name, "middleware")
-}
-
-// generateTestFile generates a test file for the tool
-func (g *ToolGenerator) generateTestFile(dir, name, toolType string) error {
-	fileName := utils.ToSnakeCase(name) + "_test.go"
-	filePath := filepath.Join(dir, fileName)
-
-	fmt.Printf("📝 Creating test file: %s\n", filePath)
-
-	data := map[string]any{
-		"Name":       name,
-		"ToolType":   toolType,
-		"ModuleName": g.config.ModuleName,
-	}
-
-	var templateName string
-	switch toolType {
-	case "logger":
-		templateName = "tool/logger_test.go.tmpl"
-	case "validator":
-		templateName = "tool/validator_test.go.tmpl"
-	case "mapper":
-		templateName = "tool/mapper_test.go.tmpl"
-	case "middleware":
-		templateName = "tool/middleware_test.go.tmpl"
-	default:
-		templateName = "tool/generic_test.go.tmpl"
-	}
-
-	content, err := g.config.templateLoader.Render(templateName, data)
-	if err != nil {
-		return fmt.Errorf("failed to render tool test template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
+	return nil
 }
 
 func getDescription(desc, defaultDesc string) string {

@@ -36,10 +36,8 @@ func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig)
 	}
 
 	fileName := utils.ToSnakeCase(workerName) + ".go"
-	testFileName := utils.ToSnakeCase(workerName) + "_test.go"
 
 	filePath := filepath.Join(workersDir, fileName)
-	testFilePath := filepath.Join(workersDir, testFileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("worker file %s already exists", filePath)
@@ -63,13 +61,6 @@ func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig)
 		}
 	default:
 		return fmt.Errorf("unsupported worker type: %s", workerConfig.Type)
-	}
-
-	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
-
-	// Generate test file
-	if err := g.generateWorkerTestFile(testFilePath, workerName); err != nil {
-		return err
 	}
 
 	// Generate or update worker manager
@@ -124,21 +115,6 @@ func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, confi
 	content, err := g.config.templateLoader.Render("worker/event.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render event worker template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
-// generateWorkerTestFile generates test file for worker
-func (g *WorkerGenerator) generateWorkerTestFile(filePath, workerName string) error {
-	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
-		"WorkerName": workerName,
-	}
-
-	content, err := g.config.templateLoader.Render("worker/worker_test.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render worker test template: %w", err)
 	}
 
 	return utils.WriteFile(filePath, content)
