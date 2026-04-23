@@ -26,6 +26,41 @@ func NewDomainGenerator(config *ProjectConfig) *DomainGenerator {
 	}
 }
 
+// constructorParams returns a comma-separated parameter list for a constructor.
+// e.g. [{Name:"Id", Type:"string"}] → "id string"
+func constructorParams(fields []Field) string {
+	parts := make([]string, len(fields))
+	for i, f := range fields {
+		parts[i] = utils.SafeParamName(f.Name) + " " + f.Type
+	}
+	return strings.Join(parts, ", ")
+}
+
+// constructorInit returns the struct field initialization block body (indented with two tabs).
+// e.g. [{Name:"Id", Type:"string"}] → "\t\tId: id,\n"
+func constructorInit(fields []Field) string {
+	var sb strings.Builder
+	for _, f := range fields {
+		fmt.Fprintf(&sb, "\t\t%s: %s,\n", f.Name, utils.SafeParamName(f.Name))
+	}
+	return sb.String()
+}
+
+// constructorTestArgs returns constructor call arguments for test files using zero-value
+// literals with inline type comments, ready to be embedded inside a function call.
+// Returns "" when fields is empty (call becomes `New...()`).
+// func constructorTestArgs(fields []Field) string {
+// 	if len(fields) == 0 {
+// 		return ""
+// 	}
+// 	var sb strings.Builder
+// 	for _, f := range fields {
+// 		fmt.Fprintf(&sb, "\n\t\t\t\t%s, // %s %s", utils.ZeroValueFor(f.Type), utils.LcFirst(f.Name), f.Type)
+// 	}
+// 	sb.WriteString("\n\t\t\t")
+// 	return sb.String()
+// }
+
 // GenerateEntity creates a new domain entity
 func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) error {
 	baseDomainDir := filepath.Join("internal", "core", "domain")
@@ -109,21 +144,13 @@ func (g *DomainGenerator) GenerateValueObject(voName, entityName string, fields 
 // generateEntityFile generates the entity implementation
 func (g *DomainGenerator) generateEntityFile(filePath, entityName, pkgName string, fields []Field) error {
 	hasTimeField := false
+
 	for _, f := range fields {
 		if strings.Contains(f.Type, "time.Time") {
 			hasTimeField = true
 			break
 		}
 	}
-
-	imports := `import (
-	"errors"
-`
-	if hasTimeField {
-		imports += `	"time"
-`
-	}
-	imports += ")"
 
 	// Generate field definitions
 	fieldDefs := ""
@@ -138,17 +165,15 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName, pkgName strin
 	UpdatedAt time.Time
 `
 		hasTimeField = true
-		imports = `import (
-	"errors"
-	"time"
-)`
 	}
 
 	data := map[string]any{
-		"EntityName":  entityName,
-		"PackageName": pkgName,
-		"FieldDefs":   fieldDefs,
-		"Imports":     imports,
+		"EntityName":        entityName,
+		"PackageName":       pkgName,
+		"FieldDefs":         fieldDefs,
+		"HasTimeField":      hasTimeField,
+		"ConstructorParams": constructorParams(fields),
+		"ConstructorInit":   constructorInit(fields),
 	}
 
 	content, err := g.config.templateLoader.Render("domain/entity.go.tmpl", data)
@@ -205,10 +230,12 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName, pkgName stri
 	}
 
 	data := map[string]any{
-		"VOName":      voName,
-		"PackageName": pkgName,
-		"FieldDefs":   fieldDefs,
-		"Imports":     imports,
+		"VOName":            voName,
+		"PackageName":       pkgName,
+		"FieldDefs":         fieldDefs,
+		"Imports":           imports,
+		"ConstructorParams": constructorParams(fields),
+		"ConstructorInit":   constructorInit(fields),
 	}
 
 	content, err := g.config.templateLoader.Render("domain/value_object.go.tmpl", data)
