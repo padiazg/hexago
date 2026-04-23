@@ -37,6 +37,7 @@ hexago init <name> [flags]
 | `--with-metrics` | | bool | `false` | Include Prometheus metrics *(deprecated — use `--with-observability`)* |
 | `--with-example` | | bool | `false` | Include example code |
 | `--explicit-ports` | | bool | `false` | Create an explicit `ports/` directory |
+| `--with-tests` | | bool | `false` | Enable go-testgen test generation for `add` commands. Saved to `.hexago.yaml` as `testing.enabled`. Requires [go-testgen](https://padiazg.github.io/go-testgen/) ≥ v0.1.0 on `$PATH`. |
 
 !!! note
     All `--with-*` flags default to `false` (opt-in). This keeps generated projects lean — only include what you need.

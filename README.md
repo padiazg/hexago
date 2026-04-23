@@ -188,6 +188,7 @@ Flags:
       --with-metrics           Include Prometheus metrics (default: false)
       --with-example           Include example code (default: false)
       --explicit-ports         Create ports/ directory (default: false)
+      --with-tests             Enable go-testgen test generation for add commands (default: false)
 ```
 
 ### Add Service
@@ -223,28 +224,67 @@ Examples:
 ### Add Primary Adapter
 
 ```shell
-hexago add adapter primary <type> <name>
+hexago add adapter primary <type> <name> [flags]
 
 Types: http, grpc, queue
+
+Flags:
+  -e, --entity string   Domain entity this handler serves
+      --with-test       Generate tests for this component (overrides config)
+      --no-test         Skip test generation for this component (overrides config)
 
 Examples:
   hexago add adapter primary http UserHandler
   hexago add adapter primary grpc OrderService
   hexago add adapter primary queue EmailConsumer
+  hexago add adapter primary http UserHandler --with-test
 ```
 
 ### Add Secondary Adapter
 
 ```shell
-hexago add adapter secondary <type> <name>
+hexago add adapter secondary <type> <name> [flags]
 
 Types: database, external, cache
+
+Flags:
+  -e, --entity string      Domain entity this adapter implements
+  -p, --from-port string   Port interface name to infer method signatures from
+      --with-test          Generate tests for this component (overrides config)
+      --no-test            Skip test generation for this component (overrides config)
 
 Examples:
   hexago add adapter secondary database UserRepository
   hexago add adapter secondary external EmailService
   hexago add adapter secondary cache UserCache
+  hexago add adapter secondary database UserRepository --from-port UserRepository --with-test
 ```
+
+### Test Generation (optional)
+
+HexaGo integrates with [`go-testgen`](https://padiazg.github.io/go-testgen/) to scaffold tests
+for generated adapter code. Install it first:
+
+```shell
+go install github.com/padiazg/go-testgen@latest
+```
+
+Enable globally for a project (written to `.hexago.yaml`):
+
+```shell
+hexago init my-app --module github.com/user/my-app --with-tests
+```
+
+Or enable/disable per command:
+
+```shell
+hexago add adapter secondary database UserRepository --with-test   # force on
+hexago add adapter primary http UserHandler --no-test              # force off
+```
+
+When enabled, HexaGo runs `go-testgen report --format json` on the adapter package after
+generation and calls `go-testgen gen` for each untested exported function. If `go-testgen` is
+missing or below v0.1.0, a warning is printed and the adapter is still generated.
 
 ### Add Worker
 

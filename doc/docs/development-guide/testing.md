@@ -4,6 +4,66 @@ How to write and run tests in HexaGo-generated projects.
 
 ---
 
+## Automatic Test Generation with go-testgen
+
+HexaGo integrates with [go-testgen](https://padiazg.github.io/go-testgen/) to scaffold test
+files for generated adapters immediately after they are written.
+
+### Install go-testgen
+
+```shell
+go install github.com/padiazg/go-testgen@latest
+```
+
+Minimum required version: **v0.1.0**. HexaGo checks the installed version before invoking it.
+If it is missing or outdated, a warning is printed and adapter generation continues normally.
+
+### Enable in your project
+
+Pass `--with-tests` to `hexago init` — this saves `testing.enabled: true` to `.hexago.yaml`
+and applies to all subsequent `add` commands:
+
+```shell
+hexago init my-app --module github.com/user/my-app --with-tests
+```
+
+Or toggle per-command with `--with-test` / `--no-test` (these override the config default):
+
+```shell
+hexago add adapter secondary database UserRepository --with-test
+hexago add adapter primary  http    UserHandler      --no-test
+```
+
+### How it works
+
+After the adapter files are written, HexaGo:
+
+1. Runs `go-testgen report <adapter-pkg> --format json` to discover all exported functions
+   that lack a test.
+2. For each untested function, runs the suggested `go-testgen gen` command — including
+   `--test-style` and `--mock-from` flags inferred by go-testgen automatically.
+
+```
+🧪 Generating test: UserRepository.FindByID
+🧪 Generating test: UserRepository.Create
+```
+
+### `.hexago.yaml` configuration
+
+```yaml
+testing:
+  enabled: true   # set by hexago init --with-tests
+```
+
+### Requirements
+
+- The adapter package must compile after generation (all imported types must resolve).  
+  If they don't, re-run `hexago add adapter ... --with-test` after creating the missing domain types.
+- go-testgen runs in the project root directory (`--working-directory` / detected root).
+- Non-interactive: existing test functions are never overwritten.
+
+---
+
 ## Test Types
 
 | Type | Description | How to Run |

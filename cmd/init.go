@@ -26,6 +26,7 @@ var (
 	explicitPorts     bool
 	withWorkers       bool
 	withObservability bool
+	withTests         bool
 	inPlace           bool
 )
 
@@ -77,6 +78,7 @@ func init() {
 	initCmd.Flags().BoolVar(&explicitPorts, "explicit-ports", false, "Create explicit ports/ directory")
 	initCmd.Flags().BoolVar(&withWorkers, "with-workers", false, "Include worker pattern setup")
 	initCmd.Flags().BoolVar(&withObservability, "with-observability", false, "Include observability (health checks + metrics)")
+	initCmd.Flags().BoolVar(&withTests, "with-tests", false, "Enable go-testgen test generation for add commands (requires go-testgen ≥ v0.1.0)")
 	initCmd.Flags().BoolVar(&inPlace, "in-place", false, "Generate project files directly in the working directory (no <name> subdirectory)")
 }
 
@@ -138,6 +140,9 @@ func runInit(cmd *cobra.Command, args []string) error {
 		if !cmd.Flags().Changed("with-observability") {
 			withObservability = pc.WithObservability
 		}
+		if !cmd.Flags().Changed("with-tests") {
+			withTests = pc.WithTests
+		}
 	}
 
 	// Generate module name if not provided
@@ -190,6 +195,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	config.ExplicitPorts = explicitPorts
 	config.WithWorkers = withWorkers
 	config.WithObservability = withObservability
+	config.WithTests = withTests
 	config.InPlace = inPlace
 
 	// Print configuration
