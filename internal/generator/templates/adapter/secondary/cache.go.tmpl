@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+{{if .PortImport}}
+{{.PortImport}}
+{{end}}
+
 // {{.CacheName}} implements caching operations
 type {{.CacheName}} struct {
 	// TODO: Add cache client (Redis, Memcached, etc.)
@@ -13,7 +17,7 @@ type {{.CacheName}} struct {
 
 {{if .PortName}}
 // compile-time check that {{.CacheName}} satisfies the {{.PortName}} port.
-var _ {{.PortName}} = (*{{.CacheName}})(nil)
+var _ {{.PortImport}} = (*{{.CacheName}})(nil)
 {{end}}
 
 // New{{.CacheName}} creates a new {{.CacheName}}

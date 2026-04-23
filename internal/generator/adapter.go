@@ -52,9 +52,7 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 	}
 
 	fileName := utils.ToSnakeCase(adapterName) + ".go"
-	testFileName := utils.ToSnakeCase(adapterName) + "_test.go"
 	filePath := filepath.Join(adapterDir, fileName)
-	testFilePath := filepath.Join(adapterDir, testFileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("adapter file %s already exists", filePath)
@@ -77,12 +75,6 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 		}
 	default:
 		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
-	}
-
-	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
-
-	if err := g.generateAdapterTestFile(testFilePath, adapterName, adapterType, nil); err != nil {
-		return err
 	}
 
 	return nil
@@ -165,7 +157,9 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 		return fmt.Errorf("invalid secondary adapter type '%s'. Valid types: database, external, cache", adapterType)
 	}
 
-	var adapterDir, filePath, testFilePath string
+	var (
+		adapterDir, pkgName string
+	)
 
 	if adapterType == "database" {
 		// Always use sub-package for database adapters
@@ -179,31 +173,39 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 		if err := utils.CreateDir(adapterDir); err != nil {
 			return err
 		}
-		filePath = filepath.Join(g.config.OutputDir, adapterDir, pkgName+".go")
-		testFilePath = filepath.Join(g.config.OutputDir, adapterDir, pkgName+"_test.go")
+		// Ensure domain errors file exists
+		domainDir := filepath.Join("internal", "core", "domain")
+		if err := utils.CreateDir(domainDir); err != nil {
+			return fmt.Errorf("failed to create domain directory: %w", err)
+		}
+		errorsFile := filepath.Join(domainDir, "errors.go")
+		if !utils.FileExists(errorsFile) {
+			data := map[string]any{}
+			content, err := g.config.templateLoader.Render("domain/errors.go.tmpl", data)
+			if err != nil {
+				return fmt.Errorf("failed to render domain errors template: %w", err)
+			}
+			if err := utils.WriteFile(errorsFile, content); err != nil {
+				return err
+			}
+			fmt.Printf("📝 Creating domain errors file: %s\n", errorsFile)
+		}
 	} else {
 		adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
 		if err := utils.CreateDir(adapterDir); err != nil {
 			return err
 		}
-		filePath = filepath.Join(g.config.OutputDir, adapterDir, utils.ToSnakeCase(adapterName)+".go")
-		testFilePath = filepath.Join(g.config.OutputDir, adapterDir, utils.ToSnakeCase(adapterName)+"_test.go")
+		pkgName = utils.ToSnakeCase(adapterName)
 	}
+
+	filePath := filepath.Join(adapterDir, pkgName+".go")
+	// testFilePath := filepath.Join(adapterDir, pkgName+"_test.go")
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("adapter file %s already exists", filePath)
 	}
 
 	fmt.Printf("📝 Creating adapter file: %s\n", filePath)
-
-	// Generate port interface if using explicit ports
-	// TODO: review this step in this flow. shouldn't ports be created when creating domain entities, or manually if needed
-	if g.config.ExplicitPorts && portName != "" {
-		if err := g.generatePortInterface(portName, adapterName); err != nil {
-			// Non-fatal - just warn
-			fmt.Printf("⚠️  Warning: failed to generate port interface: %v\n", err)
-		}
-	}
 
 	switch adapterType {
 	case "database":
@@ -222,17 +224,6 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
 	}
 
-	fmt.Printf("📝 Creating test file: %s\n", testFilePath)
-
-	// FIXME: wrong import
-	// command: hexago add adapter secondary database URLRepository --entity URL
-	// creates:
-	//  internal/adapters/secondary/database/urls/urls.go       => package urls
-	//  internal/adapters/secondary/database/urls/urls_test.go  => package database_test
-	if err := g.generateAdapterTestFile(testFilePath, adapterName, adapterType, portInfo); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -244,7 +235,7 @@ func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) err
 		"HandlerName": handlerName,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/http.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/primary/http.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render HTTP adapter template: %w", err)
 	}
@@ -260,7 +251,7 @@ func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) err
 		"HandlerName": handlerName,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/grpc.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/primary/grpc.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render gRPC adapter template: %w", err)
 	}
@@ -311,7 +302,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 		"EntityImportAlias": entityImportAlias,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/database.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/secondary/database.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render database adapter template: %w", err)
 	}
@@ -332,11 +323,26 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 		"PortName":    portName,
 	}
 
-	if portInfo != nil {
-		data["Methods"] = portInfo.Methods
+	// Set PortImport if portName is provided (via --port or --from-port)
+	if portName != "" {
+		portImport := fmt.Sprintf("%q", g.config.ModuleName+"/internal/core/ports/outbound")
+		data["PortImport"] = portImport
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/external.go.tmpl", data)
+	if portInfo != nil {
+		if portInfo.Name != "" {
+			data["PortName"] = portInfo.Name
+		}
+
+		// Collect domain imports from method parameters
+		domainAliasMap := portInfo.DomainAliasMap(g.config.ModuleName)
+
+		// Process methods with prefixed types
+		data["Methods"] = processMethodsWithPrefix(portInfo.Methods, domainAliasMap)
+		data["DomainImports"] = domainAliasMap
+	}
+
+	content, err := g.config.templateLoader.Render("adapter/secondary/external.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render external adapter template: %w", err)
 	}
@@ -356,36 +362,14 @@ func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName st
 		"PortName":  portName,
 	}
 
+	if portName != "" {
+		portImport := fmt.Sprintf("%q", g.config.ModuleName+"/internal/core/ports/outbound")
+		data["PortImport"] = portImport
+	}
+
 	content, err := g.config.templateLoader.Render("adapter/cache.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render cache adapter template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
-// generatePortInterface generates a port interface (if using explicit ports)
-func (g *AdapterGenerator) generatePortInterface(portName, adapterName string) error {
-	// This would generate the port interface in internal/core/ports/
-	// For now, skip implementation as it's optional
-	return nil
-}
-
-// generateAdapterTestFile generates test file for adapters
-func (g *AdapterGenerator) generateAdapterTestFile(filePath, adapterName, adapterType string, portInfo *analyzer.PortInfo) error {
-	data := map[string]any{
-		"Package":     adapterType,
-		"AdapterName": adapterName,
-	}
-
-	if portInfo != nil {
-		data["Methods"] = portInfo.Methods
-		data["PortName"] = portInfo.Name
-	}
-
-	content, err := g.config.templateLoader.Render("adapter/adapter_test.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render adapter test template: %w", err)
 	}
 
 	return utils.WriteFile(filePath, content)
@@ -477,4 +461,55 @@ func (g *AdapterGenerator) appendErrorToFile(filePath, errorName, errorMessage s
 	newContent := strings.TrimSpace(content) + newError + "\n"
 
 	return utils.WriteFile(filePath, []byte(newContent))
+}
+
+// processMethodsWithPrefix adds import alias prefix to types that need it.
+func processMethodsWithPrefix(methods []analyzer.MethodInfo, aliasMap map[string]string) []analyzer.MethodInfo {
+	result := make([]analyzer.MethodInfo, len(methods))
+	for i, method := range methods {
+		newParams := make([]analyzer.ParamInfo, len(method.Params))
+		for j, param := range method.Params {
+			newParams[j] = analyzer.ParamInfo{
+				Name:       param.Name,
+				Type:       prefixType(param.Type, param.ImportPath, aliasMap),
+				ImportPath: param.ImportPath,
+			}
+		}
+		newReturns := make([]analyzer.ParamInfo, len(method.Returns))
+		for j, ret := range method.Returns {
+			newReturns[j] = analyzer.ParamInfo{
+				Name:       ret.Name,
+				Type:       prefixType(ret.Type, ret.ImportPath, aliasMap),
+				ImportPath: ret.ImportPath,
+			}
+		}
+		result[i] = analyzer.MethodInfo{
+			Name:    method.Name,
+			Params:  newParams,
+			Returns: newReturns,
+		}
+	}
+	return result
+}
+
+// prefixType adds the import alias prefix to a type if it's from an external package.
+func prefixType(typeStr, importPath string, aliasMap map[string]string) string {
+	if importPath == "" {
+		return typeStr
+	}
+	alias, ok := aliasMap[importPath]
+	if !ok {
+		return typeStr
+	}
+	// Handle pointer types
+	if strings.HasPrefix(typeStr, "*") {
+		return "*" + alias + "." + strings.TrimPrefix(typeStr, "*")
+	}
+	// Handle slice types
+	if strings.HasPrefix(typeStr, "[]") {
+		elem := strings.TrimPrefix(typeStr, "[]")
+		return "[]" + alias + "." + elem
+	}
+	// Handle other types
+	return alias + "." + typeStr
 }

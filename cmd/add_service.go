@@ -99,6 +99,7 @@ func runAddService(cmd *cobra.Command, args []string) error {
 	if serviceFromPort != "" && portInfo != nil {
 		fmt.Printf("   📋 Inferred %d method(s) from %s port\n", len(portInfo.Methods), serviceFromPort)
 	}
+
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the business logic in the Execute method\n")
 	fmt.Printf("  2. Add any required dependencies to the constructor\n")

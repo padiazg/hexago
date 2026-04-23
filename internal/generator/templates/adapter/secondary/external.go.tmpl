@@ -2,8 +2,15 @@ package external
 
 import(
 	"context"
-	"fmt"
+	{{ if not .Methods }}"fmt"
+	{{ end -}}
 	"net/http"
+{{ if .PortImport }}
+	outbound {{ .PortImport }}
+{{ end -}}
+{{ range $path, $alias := .DomainImports }}
+	{{ $alias }} "{{ $path }}"
+{{ end -}}
 )
 
 type {{.ServiceName}} struct{
@@ -12,10 +19,10 @@ type {{.ServiceName}} struct{
 	apiKey	string
 }
 
-{{if .PortName}}
-var _ {{.PortName}} = (*{{.ServiceName}})(nil)
-{{end}}
+{{if .PortName -}}
+var _ outbound.{{.PortName}} = (*{{.ServiceName}})(nil)
 
+{{end -}}
 func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}}{
 	return &{{.ServiceName}}{
 		client:	&http.Client{},
@@ -23,16 +30,15 @@ func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}}{
 		apiKey:	apiKey,
 	}
 }
-
-{{if .Methods}}
-{{$svcName := .ServiceName}}
-{{range .Methods}}
+{{- if .Methods }}
+{{- $svcName := .ServiceName }}
+{{ range .Methods }}
 func(s *{{$svcName}}){{.Name}}({{range $i, $p := .Params}}{{if $i}}, {{end}}{{$p.Name}} {{$p.Type}}{{end}})({{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type}}{{end}}){
 	return {{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type | zeroVal}}{{end}}
 }
-{{end}}
-{{else}}
+{{ end }}
+{{ else }} 
 func(s *{{.ServiceName}}) CallExternalAPI(ctx context.Context, params any)(any, error){
 	return nil, fmt.Errorf("not implemented")
 }
-{{end}}
+{{ end }}
