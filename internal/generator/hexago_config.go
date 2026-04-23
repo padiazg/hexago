@@ -21,6 +21,7 @@ type HexagoConfig struct {
 	Project   HexagoProjectConfig   `yaml:"project"`
 	Structure HexagoStructureConfig `yaml:"structure"`
 	Features  HexagoFeaturesConfig  `yaml:"features"`
+	Testing   HexagoTestingConfig   `yaml:"testing,omitempty"`
 }
 
 // HexagoProjectConfig holds basic project metadata
@@ -50,6 +51,11 @@ type HexagoFeaturesConfig struct {
 	WithExample       bool `yaml:"with_example"`
 }
 
+// HexagoTestingConfig holds test generation settings
+type HexagoTestingConfig struct {
+	Enabled bool `yaml:"enabled,omitempty"`
+}
+
 // HexagoConfigFromProject maps a ProjectConfig to a HexagoConfig.
 func HexagoConfigFromProject(cfg *ProjectConfig) *HexagoConfig {
 	return &HexagoConfig{
@@ -73,6 +79,9 @@ func HexagoConfigFromProject(cfg *ProjectConfig) *HexagoConfig {
 			WithWorkers:       cfg.WithWorkers,
 			WithMetrics:       cfg.WithMetrics,
 			WithExample:       cfg.WithExample,
+		},
+		Testing: HexagoTestingConfig{
+			Enabled: cfg.WithTests,
 		},
 	}
 }
@@ -99,6 +108,7 @@ func (h *HexagoConfig) ToProjectConfig() *ProjectConfig {
 	cfg.WithWorkers = h.Features.WithWorkers
 	cfg.WithMetrics = h.Features.WithMetrics
 	cfg.WithExample = h.Features.WithExample
+	cfg.WithTests = h.Testing.Enabled
 
 	return cfg
 }

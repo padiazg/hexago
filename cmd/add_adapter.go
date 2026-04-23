@@ -9,6 +9,7 @@ import (
 
 	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/internal/generator"
+	"github.com/padiazg/hexago/internal/testgen"
 	"github.com/spf13/cobra"
 )
 
@@ -76,8 +77,15 @@ func init() {
 
 	// Flags
 	addAdapterPrimaryCmd.Flags().StringVarP(&adapterPrimaryEntity, "entity", "e", "", "Domain entity this handler serves (PascalCase); generates sub-package with config+handlers files")
+	addAdapterPrimaryCmd.Flags().Bool("with-test", false, "Generate tests for this component (overrides config)")
+	addAdapterPrimaryCmd.Flags().Bool("no-test", false, "Skip test generation for this component (overrides config)")
+	addAdapterPrimaryCmd.MarkFlagsMutuallyExclusive("with-test", "no-test")
+
 	addAdapterSecondaryCmd.Flags().StringVarP(&adapterEntity, "entity", "e", "", "Domain entity this adapter implements (PascalCase); determines sub-package for database adapters")
 	addAdapterSecondaryCmd.Flags().StringVarP(&fromPort, "from-port", "p", "", "Port interface name to infer method signatures from")
+	addAdapterSecondaryCmd.Flags().Bool("with-test", false, "Generate tests for this component (overrides config)")
+	addAdapterSecondaryCmd.Flags().Bool("no-test", false, "Skip test generation for this component (overrides config)")
+	addAdapterSecondaryCmd.MarkFlagsMutuallyExclusive("with-test", "no-test")
 }
 
 func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
@@ -100,6 +108,11 @@ func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
 	gen := generator.NewAdapterGenerator(config)
 	if err := gen.GeneratePrimary(adapterType, adapterName, adapterPrimaryEntity, fromPort); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
+	}
+
+	if effectiveWithTests(cmd, config) {
+		pkgRel := gen.AdapterInboundPackageRelPath(adapterType, adapterName, adapterPrimaryEntity)
+		_ = testgen.GenerateForPackage(cmd.Context(), config.OutputDir, "./"+pkgRel)
 	}
 
 	fmt.Println("\n✅ Primary adapter added successfully!")
@@ -148,6 +161,11 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 	gen := generator.NewAdapterGenerator(config)
 	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, fromPort, portInfo); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
+	}
+
+	if effectiveWithTests(cmd, config) {
+		pkgRel := gen.AdapterOutboundPackageRelPath(adapterType, adapterName, adapterEntity)
+		_ = testgen.GenerateForPackage(cmd.Context(), config.OutputDir, "./"+pkgRel)
 	}
 
 	fmt.Println("\n✅ Secondary adapter added successfully!")

@@ -492,6 +492,31 @@ func processMethodsWithPrefix(methods []analyzer.MethodInfo, aliasMap map[string
 	return result
 }
 
+// AdapterInboundPackageRelPath returns the relative package path for a primary (inbound) adapter,
+// matching the directory layout used by GeneratePrimary.
+func (g *AdapterGenerator) AdapterInboundPackageRelPath(adapterType, adapterName, entityName string) string {
+	if adapterType == "http" && entityName != "" {
+		pkgName := utils.ToPlural(strings.ToLower(entityName))
+		return filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", pkgName)
+	}
+	return filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), adapterType)
+}
+
+// AdapterOutboundPackageRelPath returns the relative package path for a secondary (outbound) adapter,
+// matching the directory layout used by GenerateSecondary.
+func (g *AdapterGenerator) AdapterOutboundPackageRelPath(adapterType, adapterName, entityName string) string {
+	if adapterType == "database" {
+		var pkgName string
+		if entityName != "" {
+			pkgName = utils.ToPlural(strings.ToLower(entityName))
+		} else {
+			pkgName = strings.ToLower(adapterName)
+		}
+		return filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), "database", pkgName)
+	}
+	return filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
+}
+
 // prefixType adds the import alias prefix to a type if it's from an external package.
 func prefixType(typeStr, importPath string, aliasMap map[string]string) string {
 	if importPath == "" {

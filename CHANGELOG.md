@@ -19,7 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **New CLI flags for semantic code generation**:
   - `--from-port <PortName>` — infers method signatures from an existing port interface
-  - `--infer-tests` — generates tests with correct method signatures (placeholder, not yet implemented)
+
+- **go-testgen integration for `add adapter`** (requires [`go-testgen`](https://padiazg.github.io/go-testgen/) ≥ v0.1.0):
+  - New `testing:` block in `.hexago.yaml` with `enabled` field
+  - `hexago init --with-tests` — sets `testing.enabled: true` in the generated config
+  - `hexago add adapter primary|secondary --with-test` — enables test generation for this run
+  - `hexago add adapter primary|secondary --no-test` — disables test generation for this run (overrides config)
+  - After adapter generation, HexaGo runs `go-testgen report --format json` on the adapter package
+    and executes the suggested `go-testgen gen` command for each untested exported function
+  - If `go-testgen` is missing or outdated, a warning is printed and generation continues normally
+  - New package `internal/testgen/` encapsulates all `go-testgen` exec, version check, and JSON parsing
 
 - **Templates now generate code with actual signatures**:
   - `service/service.go.tmpl` — generates methods from port interface

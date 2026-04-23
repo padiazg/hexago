@@ -28,6 +28,7 @@ type ProjectConfig struct {
 	ExplicitPorts     bool // Create explicit ports/ directory
 	WithWorkers       bool
 	WithObservability bool
+	WithTests         bool // Generate tests via go-testgen on add commands
 	InPlace           bool // Generate directly in OutputDir (no <ProjectName> subdirectory)
 
 	templateLoader *TemplateLoader

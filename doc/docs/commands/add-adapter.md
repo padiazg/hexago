@@ -165,24 +165,68 @@ HexaGo auto-detects your project's naming convention.
 
 ## Flags
 
+### Primary adapter flags
+
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--port` | `-p` | Port interface name this adapter implements. Only used when the project was initialized with `--explicit-ports`. |
+| `--entity` | `-e` | Domain entity this handler serves (PascalCase). Generates a sub-package with config and handler files. |
+| `--with-test` | | Generate tests for this component using go-testgen (overrides project config). |
+| `--no-test` | | Skip test generation for this component (overrides project config). |
 | `--working-directory` | `-w` | Project root (defaults to the current directory). |
 
-### `--port` — explicit port binding
+### Secondary adapter flags
 
-When your project has an explicit `internal/core/ports/` directory (initialized with
-`hexago init --explicit-ports`), pass the port interface name so the generated adapter
-references it correctly:
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--entity` | `-e` | Domain entity this adapter implements (PascalCase). Determines the sub-package for database adapters. |
+| `--from-port` | `-p` | Port interface name to infer method signatures from (semantic code generation). |
+| `--with-test` | | Generate tests for this component using go-testgen (overrides project config). |
+| `--no-test` | | Skip test generation for this component (overrides project config). |
+| `--working-directory` | `-w` | Project root (defaults to the current directory). |
+
+### `--from-port` — semantic method generation
+
+When `--from-port` is specified, HexaGo loads the named port interface from the project
+and generates adapter methods with the correct signatures:
 
 ```shell
-hexago add adapter secondary database UserRepository --port UserRepository
-hexago add adapter secondary external EmailService   --port EmailSender
+hexago add adapter secondary database UserRepository --from-port UserRepository
+hexago add adapter secondary external EmailService   --from-port EmailSender
 ```
 
-If `--port` is omitted, the adapter is generated without a port reference and you can
-wire it manually.
+If the interface cannot be loaded, generation falls back to generic stubs.
+
+---
+
+## Test Generation
+
+HexaGo can scaffold tests for generated adapters using [go-testgen](https://padiazg.github.io/go-testgen/).
+
+**Prerequisites:** install go-testgen ≥ v0.1.0:
+
+```shell
+go install github.com/padiazg/go-testgen@latest
+```
+
+**Per-command flags** (`--with-test` / `--no-test`) override the project-level default set by `hexago init --with-tests`.
+
+```shell
+# enable for this run (regardless of config)
+hexago add adapter secondary database UserRepository --with-test
+
+# disable for this run (regardless of config)
+hexago add adapter primary http UserHandler --no-test
+```
+
+After the adapter files are written, HexaGo runs:
+
+```shell
+go-testgen report <adapter-pkg> --format json   # discover untested functions
+go-testgen gen <adapter-pkg> <FuncSpec> ...     # generate each missing test
+```
+
+If go-testgen is missing, outdated, or the report fails, a warning is printed and the adapter
+is still generated normally.
 
 ---
 

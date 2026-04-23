@@ -4,6 +4,7 @@ Copyright © 2026 HexaGo Contributors
 package cmd
 
 import (
+	"github.com/padiazg/hexago/internal/generator"
 	"github.com/spf13/cobra"
 )
 
@@ -43,4 +44,16 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output")
 	rootCmd.PersistentFlags().StringVarP(&workingDir, "working-directory", "w", "", "Working directory (defaults to current directory)")
+}
+
+// effectiveWithTests resolves test-generation intent for a command:
+// --no-test wins, then --with-test, then the project config default.
+func effectiveWithTests(cmd *cobra.Command, cfg *generator.ProjectConfig) bool {
+	if cmd.Flags().Changed("no-test") {
+		return false
+	}
+	if cmd.Flags().Changed("with-test") {
+		return true
+	}
+	return cfg.WithTests
 }
