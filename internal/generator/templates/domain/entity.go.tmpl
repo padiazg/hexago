@@ -8,12 +8,11 @@ type {{.EntityName}} struct {
 {{.FieldDefs}}}
 
 // New{{.EntityName}} creates a new {{.EntityName}} with validation
-func New{{.EntityName}}( /* TODO: Add constructor parameters */ ) (*{{.EntityName}}, error) {
+func New{{.EntityName}}({{ .ConstructorParams }}) (*{{.EntityName}}, error) {
 	// TODO: Add validation logic
 
 	entity := &{{.EntityName}}{
-		// TODO: Initialize fields
-	}
+{{.ConstructorInit}}	}
 
 	if err := entity.Validate(); err != nil {
 		return nil, err

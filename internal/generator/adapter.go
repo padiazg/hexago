@@ -157,7 +157,9 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 		return fmt.Errorf("invalid secondary adapter type '%s'. Valid types: database, external, cache", adapterType)
 	}
 
-	var adapterDir, filePath string
+	var (
+		adapterDir, pkgName string
+	)
 
 	if adapterType == "database" {
 		// Always use sub-package for database adapters
@@ -171,14 +173,33 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 		if err := utils.CreateDir(adapterDir); err != nil {
 			return err
 		}
-		filePath = filepath.Join(g.config.OutputDir, adapterDir, pkgName+".go")
+		// Ensure domain errors file exists
+		domainDir := filepath.Join("internal", "core", "domain")
+		if err := utils.CreateDir(domainDir); err != nil {
+			return fmt.Errorf("failed to create domain directory: %w", err)
+		}
+		errorsFile := filepath.Join(domainDir, "errors.go")
+		if !utils.FileExists(errorsFile) {
+			data := map[string]any{}
+			content, err := g.config.templateLoader.Render("domain/errors.go.tmpl", data)
+			if err != nil {
+				return fmt.Errorf("failed to render domain errors template: %w", err)
+			}
+			if err := utils.WriteFile(errorsFile, content); err != nil {
+				return err
+			}
+			fmt.Printf("📝 Creating domain errors file: %s\n", errorsFile)
+		}
 	} else {
 		adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
 		if err := utils.CreateDir(adapterDir); err != nil {
 			return err
 		}
-		filePath = filepath.Join(g.config.OutputDir, adapterDir, utils.ToSnakeCase(adapterName)+".go")
+		pkgName = utils.ToSnakeCase(adapterName)
 	}
+
+	filePath := filepath.Join(adapterDir, pkgName+".go")
+	// testFilePath := filepath.Join(adapterDir, pkgName+"_test.go")
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("adapter file %s already exists", filePath)
@@ -214,7 +235,7 @@ func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) err
 		"HandlerName": handlerName,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/http.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/primary/http.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render HTTP adapter template: %w", err)
 	}
@@ -230,7 +251,7 @@ func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) err
 		"HandlerName": handlerName,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/grpc.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/primary/grpc.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render gRPC adapter template: %w", err)
 	}
@@ -281,7 +302,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 		"EntityImportAlias": entityImportAlias,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/database.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/secondary/database.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render database adapter template: %w", err)
 	}
@@ -321,7 +342,7 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 		data["DomainImports"] = domainAliasMap
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/external.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/secondary/external.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render external adapter template: %w", err)
 	}

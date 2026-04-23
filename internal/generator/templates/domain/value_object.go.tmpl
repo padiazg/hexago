@@ -8,11 +8,11 @@ type {{.VOName}} struct {
 {{.FieldDefs}}}
 
 // New{{.VOName}} creates a new {{.VOName}} with validation
-func New{{.VOName}}( /* TODO: Add parameters */ ) ({{.VOName}}, error) {
+func New{{.VOName}}({{.ConstructorParams}}) ({{.VOName}}, error) {
 	vo := {{.VOName}}{
-		// TODO: Initialize fields
-	}
-
+{{.ConstructorInit}}
+    }
+	
 	if err := vo.Validate(); err != nil {
 		return {{.VOName}}{}, err
 	}

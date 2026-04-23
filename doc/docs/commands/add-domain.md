@@ -33,6 +33,27 @@ hexago add domain entity <name> [--fields "field:type,field:type"]
 
 Any valid Go type: `string`, `int`, `int64`, `float64`, `bool`, `time.Time`, etc.
 
+**Reserved keyword handling:**
+
+Field names that lower-case to a Go reserved keyword (`type`, `map`, `range`, `func`, `chan`, etc.) are automatically renamed in the generated constructor by appending `Val`. The struct field itself is unaffected.
+
+```shell
+# "type" is a reserved keyword — hexago handles it automatically
+hexago add domain entity Movement \
+  --fields "productEan13:string,type:string,quantity:float64"
+```
+
+```go
+// struct field stays "Type"; constructor parameter becomes "typeVal"
+func NewMovement(productEan13 string, typeVal string, quantity float64) (*Movement, error) {
+    return &Movement{
+        ProductEan13: productEan13,
+        Type:         typeVal,
+        Quantity:     quantity,
+    }, nil
+}
+```
+
 **Examples:**
 
 ```shell

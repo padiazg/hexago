@@ -33,21 +33,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `bool` → `false`
   - `float64` → `0`
 
-- **Fixed**: Output directory paths now correctly use `OutputDir` from project config
+### Changed
 
-#### Example Usage
+#### Adapter Template Directory Restructured into `primary/` and `secondary/`
+- Adapter templates reorganized to mirror the generated project's `adapters/primary` and
+  `adapters/secondary` split:
 
-```bash
-# Generate adapter with method stubs matching the UserRepository port
-hexago add adapter secondary database UserRepository --from-port UserRepository
+  | Old path | New path |
+  |---|---|
+  | `templates/adapter/http.go.tmpl` | `templates/adapter/primary/http.go.tmpl` |
+  | `templates/adapter/grpc.go.tmpl` | `templates/adapter/primary/grpc.go.tmpl` |
+  | `templates/adapter/database.go.tmpl` | `templates/adapter/secondary/database.go.tmpl` |
+  | `templates/adapter/external.go.tmpl` | `templates/adapter/secondary/external.go.tmpl` |
+  | `templates/adapter/cache.go.tmpl` | `templates/adapter/secondary/cache.go.tmpl` |
 
-# Generate service with method stubs inferred from port
-hexago add service SendEmail --from-port EmailSender
-```
+- `internal/generator/adapter.go` render calls updated to use the new paths
+
+#### Domain Constructor Parameters Auto-Generated from Field Definitions
+- `domain/entity.go.tmpl` and `domain/value_object.go.tmpl` updated to use
+  `{{.ConstructorParams}}` and `{{.ConstructorInit}}` — constructors now emit real parameter
+  lists and struct initializers derived from `--fields` at generation time
+- Replaces the previous `/* TODO: Add constructor parameters */` and `// TODO: Initialize fields`
+  placeholders; generated entities and value objects are immediately usable
+- Powered by two new helpers in `internal/generator/domain.go`:
+  - `constructorParams(fields []Field) string` — comma-separated `paramName type` list
+  - `constructorInit(fields []Field) string` — indented `FieldName: paramName,` block
+
+### Fixed
+
+- Output directory paths now correctly use `OutputDir` from project config
+
+- Database adapter generation now auto-creates `internal/core/domain/errors.go` (exports
+  `ErrNotFound`) when the file does not exist, resolving import errors in generated repositories
+
+#### Go Reserved Keyword Sanitisation in Constructor Parameters
+- Field names that lower-case to a Go reserved keyword (e.g. `type`, `map`, `range`) are now
+  automatically renamed in constructor parameter lists by appending `Val`
+  (e.g. `type string` → `typeVal string`) — the struct field name is left unchanged
+- Uses `go/token.IsKeyword()` from the standard library; covers all 25 Go keywords with zero
+  maintenance overhead
+- Affected helpers: `constructorParams()` and `constructorInit()` in `internal/generator/domain.go`
+- New utilities in `pkg/utils/case.go`:
+  - `SafeParamName(name string) string` — lowercases first letter, appends `Val` on keyword collision
+  - `LcFirst(s string) string` — lowercases the first rune of a string
+  - `ZeroValueFor(typ string) string` — returns correct Go zero-value literal for a type string
 
 ---
 
-## v0.1.3 - [unreleased]
+## v0.1.3 - 2026-04-07
 
 ### Added
 
