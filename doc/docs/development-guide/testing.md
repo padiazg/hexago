@@ -41,7 +41,7 @@ After the adapter files are written, HexaGo:
 1. Runs `go-testgen report <adapter-pkg> --format json` to discover all exported functions
    that lack a test.
 2. For each untested function, runs the suggested `go-testgen gen` command — including
-   `--test-style` and `--mock-from` flags inferred by go-testgen automatically.
+   `--style` and `--mock-from` flags inferred by go-testgen automatically.
 
 ```
 🧪 Generating test: UserRepository.FindByID

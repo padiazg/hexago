@@ -17,7 +17,6 @@ var (
 	serviceDescription string
 	serviceEntity      string
 	serviceFromPort    string
-	serviceInferTests  bool
 )
 
 // addServiceCmd represents the add service command
@@ -50,7 +49,6 @@ func init() {
 	addServiceCmd.Flags().StringVarP(&serviceDescription, "description", "d", "", "Service description")
 	addServiceCmd.Flags().StringVarP(&serviceEntity, "entity", "e", "", "Domain entity this service manages (PascalCase); determines sub-package name")
 	addServiceCmd.Flags().StringVarP(&serviceFromPort, "from-port", "", "", "Port interface name to infer method signatures from")
-	addServiceCmd.Flags().BoolVarP(&serviceInferTests, "infer-tests", "", false, "Generate tests with method signatures from port")
 }
 
 func runAddService(cmd *cobra.Command, args []string) error {

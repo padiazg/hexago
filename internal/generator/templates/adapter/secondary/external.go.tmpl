@@ -13,16 +13,16 @@ import(
 {{ end -}}
 )
 
+{{if .PortName -}}
+var _ outbound.{{.PortName}} = (*{{.ServiceName}})(nil)
+
+{{end -}}
 type {{.ServiceName}} struct{
 	client	*http.Client
 	baseURL string
 	apiKey	string
 }
 
-{{if .PortName -}}
-var _ outbound.{{.PortName}} = (*{{.ServiceName}})(nil)
-
-{{end -}}
 func New{{.ServiceName}}(baseURL, apiKey string) *{{.ServiceName}}{
 	return &{{.ServiceName}}{
 		client:	&http.Client{},
