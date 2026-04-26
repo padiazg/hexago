@@ -78,7 +78,7 @@ func Report(ctx context.Context, projectRoot, pkgPattern string) ([]FuncSummary,
 func Gen(ctx context.Context, projectRoot, pkgPattern string, fn FuncSummary) error {
 	args := []string{"gen", pkgPattern, fn.FuncSpec}
 	if fn.SuggestedStyle != "" && fn.SuggestedStyle != "check" {
-		args = append(args, "--test-style", fn.SuggestedStyle)
+		args = append(args, "--style", fn.SuggestedStyle)
 	}
 	for _, dep := range fn.InterfaceDeps {
 		if !dep.MockExists {
