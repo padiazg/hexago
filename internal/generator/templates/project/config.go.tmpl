@@ -15,9 +15,10 @@ import (
 
 // Config holds all application configuration
 type Config struct {
-	Server   ServerConfig
-	LogLevel string
-	LogFormat string
+	Server        ServerConfig
+	Observability ObservabilityConfig
+	LogLevel      string
+	LogFormat     string
 }
 
 // ServerConfig holds HTTP server configuration
@@ -28,6 +29,12 @@ type ServerConfig struct {
 	WriteTimeout    time.Duration
 	IdleTimeout     time.Duration
 	ShutdownTimeout time.Duration
+}
+
+// ObservabilityConfig holds observability server configuration
+type ObservabilityConfig struct {
+	Enabled bool
+	Addr    string
 }
 
 // Load reads configuration from file and environment variables
@@ -78,4 +85,8 @@ func setDefaults() {
 	// Logger defaults
 	viper.SetDefault("loglevel", "info")
 	viper.SetDefault("logformat", "json")
+
+	// Observability defaults
+	viper.SetDefault("observability.enabled", false)
+	viper.SetDefault("observability.addr", ":8080")
 }

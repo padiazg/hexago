@@ -102,6 +102,70 @@ Service generation now distinguishes between entity-bound services (requiring re
 
 ---
 
+## v0.1.4 - [unreleased]
+
+### Semantic Code Analysis via `go/packages`
+
+HexaGo now loads and analyzes the target project's Go source code without LSP dependencies:
+
+- `internal/analyzer/` — core analysis package
+    - `loader.go` — loads project packages using `go/packages`
+    - `interfaces.go` — discovers port interfaces in `internal/core/`
+    - `structs.go` — discovers domain structs
+    - `types.go` — core types: `PortInfo`, `MethodInfo`, `ParamInfo`, `DomainStruct`, `FieldInfo`
+
+### `--from-port` Flag for Semantic Generation
+
+New CLI flag on `hexago add adapter`:
+
+```shell
+hexago add adapter secondary database UserRepository --from-port UserRepository
+```
+
+Infers method signatures from an existing port interface, eliminating manual signature entry.
+
+### go-testgen Integration
+
+HexaGo integrates with [`go-testgen`](https://padiazg.github.io/go-testgen/) for automatic test scaffolding:
+
+- **`--with-tests`** on `hexago init` sets `testing.enabled: true` in `.hexago.yaml`
+- **`--with-test` / `--no-test`** on `add adapter` overrides config per-component
+- After generation, `go-testgen report --format json` runs on the adapter package
+- For each untested exported function, `go-testgen gen` is called automatically
+- If `go-testgen` is missing or below v0.1.0, a warning is printed and generation continues
+
+### Domain Constructor Parameters Auto-Generated
+
+Entity and value object templates now emit real constructor parameters and initializers:
+
+- `{{.ConstructorParams}}` — comma-separated `paramName type` list
+- `{{.ConstructorInit}}` — indented `FieldName: paramName,` block
+- Replaces `/* TODO: Add constructor parameters */` / `// TODO: Initialize fields` placeholders
+- Generated entities are immediately usable
+
+### Go Reserved Keyword Sanitisation
+
+Field names that lower-case to a Go reserved keyword (e.g. `type`, `map`, `range`) are automatically renamed in constructor parameters by appending `Val` (e.g. `type string` → `typeVal string`). Uses `go/token.IsKeyword()` from the standard library.
+
+### Adapter Template Directory Restructured
+
+Adapter templates reorganized to mirror `adapters/primary` and `adapters/secondary`:
+
+| Old path | New path |
+|----------|----------|
+| `templates/adapter/http.go.tmpl` | `templates/adapter/primary/http.go.tmpl` |
+| `templates/adapter/grpc.go.tmpl` | `templates/adapter/primary/grpc.go.tmpl` |
+| `templates/adapter/database.go.tmpl` | `templates/adapter/secondary/database.go.tmpl` |
+| `templates/adapter/external.go.tmpl` | `templates/adapter/secondary/external.go.tmpl` |
+| `templates/adapter/cache.go.tmpl` | `templates/adapter/secondary/cache.go.tmpl` |
+
+### Bug Fixes
+
+- Output directory paths now correctly use `OutputDir` from project config
+- Database adapter generation auto-creates `internal/core/domain/errors.go` (exports `ErrNotFound`) when missing, resolving import errors
+
+---
+
 ## v0.0.3 - 2026-03-04
 
 ### `--working-directory` global flag
@@ -341,10 +405,10 @@ See [Template Customization](customization/templates.md) for full details.
 ## How to Update
 
 ```shell
-go install github.com/padiazg/hexago@v0.0.2
+go install github.com/padiazg/hexago@v0.1.4
 ```
 
-Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.0.2).
+Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.1.4).
 
 [0.0.2]: https://github.com/padiazg/hexago/releases/tag/v0.0.2
 [0.0.1]: https://github.com/padiazg/hexago/releases/tag/v0.0.1

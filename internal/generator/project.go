@@ -171,6 +171,11 @@ func (g *ProjectGenerator) generateFiles() error {
 			metricsTemplate, // Generate internal/observability/metrics.go
 		}...)
 
+		// Generate standalone server for service type (http-server mounts on main HTTP server)
+		if g.config.ProjectType == "service" {
+			queue = append(queue, serverTemplate)
+		}
+
 		// Generate route handlers for health and metrics (http-server only)
 		if g.config.ProjectType == "http-server" {
 			queue = append(queue, []string{
@@ -231,6 +236,11 @@ func (g *ProjectGenerator) addDependencies() error {
 	// Add metrics/observability dependencies
 	if g.config.WithMetrics || g.config.WithObservability {
 		dependencies = append(dependencies, "github.com/prometheus/client_golang@latest")
+	}
+
+	// Add errgroup for observability server lifecycle (service type only)
+	if g.config.WithObservability {
+		dependencies = append(dependencies, "golang.org/x/sync@latest")
 	}
 
 	// Fiber needs the adaptor package to wrap net/http handlers

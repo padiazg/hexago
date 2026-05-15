@@ -31,6 +31,7 @@ const (
 	composeTemplate             string = "compose"
 	healthTemplate              string = "health"
 	metricsTemplate             string = "metrics"
+	serverTemplate              string = "server"
 	servicesStubTemplate        string = "services-stub"
 )
 
@@ -226,6 +227,12 @@ var templateMap = map[string]templateFn{
 		return templateItem{
 			source: "observability/metrics.go.tmpl",
 			target: filepath.Join("internal", "observability", "metrics.go"),
+		}
+	},
+	serverTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "observability/server.go.tmpl",
+			target: filepath.Join("internal", "observability", "server.go"),
 		}
 	},
 	servicesStubTemplate: func(g *ProjectGenerator) templateItem {

@@ -49,7 +49,7 @@ HexaGo is an opinionated CLI tool to scaffold Go applications following the **He
 
     ---
 
-    Built-in MCP server lets Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, and Zed scaffold projects without leaving the conversation. The `--working-directory` flag means no `cd` is ever required.
+    Built-in MCP server lets Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, and Zed scaffold projects without leaving the conversation. The `--working-directory` flag means no `cd` is ever required. go-testgen integration auto-generates tests for adapter code.
 
     [:octicons-arrow-right-24: hexago mcp](commands/mcp.md)
 
