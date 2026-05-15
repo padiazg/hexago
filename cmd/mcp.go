@@ -75,6 +75,7 @@ Feature flags (all bool, default false):
   with_workers       — background worker scaffolding (manager + example worker)
   with_metrics       — Prometheus metrics (implies with_observability)
   with_example       — example service, entity, and adapter illustrating the architecture
+  with_tests         — enable go-testgen test generation for add commands
   explicit_ports     — create internal/core/ports/ with explicit port interfaces
 
 ────────────────────────────────────────────────────────────────────────────────
@@ -130,13 +131,18 @@ Required:  working_directory, direction, adapter_type, name  (PascalCase)
                  For secondary: "database" | "external" | "cache"
                  Any other string is accepted and used as the subdirectory name.
 
-Examples:
-  direction=primary,   adapter_type=http,     name=UserHandler
-  direction=primary,   adapter_type=grpc,     name=OrderService
-  direction=primary,   adapter_type=queue,    name=PaymentConsumer
-  direction=secondary, adapter_type=database,  name=UserRepository
-  direction=secondary, adapter_type=external,  name=EmailClient
-  direction=secondary, adapter_type=cache,     name=SessionCache
+Optional:
+  entity      Domain entity this adapter serves (PascalCase); determines sub-package for database adapters
+  from-port   Port interface name to implement (for explicit_ports projects). E.g. "UserRepository"
+  test        "with-test" | "no-test" — force on/off test generation (overrides config)
+
+	Example calls:
+	  direction=primary,   adapter_type=http,      name=UserHandler
+	  direction=primary,   adapter_type=grpc,      name=OrderService
+	  direction=primary,   adapter_type=queue,     name=PaymentConsumer
+	  direction=secondary, adapter_type=database,  name=UserRepository
+	  direction=secondary, adapter_type=external,  name=EmailClient
+	  direction=secondary, adapter_type=cache,     name=SessionCache
 
 ────────────────────────────────────────────────────────────────────────────────
 ## hexago_add_worker — add a background worker
@@ -184,9 +190,9 @@ Optional:
   description   One-line comment embedded in the generated file.
 
 Examples:
-  tool_type=logger,     name=ZerologLogger
-  tool_type=validator,  name=RequestValidator
-  tool_type=mapper,     name=UserMapper
+  tool_type=logger,      name=ZerologLogger
+  tool_type=validator,   name=RequestValidator
+  tool_type=mapper,      name=UserMapper
   tool_type=middleware,  name=AuthMiddleware
 
 ────────────────────────────────────────────────────────────────────────────────
@@ -298,6 +304,9 @@ Example call:
 			mcp.WithBoolean("with_metrics",
 				mcp.Description("Add Prometheus metrics (implies with_observability)."),
 			),
+			mcp.WithBoolean("with_tests",
+				mcp.Description("Enable go-testgen test generation for add commands (requires go-testgen ≥ v0.1.0)."),
+			),
 			mcp.WithBoolean("with_example",
 				mcp.Description("Include example service, entity, and adapter to illustrate the architecture."),
 			),
@@ -342,6 +351,9 @@ Example call:
 			}
 			if v, _ := args["with_metrics"].(bool); v {
 				cliArgs = append(cliArgs, "--with-metrics")
+			}
+			if v, _ := args["with_tests"].(bool); v {
+				cliArgs = append(cliArgs, "--with-tests")
 			}
 			if v, _ := args["with_example"].(bool); v {
 				cliArgs = append(cliArgs, "--with-example")
@@ -568,8 +580,12 @@ Example calls:
   primary   http — generates sub-package with two files: <snake_entity>.go (Config/DTOs) + handlers.go (List/Create/GetByID/Update)
   secondary database — generates sub-package implementing the entity's Repository port`),
 			),
-			mcp.WithString("port",
+			mcp.WithString("from-port",
 				mcp.Description("Port interface name to implement (only used with explicit_ports projects). E.g. UserRepository, EmailSender."),
+			),
+			mcp.WithString("test",
+				mcp.Description(`Test generation for this component: "with-test" (force on) or "no-test" (force off). Overrides project config.`),
+				mcp.Enum("with-test", "no-test"),
 			),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -582,8 +598,11 @@ Example calls:
 			if v, _ := args["entity"].(string); v != "" {
 				cliArgs = append(cliArgs, "--entity", v)
 			}
-			if v, _ := args["port"].(string); v != "" {
-				cliArgs = append(cliArgs, "--port", v)
+			if v, _ := args["from-port"].(string); v != "" {
+				cliArgs = append(cliArgs, "--from-port", v)
+			}
+			if v, _ := args["test"].(string); v != "" {
+				cliArgs = append(cliArgs, "--"+v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))
 		},

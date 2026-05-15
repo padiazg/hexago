@@ -1,0 +1,71 @@
+package observability
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+// Server wraps a net/http server with health-check wiring and graceful shutdown.
+type Server struct {
+	addr       string
+	health     *HealthChecker
+	metrics    *PrometheusMetrics
+	httpServer *http.Server
+}
+
+// NewServer creates a new observability server.
+func NewServer(addr string, health *HealthChecker, metrics *PrometheusMetrics) *Server {
+	mux := http.NewServeMux()
+
+	mux.Handle("/health", health.HTTPHandler())
+	mux.Handle("/ready", health.ReadinessHandler())
+	mux.Handle("/metrics", promhttp.Handler())
+
+	return &Server{
+		addr:    addr,
+		health:  health,
+		metrics: metrics,
+		httpServer: &http.Server{
+			Addr:              addr,
+			Handler:           mux,
+			ReadTimeout:       5 * time.Second,
+			WriteTimeout:      10 * time.Second,
+			IdleTimeout:       60 * time.Second,
+			ReadHeaderTimeout: 5 * time.Second,
+		},
+	}
+}
+
+// Start runs the server in the current goroutine.
+func (s *Server) Start() error {
+	fmt.Printf("Starting observability server on %s\n", s.addr)
+	return s.httpServer.ListenAndServe()
+}
+
+// StartInBackground starts the server in a goroutine and returns a shutdown function.
+func (s *Server) StartInBackground(ctx context.Context) func() {
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			// Logger not available here; caller should handle logging
+		}
+	}()
+
+	return func() {
+		shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+		_ = s.httpServer.Shutdown(shutdownCtx)
+		<-done
+	}
+}
+
+// Shutdown gracefully shuts down the server.
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
+}

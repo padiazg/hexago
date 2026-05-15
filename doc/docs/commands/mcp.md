@@ -18,7 +18,7 @@ logic is identical to the regular CLI — no duplication.
 ## Available Tools
 
 | Tool | What it does |
-|------|-------------|
+| - | - |
 | `hexago_init` | Bootstrap a new project |
 | `hexago_add_service` | Add a business-logic service/use case |
 | `hexago_add_domain_entity` | Add a domain entity |
@@ -41,13 +41,13 @@ All tools require a `working_directory` absolute path parameter:
 
 === "Claude Code"
 
-    ```shell
-    # Project scope — stored in .mcp.json, commit it so the whole team gets it
-    claude mcp add --scope project hexago -- hexago mcp
+  ```shell
+  # Project scope — stored in .mcp.json, commit it so the whole team gets it
+  claude mcp add --scope project hexago -- hexago mcp
 
-    # User scope — available across all your projects
-    claude mcp add --scope user hexago -- hexago mcp
-    ```
+  # User scope — available across all your projects
+  claude mcp add --scope user hexago -- hexago mcp
+  ```
 
     Verify with `claude mcp list`. Scope precedence (highest → lowest): `local > project > user`.
 
@@ -211,6 +211,7 @@ All tools require a `working_directory` absolute path parameter:
 | `with_migrations` | | bool | `false` | Migration setup |
 | `with_workers` | | bool | `false` | Worker scaffolding |
 | `with_metrics` | | bool | `false` | Prometheus metrics |
+| `with_tests` | | bool | `false` | Enable go-testgen test generation |
 | `with_example` | | bool | `false` | Example code |
 | `explicit_ports` | | bool | `false` | Explicit `ports/` directory |
 

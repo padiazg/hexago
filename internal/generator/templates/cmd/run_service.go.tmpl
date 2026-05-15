@@ -20,11 +20,9 @@ import (
 	"syscall"
 	"time"
 
+	"{{.ModuleName}}/internal/observability"
 	"{{.ModuleName}}/pkg/logger"
 	"{{.ModuleName}}/internal/core/services"
-{{- if .WithObservability}}
-	"{{.ModuleName}}/internal/observability"
-{{- end}}
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +37,7 @@ scheduled tasks. It listens for SIGINT (Ctrl+C) and SIGTERM signals
 and performs a graceful shutdown with a configurable timeout.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := GetConfig()
-		
+
 		// Initialize logger from config
 		log := logger.New(&logger.Config{
 			Level:  cfg.LogLevel,
@@ -50,33 +48,29 @@ and performs a graceful shutdown with a configurable timeout.`,
 
 {{- if .WithObservability}}
 		// Start observability server (health checks + metrics) if enabled
-		enableObservability, _ := cmd.Flags().GetBool("observability")
 		var shutdownObservability func()
 		var metrics *observability.PrometheusMetrics
 
-		if enableObservability {
-			healthChecker := observability.NewHealthChecker()
+		if cfg.Observability.Enabled {
+			healthChecker := observability.NewHealthChecker(log)
 			metrics = observability.NewPrometheusMetrics()
 
 			// Register health checks for your components here
 			// Example:
 			// healthChecker.RegisterCheck("database", func(ctx context.Context) observability.ComponentHealth {
-			//     // Check database connection
 			//     return observability.ComponentHealth{
 			//         Status:  observability.StatusHealthy,
 			//         Message: "Database connected",
 			//     }
 			// })
 
-			obsAddr, _ := cmd.Flags().GetString("observability-addr")
-			obsServer := observability.NewServer(obsAddr, healthChecker, metrics)
-			shutdownObservability = obsServer.StartInBackground(log)
+			obsServer := observability.NewServer(cfg.Observability.Addr, healthChecker, metrics)
+			shutdownObservability = obsServer.StartInBackground(context.Background())
 			defer shutdownObservability()
 		}
 {{- end}}
 
 		// Create your service/processor
-		// This is the main business logic that runs continuously
 		processor, err := services.NewProcessor(&services.ProcessorConfig{
 			Config: cfg,
 			Logger: log,
@@ -99,7 +93,6 @@ and performs a graceful shutdown with a configurable timeout.`,
 		errChan := make(chan error, 1)
 
 		// Start processor in goroutine
-		// This is where your main business logic runs
 		go func() {
 			log.Info("Processor started")
 			if err := processor.Start(ctx); err != nil {
