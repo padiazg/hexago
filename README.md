@@ -17,7 +17,7 @@ HexaGo is an opinionated CLI tool to scaffold for Go applications following the 
 - ⚙️ **Configuration** - Viper with YAML + environment variables
 - 📊 **Observability** - Health checks and Prometheus metrics on the main server (no separate port)
 - 🔌 **Handler Plugin Pattern** - Self-contained route packages registered via `Use(ServerHandler)`
-- 🧪 **Testing** - Test files with testify structure
+- 🧪 **Testing** - go-testgen auto-generation for adapter code
 
 ### 🧩 Component Generation (Phase 2)
 - 📦 **Services** - Add business logic services/usecases
