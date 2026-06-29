@@ -5,6 +5,9 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  pull-requests: write
+  actions: read
 jobs:
   test:
     runs-on: ubuntu-latest
