@@ -15,7 +15,7 @@ go install github.com/padiazg/hexago@latest
 To install a specific version:
 
 ```shell
-go install github.com/padiazg/hexago@v0.1.4
+go install github.com/padiazg/hexago@v0.4.0
 ```
 
 !!! tip

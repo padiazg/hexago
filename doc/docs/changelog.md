@@ -102,7 +102,9 @@ Service generation now distinguishes between entity-bound services (requiring re
 
 ---
 
-## v0.1.4 - [unreleased]
+## v0.4.0 - 2026-06-29
+
+> **Note on version jump (v0.1.3 → v0.4.0):** Earlier releases used PATCH bumps for new features, which violates semver's rule that MINOR increments for features, PATCH for bug fixes only. We've skipped `v0.2.0` and `v0.3.0` to align our tag history with actual release content. From here forward: MINOR for features/changes, PATCH for bug fixes only.
 
 ### Semantic Code Analysis via `go/packages`
 
@@ -405,10 +407,10 @@ See [Template Customization](customization/templates.md) for full details.
 ## How to Update
 
 ```shell
-go install github.com/padiazg/hexago@v0.1.4
+go install github.com/padiazg/hexago@v0.4.0
 ```
 
-Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.1.4).
+Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.4.0).
 
 [0.0.2]: https://github.com/padiazg/hexago/releases/tag/v0.0.2
 [0.0.1]: https://github.com/padiazg/hexago/releases/tag/v0.0.1
