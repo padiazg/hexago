@@ -7,7 +7,7 @@ name: post PR comment
 
 on:
   workflow_run:
-    workflows: [crap]
+    workflows: [quality]
     types: [completed]
 
 permissions:
