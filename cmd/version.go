@@ -6,7 +6,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/padiazg/hexago/pkg/version"
+	"github.com/padiazg/hexago/internal/version"
 	"github.com/spf13/cobra"
 )
 

@@ -13,7 +13,7 @@ import (
 
 var (
 	entityFields string
-	voEntity   string
+	voEntity     string
 )
 
 // addDomainCmd represents the add domain command

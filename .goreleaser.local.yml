@@ -22,9 +22,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/padiazg/hexago/pkg/version.version={{.Version}}
-      - -X github.com/padiazg/hexago/pkg/version.commit={{.Commit}}
-      - -X github.com/padiazg/hexago/pkg/version.buildDate={{.Date}}
+      - -X github.com/padiazg/hexago/internal/version.version={{.Version}}
+      - -X github.com/padiazg/hexago/internal/version.commit={{.Commit}}
+      - -X github.com/padiazg/hexago/internal/version.buildDate={{.Date}}
 
 archives:
   - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
