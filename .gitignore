@@ -1,13 +1,59 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.obj
+*.so
+*.dylib
+*.test
+*.out
+
+# Build target
 hexago
+
+# Build info
+*.tar.gz
+mutation*.json
+
+# Test cache
+coverage.out
+mutation.json
+mutation-report.json
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GoReleaser dist
+dist/
+
+# Local GoReleaser cache
+.goreleaser/local/
+
+# Specific
+.claude
+.opencode
 tmp
+
 *.md
 !README.md
+!CLAUDE.md
+!AGENTS.md
 !QUICKSTART.md
 !TEMPLATE_CUSTOMIZATION.md
 !CHANGELOG.md
-!doc/**/*.md
-doc/site
+!CODE_OF_CONDUCT.md
+!CONTRIBUTING.md
+!SECURITY.md
 
-.vscode
-.claude
-*.dis
+# MkDocs site
+!doc/**/*.md
+doc/site/

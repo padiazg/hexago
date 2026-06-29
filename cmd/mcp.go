@@ -11,7 +11,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/padiazg/hexago/pkg/version"
+	"github.com/padiazg/hexago/internal/version"
 	"github.com/spf13/cobra"
 )
 
