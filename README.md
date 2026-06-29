@@ -2,8 +2,10 @@
 
 ![Hexago Gopher](logo.png)
 
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
+[![Go Reference](https://pkg.go.dev/badge/github.com/padiazg/hexago.svg)](https://pkg.go.dev/github.com/padiazg/hexago)
+[![Go Report Card](https://goreportcard.com/badge/github.com/padiazg/hexago)](https://goreportcard.com/report/github.com/padiazg/hexago)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CRAP analysis](https://github.com/padiazg/go-crap/actions/workflows/quality.yml/badge.svg?branch=master)](https://github.com/padiazg/hexago/actions/workflows/quality.yml.yml)
 
 HexaGo is an opinionated CLI tool to scaffold for Go applications following the **Hexagonal Architecture** (Ports & Adapters) pattern. It helps developers maintain proper separation of concerns and build maintainable applications.
 
