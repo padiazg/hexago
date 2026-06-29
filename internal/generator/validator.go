@@ -7,6 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // ValidationResult holds validation results
@@ -127,11 +130,12 @@ func (v *Validator) validateServiceDependencies(result *ValidationResult) {
 		return
 	}
 
+	caser := cases.Title(language.Und, cases.NoLower)
 	if len(violations) == 0 {
-		result.Successes = append(result.Successes, fmt.Sprintf("%s only depend on domain and ports", strings.Title(v.config.CoreLogicDir())))
+		result.Successes = append(result.Successes, fmt.Sprintf("%s only depend on domain and ports", caser.String(v.config.CoreLogicDir())))
 	} else {
 		for _, violation := range violations {
-			result.Errors = append(result.Errors, fmt.Sprintf("%s imports adapter: %s in %s", strings.Title(v.config.CoreLogicDir()), violation.importPath, violation.file))
+			result.Errors = append(result.Errors, fmt.Sprintf("%s imports adapter: %s in %s", caser.String(v.config.CoreLogicDir()), violation.importPath, violation.file))
 		}
 	}
 }
