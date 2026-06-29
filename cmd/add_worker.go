@@ -78,9 +78,10 @@ func runAddWorker(cmd *cobra.Command, args []string) error {
 	fmt.Printf("📦 Adding worker: %s (%s)\n", workerName, workerType)
 	fmt.Printf("   Project: %s\n", config.ProjectName)
 
-	if workerType == "periodic" {
+	switch workerType {
+	case "periodic":
 		fmt.Printf("   Interval: %s\n", workerInterval)
-	} else if workerType == "queue" {
+	case "queue":
 		fmt.Printf("   Workers: %d\n", workerWorkers)
 		fmt.Printf("   Queue size: %d\n", workerQueueSize)
 	}
