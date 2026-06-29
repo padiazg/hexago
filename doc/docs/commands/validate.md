@@ -21,6 +21,12 @@ hexago validate --working-directory /home/user/projects/my-api
 
 `hexago validate` analyzes your project's import graph to ensure the **Dependency Rule** is respected: dependencies must flow inward (adapters → services → domain), never outward.
 
+Use `--fix` to attempt automatic fixes (currently prints a not-implemented notice):
+
+```shell
+hexago validate --fix
+```
+
 ---
 
 ## Checks Performed
@@ -40,7 +46,7 @@ hexago validate --working-directory /home/user/projects/my-api
 **Valid project:**
 
 ```
-Validating hexagonal architecture...
+📋 Validation Results:
 
   ✓ Project structure
   ✓ Core domain dependencies
@@ -48,13 +54,16 @@ Validating hexagonal architecture...
   ✓ Adapter dependencies
   ✓ Naming conventions
 
-Architecture is valid!
+📊 Summary:
+  ✓ Passed: 5
+
+✅ Validation PASSED
 ```
 
 **Invalid project (architecture violation):**
 
 ```
-Validating hexagonal architecture...
+📋 Validation Results:
 
   ✓ Project structure
   ✗ Core domain dependencies
@@ -65,8 +74,20 @@ Validating hexagonal architecture...
   ✓ Adapter dependencies
   ✓ Naming conventions
 
-Found 1 architecture violation(s).
+📊 Summary:
+  ✓ Passed: 4
+  ✗ Failed: 1
+
+❌ Validation FAILED
 ```
+
+---
+
+## Flags
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--fix` | | bool | `false` | Attempt to fix issues automatically (not yet implemented) |
 
 ---
 

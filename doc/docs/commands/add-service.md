@@ -17,6 +17,9 @@ Operates on the project root — use `--working-directory` (`-w`) to target a pr
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--description` | `-d` | string | `""` | Description of what the service does |
+| `--entity` | `-e` | string | `""` | Domain entity this service manages (PascalCase); determines sub-package name |
+| `--from-port` | | string | `""` | Port interface name to infer method signatures from |
+| `--infer-tests` | | bool | `false` | Generate tests with method signatures from port |
 
 ---
 
@@ -33,16 +36,20 @@ hexago add service ProcessOrder --description "Handles order processing"
 
 ## Generated Files
 
-For `hexago add service CreateUser`:
+Services are placed in their own sub-package under the core logic directory:
+
+For `hexago add service CreateUser --entity User`:
 
 ```
-internal/core/services/
+internal/core/services/create_user/
 ├── create_user.go         # Service implementation
-└── create_user_test.go    # Test file
+├── create_user_test.go    # Test file
+└── services.go            # Service aggregator (updated on each add)
 ```
 
 !!! note
     If your project uses `--core-logic usecases`, files are placed in `internal/core/usecases/` instead.
+    When `--entity` is provided, the sub-package name is derived from the entity (e.g. `categories/` for `Category`).
 
 ---
 

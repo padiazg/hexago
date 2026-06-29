@@ -96,7 +96,8 @@ migrations/
 
 ## Running Migrations
 
-Generated projects with `--with-migrations` include Makefile targets:
+After adding migrations, HexaGo prints Makefile target suggestions to the console.
+Add these to your project's Makefile manually:
 
 ```shell
 make migrate-up       # Apply all pending migrations

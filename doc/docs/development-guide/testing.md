@@ -221,7 +221,7 @@ func TestGetUser(t *testing.T) {
 Use build tags to separate unit and integration tests:
 
 ```go
-// +build integration
+//go:build integration
 
 package myapp_test
 

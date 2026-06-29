@@ -84,9 +84,10 @@ hexago add worker ImageProcessor --type queue --workers 10 --queue-size 1000
 For `hexago add worker EmailWorker --type queue`:
 
 ```
-internal/
-└── workers/
-    └── email_worker.go
+internal/workers/
+├── email_worker.go          # Worker implementation
+├── email_worker_test.go     # Test file
+└── manager.go               # Worker manager (generated on first worker add)
 ```
 
 ---

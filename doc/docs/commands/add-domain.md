@@ -69,7 +69,7 @@ hexago add domain entity Product --fields "id:string,name:string,price:float64,s
 Add a value object — an immutable domain concept defined by its attributes, not identity.
 
 ```shell
-hexago add domain valueobject <name> [--fields "field:type"]
+hexago add domain valueobject <name> [--fields "field:type"] [--entity <entity>]
 ```
 
 **Flags:**
@@ -77,6 +77,7 @@ hexago add domain valueobject <name> [--fields "field:type"]
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--fields` | `-f` | string | `""` | Comma-separated `field:type` pairs |
+| `--entity` | `-e` | string | `""` | Entity name to co-locate with (entity-bound); omit for standalone sub-package |
 
 **Examples:**
 
@@ -84,6 +85,7 @@ hexago add domain valueobject <name> [--fields "field:type"]
 hexago add domain valueobject Email
 hexago add domain valueobject Money --fields "amount:float64,currency:string"
 hexago add domain valueobject Address --fields "street:string,city:string,country:string"
+hexago add domain valueobject StockLevel --fields "value:float64" --entity Product
 ```
 
 ---
@@ -93,19 +95,32 @@ hexago add domain valueobject Address --fields "street:string,city:string,countr
 For `hexago add domain entity User --fields "id:string,name:string,email:string"`:
 
 ```
-internal/core/domain/
-├── user.go           # Entity definition
-└── user_test.go      # Test file
+internal/core/domain/users/
+├── users.go          # Entity definition
+├── port.go           # Repository port interface
+└── users_test.go     # Test file
+```
+
+Value objects are generated either as a standalone sub-package or co-located with an entity:
+
+```shell
+# Standalone — own sub-package
+hexago add domain valueobject Email
+# → internal/core/domain/email/email.go
+
+# Entity-bound — co-located with entity
+hexago add domain valueobject StockLevel --entity Product
+# → internal/core/domain/products/stock_level.go
 ```
 
 ---
 
 ## Generated Code Structure
 
-**Entity:**
+**Entity (in `internal/core/domain/users/users.go`):**
 
 ```go
-package domain
+package users
 
 // User represents the User entity
 type User struct {
@@ -124,10 +139,10 @@ func NewUser(id string, name string, email string) *User {
 }
 ```
 
-**Value Object:**
+**Value Object (standalone, in `internal/core/domain/email/email.go`):**
 
 ```go
-package domain
+package email
 
 // Email represents the Email value object
 type Email struct {

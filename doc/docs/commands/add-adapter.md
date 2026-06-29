@@ -76,7 +76,8 @@ For `hexago add adapter primary http UserHandler`:
 
 ```
 internal/adapters/primary/http/
-└── user_handler.go
+├── user_handler.go
+└── user_handler_test.go
 ```
 
 ### Secondary database adapter
@@ -84,8 +85,17 @@ internal/adapters/primary/http/
 For `hexago add adapter secondary database UserRepository`:
 
 ```
-internal/adapters/secondary/database/
-└── user_repository.go
+internal/adapters/secondary/database/userrepository/
+├── userrepository.go
+└── userrepository_test.go
+```
+
+When `--entity` is provided, database adapters use the entity name as sub-package:
+
+```
+internal/adapters/secondary/database/user_repository/
+├── user_repository.go
+└── user_repository_test.go
 ```
 
 ---
@@ -170,7 +180,7 @@ HexaGo auto-detects your project's naming convention.
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--entity` | `-e` | Domain entity this handler serves (PascalCase). Generates a sub-package with config and handler files. |
-| `--with-test` | | Generate tests for this component using go-testgen (overrides project config). |
+| `--with-test` | | Generate tests for this component (overrides project config). |
 | `--no-test` | | Skip test generation for this component (overrides project config). |
 | `--working-directory` | `-w` | Project root (defaults to the current directory). |
 
@@ -227,6 +237,22 @@ go-testgen gen <adapter-pkg> <FuncSpec> ...     # generate each missing test
 
 If go-testgen is missing, outdated, or the report fails, a warning is printed and the adapter
 is still generated normally.
+
+### `--entity` — domain entity binding
+
+For primary HTTP adapters, `--entity` generates a sub-package with a config file and
+CRUD handlers (List, Create, GetByID, Update):
+
+```shell
+hexago add adapter primary http UserHandler --entity User
+```
+
+For secondary database adapters, `--entity` creates the sub-package named after the
+entity and generates repository methods:
+
+```shell
+hexago add adapter secondary database UserRepository --entity User
+```
 
 ---
 
