@@ -71,19 +71,39 @@ jobs:
         if: always()
         run: go-crap scan --format pr-comment --threshold 300 --exclude '.*_test\.go' --output pr-comment.md || true
 
-      - name: get pr number
-        if: always()
-        run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
-
-      - name: upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
+      - name: post pr comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
         with:
-          name: crap-comment
-          path: |
-            pr-comment.md
-            pr-number.txt
-          if-no-files-found: ignore
+          github-token: ${{ secrets.PAT_FOR_PR_COMMENTS || github.token }}
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('pr-comment.md')) return;
+            const body = fs.readFileSync('pr-comment.md', 'utf8');
+            const prNumber = context.issue.number;
+            if (!prNumber) return;
+            const marker = '<!-- go-crap-report -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const existing = comments.find(c => c.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body,
+              });
+            }
 
       - name: fail if crap exceeded threshold
         if: steps.crap.outcome != 'success'
