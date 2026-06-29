@@ -11,13 +11,13 @@ import (
 
 // ProjectGenerator handles the generation of new projects
 type ProjectGenerator struct {
-	config      *ProjectConfig
+	config      HexagoConfig
 	projectPath string
 }
 
 // NewProjectGenerator creates a new ProjectGenerator
-func NewProjectGenerator(config *ProjectConfig) *ProjectGenerator {
-	return &ProjectGenerator{
+func NewProjectGenerator(config HexagoConfig) ProjectGenerator {
+	return ProjectGenerator{
 		config: config,
 	}
 }
@@ -28,14 +28,14 @@ func (g *ProjectGenerator) Generate() error {
 	if g.config.InPlace {
 		g.projectPath = g.config.OutputDir
 	} else {
-		g.projectPath = filepath.Join(g.config.OutputDir, g.config.ProjectName)
+		g.projectPath = filepath.Join(g.config.OutputDir, g.config.Project.Name)
 		// Check if directory already exists (in-place always uses an existing dir)
 		if utils.FileExists(g.projectPath) {
 			return fmt.Errorf("directory %s already exists", g.projectPath)
 		}
 	}
 
-	fmt.Printf("🚀 Generating project %s...\n", g.config.ProjectName)
+	fmt.Printf("🚀 Generating project %s...\n", g.config.Project.Name)
 
 	// Create base directory (no-op when in-place, dir already exists)
 	if err := utils.CreateDir(g.projectPath); err != nil {
@@ -94,22 +94,22 @@ func (g *ProjectGenerator) generateDirectoryStructure() error {
 	}
 
 	// Add optional directories
-	if g.config.ExplicitPorts {
+	if g.config.Structure.ExplicitPorts {
 		dirs = append(dirs,
 			"internal/core/ports/inbound",
 			"internal/core/ports/outbound",
 		)
 	}
 
-	if g.config.WithObservability {
+	if g.config.Features.WithObservability {
 		dirs = append(dirs, "internal/observability")
 	}
 
-	if g.config.WithWorkers {
+	if g.config.Features.WithWorkers {
 		dirs = append(dirs, "internal/workers")
 	}
 
-	if g.config.WithMigrations {
+	if g.config.Features.WithMigrations {
 		dirs = append(dirs, "migrations")
 	}
 
@@ -127,7 +127,7 @@ func (g *ProjectGenerator) generateFiles() error {
 		runTemplate,
 	}
 
-	switch g.config.ProjectType {
+	switch g.config.Project.Type {
 
 	// Generate processor for service type
 	case "service":
@@ -157,7 +157,7 @@ func (g *ProjectGenerator) generateFiles() error {
 	}...)
 
 	// Docker files
-	if g.config.WithDocker {
+	if g.config.Features.WithDocker {
 		queue = append(queue, []string{
 			dockerFileTemplate, // Generate Dockerfile
 			composeTemplate,    // Generate compose.yaml
@@ -165,19 +165,19 @@ func (g *ProjectGenerator) generateFiles() error {
 	}
 
 	// Observability files
-	if g.config.WithObservability {
+	if g.config.Features.WithObservability {
 		queue = append(queue, []string{
 			healthTemplate,  // Generate internal/observability/health.go
 			metricsTemplate, // Generate internal/observability/metrics.go
 		}...)
 
 		// Generate standalone server for service type (http-server mounts on main HTTP server)
-		if g.config.ProjectType == "service" {
+		if g.config.Project.Type == "service" {
 			queue = append(queue, serverTemplate)
 		}
 
 		// Generate route handlers for health and metrics (http-server only)
-		if g.config.ProjectType == "http-server" {
+		if g.config.Project.Type == "http-server" {
 			queue = append(queue, []string{
 				httpHealthTemplate,
 				httpMetricsTemplate,
@@ -198,7 +198,7 @@ func (g *ProjectGenerator) generateFiles() error {
 func (g *ProjectGenerator) initGoModule() error {
 	fmt.Println("📦 Initializing go module...")
 
-	cmd := exec.Command("go", "mod", "init", g.config.ModuleName)
+	cmd := exec.Command("go", "mod", "init", g.config.Project.Module)
 	cmd.Dir = g.projectPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -222,7 +222,7 @@ func (g *ProjectGenerator) addDependencies() error {
 	}
 
 	// Add framework-specific dependencies
-	switch g.config.Framework {
+	switch g.config.Project.Framework {
 	case "echo":
 		dependencies = append(dependencies, "github.com/labstack/echo/v4@latest")
 	case "gin":
@@ -234,17 +234,17 @@ func (g *ProjectGenerator) addDependencies() error {
 	}
 
 	// Add metrics/observability dependencies
-	if g.config.WithMetrics || g.config.WithObservability {
+	if g.config.Features.WithMetrics || g.config.Features.WithObservability {
 		dependencies = append(dependencies, "github.com/prometheus/client_golang@latest")
 	}
 
 	// Add errgroup for observability server lifecycle (service type only)
-	if g.config.WithObservability {
+	if g.config.Features.WithObservability {
 		dependencies = append(dependencies, "golang.org/x/sync@latest")
 	}
 
 	// Fiber needs the adaptor package to wrap net/http handlers
-	if g.config.Framework == "fiber" && g.config.WithObservability {
+	if g.config.Project.Framework == "fiber" && g.config.Features.WithObservability {
 		dependencies = append(dependencies, "github.com/gofiber/adaptor/v2@latest")
 	}
 
@@ -291,15 +291,14 @@ func (g *ProjectGenerator) formatCode() error {
 
 // saveHexagoConfig writes .hexago.yaml with the current project settings.
 func (g *ProjectGenerator) saveHexagoConfig() error {
-	cfg := HexagoConfigFromProject(g.config)
-	return SaveHexagoConfig(g.projectPath, cfg)
+	return SaveHexagoConfig(g.projectPath, &g.config)
 }
 
 // printSuccess prints success message with next steps
 func (g *ProjectGenerator) printSuccess() {
 	fmt.Println("\n✅ Project generated successfully!")
 	fmt.Println("\n📚 Next steps:")
-	fmt.Printf("  cd %s\n", g.config.ProjectName)
+	fmt.Printf("  cd %s\n", g.config.Project.Name)
 	fmt.Println("  go run main.go run")
 	fmt.Println("\n📖 Read the README.md for more information about the project structure.")
 }

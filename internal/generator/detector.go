@@ -22,14 +22,13 @@ func NewProjectDetector(projectPath string) *ProjectDetector {
 }
 
 // DetectConfig detects the project configuration from existing structure
-func (d *ProjectDetector) DetectConfig() (*ProjectConfig, error) {
+func (d *ProjectDetector) DetectConfig() (*HexagoConfig, error) {
 	// Try .hexago.yaml first — it has the full picture
 	if hexCfg, err := LoadHexagoConfig(d.projectPath); err == nil {
-		cfg := hexCfg.ToProjectConfig()
 		// Always override with actual project values
-		cfg.ProjectName = filepath.Base(d.projectPath)
-		cfg.OutputDir = d.projectPath
-		return cfg, nil
+		hexCfg.Project.Name = filepath.Base(d.projectPath)
+		hexCfg.OutputDir = d.projectPath
+		return hexCfg, nil
 	}
 
 	// Fall back to filesystem heuristics (legacy / non-hexago projects)
@@ -44,29 +43,31 @@ func (d *ProjectDetector) DetectConfig() (*ProjectConfig, error) {
 		return nil, fmt.Errorf("not a hexagonal architecture project (internal/core not found)")
 	}
 
-	config := &ProjectConfig{}
+	config := &HexagoConfig{
+		templateLoader: NewTemplateLoader(),
+	}
 
 	// Detect module name from go.mod
 	moduleName, err := d.detectModuleName()
 	if err != nil {
 		return nil, err
 	}
-	config.ModuleName = moduleName
+	config.Project.Module = moduleName
 
 	// Detect project name from directory
-	config.ProjectName = filepath.Base(d.projectPath)
+	config.Project.Name = filepath.Base(d.projectPath)
 
 	// Detect adapter style (primary-secondary vs driver-driven)
-	config.AdapterStyle = d.detectAdapterStyle()
+	config.Structure.AdapterStyle = d.detectAdapterStyle()
 
 	// Detect core logic naming (services vs usecases)
-	config.CoreLogic = d.detectCoreLogic()
+	config.Structure.CoreLogic = d.detectCoreLogic()
 
 	// Check for explicit ports
-	config.ExplicitPorts = d.hasExplicitPorts()
+	config.Structure.ExplicitPorts = d.hasExplicitPorts()
 
 	// Check for observability
-	config.WithObservability = d.hasObservability()
+	config.Features.WithObservability = d.hasObservability()
 
 	// Set output directory
 	config.OutputDir = d.projectPath
@@ -159,7 +160,7 @@ func (d *ProjectDetector) hasObservability() bool {
 
 // GetCurrentProjectConfig detects the project in the given dir.
 // If dir is empty, os.Getwd() is used.
-func GetCurrentProjectConfig(dir string) (*ProjectConfig, error) {
+func GetCurrentProjectConfig(dir string) (*HexagoConfig, error) {
 	if dir == "" {
 		var err error
 		dir, err = os.Getwd()

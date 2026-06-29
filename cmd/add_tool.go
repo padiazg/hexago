@@ -64,7 +64,7 @@ func runAddTool(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding %s tool: %s\n", toolType, toolName)
-	fmt.Printf("   Project: %s\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n", config.Project.Name)
 	if toolDescription != "" {
 		fmt.Printf("   Description: %s\n", toolDescription)
 	}

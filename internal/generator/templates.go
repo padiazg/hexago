@@ -63,7 +63,7 @@ var templateMap = map[string]templateFn{
 	},
 	runTemplate: func(g *ProjectGenerator) templateItem {
 		var templateName string
-		switch g.config.ProjectType {
+		switch g.config.Project.Type {
 		case "http-server":
 			templateName = "cmd/run_http_server.go.tmpl"
 		case "service":
@@ -134,7 +134,7 @@ var templateMap = map[string]templateFn{
 	},
 	httpServerFileTemplate: func(g *ProjectGenerator) templateItem {
 		// TODO: manage this at the config package
-		framework := g.config.Framework
+		framework := g.config.Project.Framework
 		if framework == "" {
 			framework = "stdlib"
 		}
@@ -145,7 +145,7 @@ var templateMap = map[string]templateFn{
 		}
 	},
 	// httpServerHandlerTemplate: func(g *ProjectGenerator) templateItem {
-	// 	framework := g.config.Framework
+	// 	framework := g.config.Project.Framework
 	// 	if framework == "" {
 	// 		framework = "stdlib"
 	// 	}
@@ -156,7 +156,7 @@ var templateMap = map[string]templateFn{
 	// 	}
 	// },
 	httpAdapterTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Framework
+		framework := g.config.Project.Framework
 		if framework == "" {
 			framework = "stdlib"
 		}
@@ -167,7 +167,7 @@ var templateMap = map[string]templateFn{
 		}
 	},
 	httpPingTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Framework
+		framework := g.config.Project.Framework
 		if framework == "" {
 			framework = "stdlib"
 		}
@@ -178,7 +178,7 @@ var templateMap = map[string]templateFn{
 		}
 	},
 	httpHealthTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Framework
+		framework := g.config.Project.Framework
 		if framework == "" {
 			framework = "stdlib"
 		}
@@ -189,7 +189,7 @@ var templateMap = map[string]templateFn{
 		}
 	},
 	httpMetricsTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Framework
+		framework := g.config.Project.Framework
 		if framework == "" {
 			framework = "stdlib"
 		}

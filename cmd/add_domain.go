@@ -91,7 +91,7 @@ func runAddDomainEntity(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding domain entity: %s\n", entityName)
-	fmt.Printf("   Project: %s\n\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n\n", config.Project.Name)
 
 	// Parse fields
 	fields, err := parseFields(entityFields)
@@ -128,7 +128,7 @@ func runAddDomainValueObject(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding value object: %s\n", voName)
-	fmt.Printf("   Project: %s\n\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n\n", config.Project.Name)
 
 	// Parse fields
 	fields, err := parseFields(entityFields)

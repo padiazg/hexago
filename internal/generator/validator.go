@@ -31,11 +31,11 @@ func (r *ValidationResult) ErrorCount() int {
 
 // Validator validates hexagonal architecture compliance
 type Validator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewValidator creates a new validator
-func NewValidator(config *ProjectConfig) *Validator {
+func NewValidator(config *HexagoConfig) *Validator {
 	return &Validator{
 		config: config,
 	}
@@ -119,7 +119,7 @@ func (v *Validator) validateServiceDependencies(result *ValidationResult) {
 
 	violations, err := v.checkImports(servicePath, func(importPath string) bool {
 		// Services can import domain and ports, but not adapters
-		if strings.Contains(importPath, v.config.ModuleName) {
+		if strings.Contains(importPath, v.config.Project.Module) {
 			return !strings.Contains(importPath, "/adapters/")
 		}
 		return true
@@ -234,7 +234,7 @@ func (v *Validator) checkImports(dir string, isAllowed func(string) bool) ([]imp
 			importPath := strings.Trim(imp.Path.Value, `"`)
 
 			// Only check imports from the same module
-			if !strings.HasPrefix(importPath, v.config.ModuleName) {
+			if !strings.HasPrefix(importPath, v.config.Project.Module) {
 				continue
 			}
 

@@ -65,7 +65,7 @@ func runAddMigration(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding migration: %s\n", migrationName)
-	fmt.Printf("   Project: %s\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n", config.Project.Name)
 	fmt.Printf("   Type: %s\n\n", migrationType)
 
 	// Generate migration

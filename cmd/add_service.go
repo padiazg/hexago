@@ -66,9 +66,9 @@ func runAddService(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding service: %s\n", serviceName)
-	fmt.Printf("   Project: %s\n", config.ProjectName)
-	fmt.Printf("   Module: %s\n", config.ModuleName)
-	fmt.Printf("   Logic dir: %s\n\n", config.CoreLogic)
+	fmt.Printf("   Project: %s\n", config.Project.Name)
+	fmt.Printf("   Module: %s\n", config.Project.Module)
+	fmt.Printf("   Logic dir: %s\n\n", config.Structure.CoreLogic)
 
 	// Load port info if --from-port is provided
 	var portInfo *analyzer.PortInfo

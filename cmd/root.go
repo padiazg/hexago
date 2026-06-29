@@ -48,12 +48,12 @@ func init() {
 
 // effectiveWithTests resolves test-generation intent for a command:
 // --no-test wins, then --with-test, then the project config default.
-func effectiveWithTests(cmd *cobra.Command, cfg *generator.ProjectConfig) bool {
+func effectiveWithTests(cmd *cobra.Command, cfg *generator.HexagoConfig) bool {
 	if cmd.Flags().Changed("no-test") {
 		return false
 	}
 	if cmd.Flags().Changed("with-test") {
 		return true
 	}
-	return cfg.WithTests
+	return cfg.Features.WithTests
 }

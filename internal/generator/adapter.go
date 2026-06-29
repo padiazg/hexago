@@ -14,11 +14,11 @@ import (
 
 // AdapterGenerator generates adapter files
 type AdapterGenerator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewAdapterGenerator creates a new adapter generator
-func NewAdapterGenerator(config *ProjectConfig) *AdapterGenerator {
+func NewAdapterGenerator(config *HexagoConfig) *AdapterGenerator {
 	return &AdapterGenerator{
 		config: config,
 	}
@@ -104,7 +104,7 @@ func (g *AdapterGenerator) generateHTTPHandlerPackage(adapterName, entityName st
 	routePrefix := pkgName
 
 	data := map[string]any{
-		"ModuleName":         g.config.ModuleName,
+		"ModuleName":         g.config.Project.Module,
 		"CoreLogic":          g.config.CoreLogicDir(),
 		"PackageName":        pkgName,
 		"EntityName":         entityName,
@@ -118,7 +118,7 @@ func (g *AdapterGenerator) generateHTTPHandlerPackage(adapterName, entityName st
 		"RoutePrefix":        routePrefix,
 	}
 
-	framework := g.config.Framework
+	framework := g.config.Project.Framework
 	if framework == "" {
 		framework = "chi"
 	}
@@ -230,7 +230,7 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 // generateHTTPAdapter generates an HTTP handler adapter
 func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) error {
 	data := map[string]any{
-		"ModuleName":  g.config.ModuleName,
+		"ModuleName":  g.config.Project.Module,
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"HandlerName": handlerName,
 	}
@@ -246,7 +246,7 @@ func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) err
 // generateGRPCAdapter generates a gRPC handler adapter
 func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) error {
 	data := map[string]any{
-		"ModuleName":  g.config.ModuleName,
+		"ModuleName":  g.config.Project.Module,
 		"CoreLogic":   g.config.CoreLogicDir(),
 		"HandlerName": handlerName,
 	}
@@ -262,7 +262,7 @@ func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) err
 // generateQueueAdapter generates a message queue consumer adapter
 func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) error {
 	data := map[string]any{
-		"ModuleName":   g.config.ModuleName,
+		"ModuleName":   g.config.Project.Module,
 		"CoreLogic":    g.config.CoreLogicDir(),
 		"ConsumerName": consumerName,
 	}
@@ -294,7 +294,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 	entityImportAlias = pkgName + "Domain"
 
 	data := map[string]any{
-		"ModuleName":        g.config.ModuleName,
+		"ModuleName":        g.config.Project.Module,
 		"PackageName":       pkgName,
 		"RepoName":          repoName,
 		"EntityName":        resolvedEntity,
@@ -325,7 +325,7 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 
 	// Set PortImport if portName is provided (via --port or --from-port)
 	if portName != "" {
-		portImport := fmt.Sprintf("%q", g.config.ModuleName+"/internal/core/ports/outbound")
+		portImport := fmt.Sprintf("%q", g.config.Project.Module+"/internal/core/ports/outbound")
 		data["PortImport"] = portImport
 	}
 
@@ -335,7 +335,7 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 		}
 
 		// Collect domain imports from method parameters
-		domainAliasMap := portInfo.DomainAliasMap(g.config.ModuleName)
+		domainAliasMap := portInfo.DomainAliasMap(g.config.Project.Module)
 
 		// Process methods with prefixed types
 		data["Methods"] = processMethodsWithPrefix(portInfo.Methods, domainAliasMap)
@@ -363,7 +363,7 @@ func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName st
 	}
 
 	if portName != "" {
-		portImport := fmt.Sprintf("%q", g.config.ModuleName+"/internal/core/ports/outbound")
+		portImport := fmt.Sprintf("%q", g.config.Project.Module+"/internal/core/ports/outbound")
 		data["PortImport"] = portImport
 	}
 

@@ -102,7 +102,7 @@ func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding primary adapter: %s (%s)\n", adapterName, adapterType)
-	fmt.Printf("   Project: %s\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n", config.Project.Name)
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterInboundDir())
 
 	gen := generator.NewAdapterGenerator(config)
@@ -139,7 +139,7 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding secondary adapter: %s (%s)\n", adapterName, adapterType)
-	fmt.Printf("   Project: %s\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n", config.Project.Name)
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterOutboundDir())
 
 	var portInfo *analyzer.PortInfo

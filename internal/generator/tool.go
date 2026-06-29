@@ -9,11 +9,11 @@ import (
 
 // ToolGenerator generates infrastructure tools
 type ToolGenerator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewToolGenerator creates a new tool generator
-func NewToolGenerator(config *ProjectConfig) *ToolGenerator {
+func NewToolGenerator(config *HexagoConfig) *ToolGenerator {
 	return &ToolGenerator{
 		config: config,
 	}
@@ -100,7 +100,7 @@ func (g *ToolGenerator) generateMapper(dir, name, description string) error {
 	data := map[string]any{
 		"Name":        name,
 		"Description": getDescription(description, "maps between domain entities and DTOs"),
-		"ModuleName":  g.config.ModuleName,
+		"ModuleName":  g.config.Project.Module,
 	}
 
 	content, err := g.config.templateLoader.Render("tool/mapper.go.tmpl", data)
@@ -125,7 +125,7 @@ func (g *ToolGenerator) generateMiddleware(dir, name, description string) error 
 	data := map[string]any{
 		"Name":        name,
 		"Description": getDescription(description, "is HTTP middleware"),
-		"ModuleName":  g.config.ModuleName,
+		"ModuleName":  g.config.Project.Module,
 	}
 
 	content, err := g.config.templateLoader.Render("tool/middleware.go.tmpl", data)

@@ -50,10 +50,10 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to detect project: %w\nMake sure you're in a hexagonal architecture project directory", err)
 	}
 
-	fmt.Printf("🔍 Validating project: %s\n", config.ProjectName)
-	fmt.Printf("   Module: %s\n", config.ModuleName)
-	fmt.Printf("   Adapter style: %s\n", config.AdapterStyle)
-	fmt.Printf("   Core logic: %s\n\n", config.CoreLogic)
+	fmt.Printf("🔍 Validating project: %s\n", config.Project.Name)
+	fmt.Printf("   Module: %s\n", config.Project.Module)
+	fmt.Printf("   Adapter style: %s\n", config.Structure.AdapterStyle)
+	fmt.Printf("   Core logic: %s\n\n", config.Structure.CoreLogic)
 
 	// Run validation
 	validator := generator.NewValidator(config)
