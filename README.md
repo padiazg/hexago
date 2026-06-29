@@ -11,54 +11,63 @@ HexaGo is an opinionated CLI tool to scaffold for Go applications following the 
 
 ## Features
 
-### ✨ Project Generation (Phase 1)
-- 🚀 **One Command Setup** - Create complete projects instantly
-- 🏗️ **Framework Support** - Echo, Gin, Chi, Fiber, or stdlib
-- 🐳 **Docker Ready** - Multi-stage Dockerfile + docker-compose
-- 🔄 **Graceful Shutdown** - Context-based with signal handling
-- ⚙️ **Configuration** - Viper with YAML + environment variables
-- 📊 **Observability** - Health checks and Prometheus metrics on the main server (no separate port)
-- 🔌 **Handler Plugin Pattern** - Self-contained route packages registered via `Use(ServerHandler)`
-- 🧪 **Testing** - go-testgen auto-generation for adapter code
+### Project Generation
 
-### 🧩 Component Generation (Phase 2)
-- 📦 **Services** - Add business logic services/usecases
-- 🎯 **Domain Entities** - Generate entities and value objects
-- 🔌 **Adapters** - HTTP handlers, repositories, external services
-- ✅ **Auto-detection** - Respects existing project conventions
-- 📝 **Smart Templates** - Context-aware code generation
+- **One Command Setup** - Create complete projects instantly
+- **Framework Support** - Echo, Gin, Chi, Fiber, or stdlib
+- **Docker Ready** - Multi-stage Dockerfile + docker-compose
+- **Graceful Shutdown** - Context-based with signal handling
+- **Configuration** - Viper with YAML + environment variables
+- **Observability** - Health checks and Prometheus metrics on the main server (no separate port)
+- **Handler Plugin Pattern** - Self-contained route packages registered via `Use(ServerHandler)`
+- **Testing** - go-testgen auto-generation for adapter code
 
-### ⚡ High Value Features (Phase 3)
-- 👷 **Workers** - Queue, periodic, and event-driven background workers
-- 🗄️ **Migrations** - Database migrations with sequential numbering
-- ✅ **Validation** - Architecture compliance validation
+### Component Generation
 
-### 🎨 Template Customization
-- 📝 **Customizable Templates** - Modify generated code to match your style
-- 🏢 **Company Branding** - Add custom headers and comments
-- 👥 **Team Sharing** - Version control and share custom templates
-- 🔄 **Multi-Source Loading** - Project-local, user-global, or embedded templates
+- **Services** - Add business logic services/usecases
+- **Domain Entities** - Generate entities and value objects
+- **Adapters** - HTTP handlers, repositories, external services
+- **Auto-detection** - Respects existing project conventions
+- **Smart Templates** - Context-aware code generation
 
-### 🤖 AI Assistant Integration (NEW in v0.0.3)
-- 🔌 **Built-in MCP Server** - `hexago mcp` starts a stdio Model Context Protocol server
-- 🛠️ **9 MCP Tools** - Scaffold any component without leaving your AI chat
-- 📍 **`--working-directory` flag** - Target any project from any directory, no `cd` required
-- 📂 **`--in-place` init** - Generate into the current directory, no subfolder created
-- 🖥️ **Multi-client support** - Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed
+### High Value Features
+
+- **Workers** - Queue, periodic, and event-driven background workers
+- **Migrations** - Database migrations with sequential numbering
+- **Validation** - Architecture compliance validation
+
+### Template Customization
+
+- **Customizable Templates** - Modify generated code to match your style
+- **Company Branding** - Add custom headers and comments
+- **Team Sharing** - Version control and share custom templates
+- **Multi-Source Loading** - Project-local, user-global, or embedded templates
+
+### AI Assistant Integration
+
+- **Built-in MCP Server** - `hexago mcp` starts a stdio Model Context Protocol server
+- **9 MCP Tools** - Scaffold any component without leaving your AI chat
+- **`--working-directory` flag** - Target any project from any directory, no `cd` required
+- **`--in-place` init** - Generate into the current directory, no subfolder created
+- **Multi-client support** - Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed
 
 ## Installation
+
 Using Go
+
 ```shell
 go install github.com/padiazg/hexago@latest
 ```
 
 Using Homebrew
+
 ```shell
 brew tap padiazg/hexago 
 brew install hexago
 ```
 
 Or build from source:
+
 ```shell
 git clone https://github.com/padiazg/hexago.git
 cd hexago
@@ -170,258 +179,33 @@ my-app/
 └── README.md              # Architecture docs
 ```
 
-## Commands Reference
-
-### Initialize Project
-
-```shell
-hexago init <name> [flags]
-
-Flags:
-  -m, --module string          Go module name (defaults to project name if omitted)
-  -t, --project-type string    Project type (http-server|service) (default: http-server)
-  -f, --framework string       Web framework for http-server (echo|gin|chi|fiber|stdlib) (default: stdlib)
-      --adapter-style string   Adapter naming (primary-secondary|driver-driven) (default: primary-secondary)
-      --core-logic string      Business logic dir (services|usecases) (default: services)
-      --with-docker            Generate Docker files (default: false)
-      --with-observability     Include health + metrics (default: false)
-      --with-migrations        Include migration setup (default: false)
-      --with-workers           Include worker pattern (default: false)
-      --with-metrics           Include Prometheus metrics (default: false)
-      --with-example           Include example code (default: false)
-      --explicit-ports         Create ports/ directory (default: false)
-      --with-tests             Enable go-testgen test generation for add commands (default: false)
-```
-
-### Add Service
-
-```shell
-hexago add service <name> [--description "desc"]
-
-Examples:
-  hexago add service CreateUser
-  hexago add service SendEmail --description "Sends email notifications"
-```
-
-### Add Domain Entity
-
-```shell
-hexago add domain entity <name> [--fields "field:type,field:type"]
-
-Examples:
-  hexago add domain entity User --fields "id:string,name:string,email:string"
-  hexago add domain entity Order --fields "id:string,total:float64,createdAt:time.Time"
-```
-
-### Add Domain Value Object
-
-```shell
-hexago add domain valueobject <name> [--fields "field:type"]
-
-Examples:
-  hexago add domain valueobject Email
-  hexago add domain valueobject Money --fields "amount:float64,currency:string"
-```
-
-### Add Primary Adapter
-
-```shell
-hexago add adapter primary <type> <name> [flags]
-
-Types: http, grpc, queue
-
-Flags:
-  -e, --entity string   Domain entity this handler serves
-      --with-test       Generate tests for this component (overrides config)
-      --no-test         Skip test generation for this component (overrides config)
-
-Examples:
-  hexago add adapter primary http UserHandler
-  hexago add adapter primary grpc OrderService
-  hexago add adapter primary queue EmailConsumer
-  hexago add adapter primary http UserHandler --with-test
-```
-
-### Add Secondary Adapter
-
-```shell
-hexago add adapter secondary <type> <name> [flags]
-
-Types: database, external, cache
-
-Flags:
-  -e, --entity string      Domain entity this adapter implements
-  -p, --from-port string   Port interface name to infer method signatures from
-      --with-test          Generate tests for this component (overrides config)
-      --no-test            Skip test generation for this component (overrides config)
-
-Examples:
-  hexago add adapter secondary database UserRepository
-  hexago add adapter secondary external EmailService
-  hexago add adapter secondary cache UserCache
-  hexago add adapter secondary database UserRepository --from-port UserRepository --with-test
-```
-
-### Test Generation (optional)
-
-HexaGo integrates with [`go-testgen`](https://padiazg.github.io/go-testgen/) to scaffold tests
-for generated adapter code. Install it first:
-
-```shell
-go install github.com/padiazg/go-testgen@latest
-```
-
-Enable globally for a project (written to `.hexago.yaml`):
-
-```shell
-hexago init my-app --module github.com/user/my-app --with-tests
-```
-
-Or enable/disable per command:
-
-```shell
-hexago add adapter secondary database UserRepository --with-test   # force on
-hexago add adapter primary http UserHandler --no-test              # force off
-```
-
-When enabled, HexaGo runs `go-testgen report --format json` on the adapter package after
-generation and calls `go-testgen gen` for each untested exported function. If `go-testgen` is
-missing or below v0.1.0, a warning is printed and the adapter is still generated.
-
-### Add Worker
-
-```shell
-hexago add worker <name> [flags]
-
-Flags:
-  -t, --type string         Worker type (queue|periodic|event) (default: queue)
-      --interval string     Interval for periodic workers (e.g., "5m", "1h") (default: 5m)
-      --workers int         Number of worker goroutines (queue type) (default: 5)
-      --queue-size int      Job queue buffer size (queue type) (default: 100)
-
-Examples:
-  hexago add worker EmailWorker --type queue --workers 5
-  hexago add worker HealthWorker --type periodic --interval 5m
-  hexago add worker NotificationWorker --type event
-```
-
-### Add Migration
-
-```shell
-hexago add migration <name> [flags]
-
-Flags:
-  -t, --type string   Migration type (sql|go) (default: sql)
-
-Examples:
-  hexago add migration create_users_table
-  hexago add migration add_email_index
-  hexago add migration alter_products_table
-```
-
-### Add Infrastructure Tool
-
-```shell
-hexago add tool <type> <name> [--description "desc"]
-
-Types: logger, validator, mapper, middleware
-
-Examples:
-  hexago add tool logger StructuredLogger
-  hexago add tool validator RequestValidator
-  hexago add tool mapper UserMapper
-  hexago add tool middleware AuthMiddleware
-```
-
-### Validate Architecture
-
-```shell
-hexago validate
-
-Checks:
-  ✓ Project structure
-  ✓ Core domain dependencies
-  ✓ Service/UseCase dependencies
-  ✓ Adapter dependencies
-  ✓ Naming conventions
-```
-
-### Manage Templates
-
-```shell
-# List all built-in templates (overrides annotated)
-hexago templates list
-
-# Show which source wins for a given template
-hexago templates which service/service.go.tmpl
-
-# Export a single template for editing
-hexago templates export service/service.go.tmpl          # project-local
-hexago templates export service/service.go.tmpl --global # user-global
-
-# Export every template at once
-hexago templates export-all                 # project-local, skip existing
-hexago templates export-all --global        # user-global
-hexago templates export-all --force         # overwrite existing overrides
-
-# Validate template syntax after editing
-hexago templates validate .hexago/templates/service/service.go.tmpl
-
-# Remove a custom override (reverts to built-in)
-hexago templates reset service/service.go.tmpl
-hexago templates reset service/service.go.tmpl --global
-```
-
-## Complete Example
-
-```shell
-# 1. Create project
-hexago init blog-api --module github.com/me/blog-api --framework gin
-
-cd blog-api
-
-# 2. Add domain
-hexago add domain entity Post --fields "id:string,title:string,content:string,authorID:string"
-hexago add domain entity Author --fields "id:string,name:string,email:string"
-hexago add domain valueobject Email
-
-# 3. Add business logic
-hexago add service CreatePost
-hexago add service GetPost
-hexago add service ListPosts
-hexago add service CreateAuthor
-
-# 4. Add repositories
-hexago add adapter secondary database PostRepository
-hexago add adapter secondary database AuthorRepository
-
-# 5. Add HTTP handlers
-hexago add adapter primary http PostHandler
-hexago add adapter primary http AuthorHandler
-
-# 6. Add workers
-hexago add worker EmailWorker --type queue
-hexago add worker CacheWarmer --type periodic --interval 10m
-
-# 7. Add migrations
-hexago add migration create_posts_table
-hexago add migration create_authors_table
-
-# 8. Add infrastructure tools
-hexago add tool validator PostValidator
-hexago add tool middleware RateLimitMiddleware
-
-# 9. Validate architecture
-hexago validate
-
-# 10. Build and run
-make run
-```
+## Commands
+
+See the full [Commands Reference](https://padiazg.github.io/hexago/commands/) for all flags, examples, and usage:
+
+| Command | Description |
+|---------|-------------|
+| `hexago init` | Create a new hexagonal architecture project |
+| `hexago add service` | Add a business logic service/use case |
+| `hexago add domain` | Add a domain entity or value object |
+| `hexago add adapter` | Add a primary or secondary adapter |
+| `hexago add worker` | Add a background worker |
+| `hexago add migration` | Add a database migration |
+| `hexago add tool` | Add an infrastructure tool |
+| `hexago validate` | Validate architecture compliance |
+| `hexago mcp` | Start the MCP server for AI assistants |
+| `hexago templates` | Manage and customize code generation templates |
+
+## Examples
+
+See the [URL Shortener full example](https://padiazg.github.io/hexago/examples/url-shortener-full-example/) for a complete walkthrough.
 
 ## Architecture Principles
 
 ### Dependency Rule
+
 **Dependencies flow inward:**
+
 ```
 Adapters → Services/UseCases → Domain
 ```
@@ -468,40 +252,15 @@ logformat: json
 ```
 
 Or use environment variables:
+
 ```shell
 export MY_APP_SERVER_PORT=8080
 export MY_APP_LOGLEVEL=debug
 ```
 
-## Makefile Commands
+## Build & Run
 
-Generated projects include a Makefile:
-
-```shell
-make build           # Build the application
-make run             # Run the application
-make test            # Run tests
-make test-coverage   # Run tests with coverage
-make clean           # Clean build artifacts
-make fmt             # Format code
-make lint            # Run linter
-make docker-build    # Build Docker image
-make docker-up       # Start Docker Compose
-make docker-down     # Stop Docker Compose
-make migrate-up      # Run database migrations (if configured)
-make migrate-down    # Rollback last migration (if configured)
-make migrate-version # Show current migration version (if configured)
-```
-
-## Development Workflow
-
-1. **Generate project** with `hexago init`
-2. **Add domain entities** defining your business objects
-3. **Add services** implementing business logic
-4. **Add adapters** for external interfaces
-5. **Implement logic** following TODO comments
-6. **Write tests** using generated test files
-7. **Run and iterate**
+See the [Build & Run guide](https://padiazg.github.io/hexago/development-guide/build-and-run/) for Makefile targets, Docker, and migration commands.
 
 ## `.hexago.yaml` — Project Configuration File
 
@@ -546,26 +305,6 @@ features:
    hexago init new-service --module github.com/me/new-service
    ```
 
-## Smart Features
-
-### Auto-Detection
-- Reads `.hexago.yaml` first for the full project configuration
-- Falls back to filesystem heuristics for legacy / non-hexago projects
-- Respects naming conventions
-- Uses correct module paths
-
-### Smart Templates
-- Context-aware generation
-- Proper imports
-- TODO guidance
-- Best practices
-
-### Validation
-- Component name validation
-- File conflict prevention
-- Type validation
-- Go conventions enforcement
-
 ## Framework Support
 
 HexaGo generates framework-specific code:
@@ -581,10 +320,12 @@ HexaGo generates framework-specific code:
 HexaGo supports different naming conventions:
 
 **Adapter Naming:**
+
 - `primary-secondary` (DDD terminology)
 - `driver-driven` (Ports & Adapters terminology)
 
 **Core Logic:**
+
 - `services` (DDD terminology)
 - `usecases` (Use case driven design)
 
@@ -592,37 +333,24 @@ Choose what fits your team's vocabulary!
 
 ## Documentation
 
-- [Quick Start Guide](QUICKSTART.md) - Get started quickly
-- [Template Customization](TEMPLATE_CUSTOMIZATION.md) - **NEW!** Customize generated code
-- [Implementation Strategy](IMPLEMENTATION_STRATEGY.md) - Design decisions
-- [Phase 1 Complete](PHASE1_COMPLETE.md) - Project generation details
-- [Phase 2 Complete](PHASE2_COMPLETE.md) - Component generation details
-- [Phase 3 Complete](PHASE3_COMPLETE.md) - Workers, migrations, validation
-- [CLAUDE.md](CLAUDE.md) - Claude Code guidance
-
-## Examples
-
-See generated test projects:
-- `/tmp/test-app` - Basic stdlib project
-- `/tmp/demo-app` - Echo framework with components
+- [Installation](https://padiazg.github.io/hexago/getting-started/installation/)
+- [Quick Start](https://padiazg.github.io/hexago/getting-started/quickstart/)
+- [Commands Reference](https://padiazg.github.io/hexago/commands/)
+- [Architecture Overview](https://padiazg.github.io/hexago/architecture/overview/)
+- [Project Structure](https://padiazg.github.io/hexago/architecture/project-structure/)
+- [Template Customization](https://padiazg.github.io/hexago/customization/templates/)
+- [Development Guide](https://padiazg.github.io/hexago/development-guide/)
+- [Examples](https://padiazg.github.io/hexago/examples/url-shortener-full-example/)
+- [Changelog](https://padiazg.github.io/hexago/changelog/)
 
 ## Troubleshooting
 
-### "not a hexagonal architecture project"
-Run commands from the project root directory where `go.mod` exists.
-
-### "module name not found"
-Ensure `go.mod` exists and contains a valid module declaration.
-
-### Port already in use
-Change port in config file or environment:
-```shell
-export MY_APP_SERVER_PORT=9000
-```
+See the [Development Guide](https://padiazg.github.io/hexago/development-guide/) for common issues and solutions.
 
 ## Contributing
 
 Contributions welcome! Please:
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
@@ -639,29 +367,17 @@ MIT License - see [LICENSE](LICENSE) file
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Ports & Adapters](https://herbertograca.com/2017/11/16/explicit-architecture-01-ddd-hexagonal-onion-clean-cqrs-how-i-put-it-all-together/)
 
-## Status
-
-- ✅ Phase 1: Project Generation - **Complete**
-- ✅ Phase 2: Component Generation - **Complete**
-- ✅ Phase 3: High Value Features - **Complete**
-  - ✅ Workers (queue, periodic, event-driven)
-  - ✅ Migrations (sequential numbering)
-  - ✅ Architecture validation
-
-**HexaGo is production-ready and actively maintained!**
-
 ---
 
 ## MCP Server
 
 HexaGo includes a built-in [MCP](https://modelcontextprotocol.io/) server so AI
-assistants (Claude Code, Claude Desktop, Cursor, VS Code, …) can scaffold hexagonal
-architecture projects without leaving their conversation.
+assistants can scaffold hexagonal architecture projects without leaving their conversation.
 
 ### Available tools
 
 | Tool | What it does |
-|------|-------------|
+| - | - |
 | `hexago_init` | Initialize a new project |
 | `hexago_add_service` | Add a business logic service |
 | `hexago_add_domain_entity` | Add a domain entity |
@@ -672,180 +388,20 @@ architecture projects without leaving their conversation.
 | `hexago_add_tool` | Add an infrastructure tool |
 | `hexago_validate` | Validate architecture compliance |
 
-All tools accept a required `working_directory` parameter — the project root (or parent
-directory for `hexago_init`).
-`hexago_init` also accepts `in_place: true` to generate files directly into
-`working_directory` without creating a `<name>` subdirectory.
+All tools accept a required `working_directory` parameter. `hexago_init` also accepts `in_place: true` to generate files directly into `working_directory`.
 
----
-
-### Claude Code
-
-```shell
-# User scope — available across all your projects
-claude mcp add --scope user hexago -- hexago mcp
-
-# Project scope — stored in .mcp.json, commit it so the whole team gets it
-claude mcp add --scope project hexago -- hexago mcp
-```
-
-Verify with `claude mcp list`. Scope precedence (highest → lowest): `local > project > user`.
-
----
-
-### Claude Desktop
-
-Edit `claude_desktop_config.json` and restart the app completely.
-
-| Platform | Config file |
-|----------|-------------|
-| macOS    | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Windows  | `%APPDATA%\Claude\claude_desktop_config.json` |
-
-```json
-{
-  "mcpServers": {
-    "hexago": {
-      "command": "hexago",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-> **Tip:** If `hexago` is not on `PATH`, use the full binary path (e.g. `/home/user/go/bin/hexago`).
-> Logs: `~/Library/Logs/Claude/mcp.log` (macOS) · `%APPDATA%\Claude\logs\` (Windows).
-
----
-
-### VS Code (Copilot / GitHub Copilot Chat)
-
-VS Code uses `mcp.json` with a `"servers"` top-level key. The `"type": "stdio"` field
-is required.
-
-**Workspace scope** (commit this file to share with your team):
-
-`.vscode/mcp.json`
-```json
-{
-  "servers": {
-    "hexago": {
-      "type": "stdio",
-      "command": "hexago",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-**User scope** (available in all your workspaces):
-
-| Platform | Path |
-|----------|------|
-| macOS    | `~/Library/Application Support/Code/User/mcp.json` |
-| Linux    | `~/.config/Code/User/mcp.json` |
-| Windows  | `%APPDATA%\Code\User\mcp.json` |
-
-You can also open it via the Command Palette: **MCP: Open User Configuration**.
-
----
-
-### Cursor
-
-Cursor uses `mcp.json` with a `"mcpServers"` top-level key.
-
-**Project scope** (`.cursor/mcp.json` in the project root):
-```json
-{
-  "mcpServers": {
-    "hexago": {
-      "command": "hexago",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-**Global scope** (`~/.cursor/mcp.json` — available in all projects):
-```json
-{
-  "mcpServers": {
-    "hexago": {
-      "command": "hexago",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-After editing, restart the MCP server from Cursor's Settings → MCP panel.
-
----
-
-### Windsurf (Codeium)
-
-Edit the global config and restart Windsurf.
-
-| Platform | Config file |
-|----------|-------------|
-| macOS / Linux | `~/.codeium/windsurf/mcp_config.json` |
-| Windows       | `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
-
-```json
-{
-  "mcpServers": {
-    "hexago": {
-      "command": "hexago",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
----
-
-### Zed
-
-Add a `"context_servers"` entry to your Zed settings (`Cmd+,` → JSON view).
-
-| Platform | Config file |
-|----------|-------------|
-| macOS    | `~/.zed/settings.json` |
-| Linux    | `~/.config/zed/settings.json` |
-
-```json
-{
-  "context_servers": {
-    "hexago": {
-      "source": "custom",
-      "command": "hexago",
-      "args": ["mcp"],
-      "env": {}
-    }
-  }
-}
-```
-
-`"source": "custom"` is required for manually configured servers. Verify the connection
-in the Agent Panel — a green dot means the server is active.
-
----
+See the [MCP Server docs](https://padiazg.github.io/hexago/commands/mcp/) for per-client configuration (Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed).
 
 ### Quick reference
 
 | Client | Config file | Key | `type` field |
-|--------|-------------|-----|--------------|
+| - | - | - | - |
 | Claude Code | `~/.claude.json` / `.mcp.json` | `mcpServers` | — |
 | Claude Desktop | `claude_desktop_config.json` | `mcpServers` | — |
 | VS Code | `.vscode/mcp.json` or `…/Code/User/mcp.json` | `servers` | `"stdio"` required |
 | Cursor | `.cursor/mcp.json` or `~/.cursor/mcp.json` | `mcpServers` | — |
 | Windsurf | `mcp_config.json` | `mcpServers` | — |
 | Zed | `settings.json` | `context_servers` | `source: "custom"` |
-
----
-
-### Coverage: 99%
-All core features implemented. Remaining 1% includes optional enhancements like auth scaffolding, diagram generation, and CI/CD templates.
 
 ---
 
