@@ -12,17 +12,20 @@ build:
 	@echo "Building $(BINARY)..."
 	@go build -o $(BINARY) -ldflags "$(LDFLAGS)"
 
-test:
-	go test -race -count=1 ./...
-
-lint:
-	golangci-lint run ./...
-
 clean:
 	rm -f $(BINARY) coverage.out mutation*.json
 
+test:
+	go test -race -count=1 ./...
+
+vet:
+	go vet ./...
+
 fmt:
 	gofmt -s -w .
+
+lint:
+	golangci-lint run ./...
 
 mod-tidy:
 	go mod tidy
@@ -34,7 +37,7 @@ coverage:
 	go test -race -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 
-preflight: fmt lint
+preflight: vet fmt lint
 	gremlins unleash --timeout-coefficient 20 -S "l" --integration --output=mutation.json && \
 	go-crap scan --exclude ".*_test.go" --top 10 --mutation-report mutation.json
 
