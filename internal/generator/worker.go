@@ -17,11 +17,11 @@ type WorkerConfig struct {
 
 // WorkerGenerator generates worker files
 type WorkerGenerator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewWorkerGenerator creates a new worker generator
-func NewWorkerGenerator(config *ProjectConfig) *WorkerGenerator {
+func NewWorkerGenerator(config *HexagoConfig) *WorkerGenerator {
 	return &WorkerGenerator{
 		config: config,
 	}
@@ -75,7 +75,7 @@ func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig)
 // generateQueueWorker generates a queue-based worker
 func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, config WorkerConfig) error {
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
+		"ModuleName": g.config.Project.Module,
 		"WorkerName": workerName,
 		"Workers":    config.Workers,
 		"QueueSize":  config.QueueSize,
@@ -92,7 +92,7 @@ func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, confi
 // generatePeriodicWorker generates a periodic worker
 func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, config WorkerConfig) error {
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
+		"ModuleName": g.config.Project.Module,
 		"WorkerName": workerName,
 		"Interval":   config.Interval,
 	}
@@ -108,7 +108,7 @@ func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, co
 // generateEventWorker generates an event-driven worker
 func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, config WorkerConfig) error {
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
+		"ModuleName": g.config.Project.Module,
 		"WorkerName": workerName,
 	}
 
@@ -133,7 +133,7 @@ func (g *WorkerGenerator) ensureWorkerManager(workersDir string) error {
 	fmt.Printf("📝 Creating worker manager: %s\n", managerPath)
 
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
+		"ModuleName": g.config.Project.Module,
 	}
 
 	content, err := g.config.templateLoader.Render("worker/manager.go.tmpl", data)

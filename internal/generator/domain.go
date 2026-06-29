@@ -16,11 +16,11 @@ type Field struct {
 
 // DomainGenerator generates domain entities and value objects
 type DomainGenerator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewDomainGenerator creates a new domain generator
-func NewDomainGenerator(config *ProjectConfig) *DomainGenerator {
+func NewDomainGenerator(config *HexagoConfig) *DomainGenerator {
 	return &DomainGenerator{
 		config: config,
 	}

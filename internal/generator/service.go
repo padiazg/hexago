@@ -25,11 +25,11 @@ type ServiceEntry struct {
 
 // ServiceGenerator generates service/usecase files
 type ServiceGenerator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewServiceGenerator creates a new service generator
-func NewServiceGenerator(config *ProjectConfig) *ServiceGenerator {
+func NewServiceGenerator(config *HexagoConfig) *ServiceGenerator {
 	return &ServiceGenerator{
 		config: config,
 	}
@@ -99,7 +99,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 
 	data := map[string]any{
 		"CoreLogic":         g.config.CoreLogicDir(),
-		"ModuleName":        g.config.ModuleName,
+		"ModuleName":        g.config.Project.Module,
 		"ServiceName":       serviceName,
 		"PackageName":       pkgName,
 		"HasEntity":         hasEntity,
@@ -158,7 +158,7 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 
 	aggregatorPath := filepath.Join(baseServiceDir, "services.go")
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
+		"ModuleName": g.config.Project.Module,
 		"CoreLogic":  g.config.CoreLogicDir(),
 		"Entries":    serviceEntries,
 	}

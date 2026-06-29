@@ -13,11 +13,11 @@ var migrationUpFilePattern = regexp.MustCompile(`^(\d{6})_.*\.up\.sql$`)
 
 // MigrationGenerator generates database migration files
 type MigrationGenerator struct {
-	config *ProjectConfig
+	config *HexagoConfig
 }
 
 // NewMigrationGenerator creates a new migration generator
-func NewMigrationGenerator(config *ProjectConfig) *MigrationGenerator {
+func NewMigrationGenerator(config *HexagoConfig) *MigrationGenerator {
 	return &MigrationGenerator{
 		config: config,
 	}
@@ -145,7 +145,7 @@ func (g *MigrationGenerator) ensureMigrationManager() error {
 	fmt.Printf("📝 Creating migration manager: %s\n", managerPath)
 
 	data := map[string]any{
-		"ModuleName": g.config.ModuleName,
+		"ModuleName": g.config.Project.Module,
 	}
 
 	content, err := g.config.templateLoader.Render("migration/migrator.go.tmpl", data)

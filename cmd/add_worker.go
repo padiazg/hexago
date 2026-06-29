@@ -76,7 +76,7 @@ func runAddWorker(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("📦 Adding worker: %s (%s)\n", workerName, workerType)
-	fmt.Printf("   Project: %s\n", config.ProjectName)
+	fmt.Printf("   Project: %s\n", config.Project.Name)
 
 	switch workerType {
 	case "periodic":
