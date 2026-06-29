@@ -76,7 +76,7 @@ jobs:
 
       - name: post pr comment
         if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_FOR_PR_COMMENTS || github.token }}
           script: |
