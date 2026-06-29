@@ -5,7 +5,9 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.1.4 - 2026-06-29
+## v0.4.0 - 2026-06-29
+
+> **Note on version jump (v0.1.3 → v0.4.0):** Earlier releases used PATCH bumps for new features, which violates semver's rule that MINOR increments for features, PATCH for bug fixes only. We've skipped `v0.2.0` and `v0.3.0` to align our tag history with actual release content. From here forward: MINOR for features/changes, PATCH for bug fixes only.
 
 ### Added
 
