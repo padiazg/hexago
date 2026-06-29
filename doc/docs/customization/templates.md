@@ -27,8 +27,10 @@ The template directory mirrors the generated project structure — the path of a
 templates/
 ├── cmd/                        # CLI commands
 │   ├── root.go.tmpl            → cmd/root.go
+│   ├── run.go.tmpl             → cmd/run.go  (base)
 │   ├── run_http_server.go.tmpl → cmd/run.go  (http-server type)
-│   └── run_service.go.tmpl     → cmd/run.go  (service type)
+│   ├── run_service.go.tmpl     → cmd/run.go  (service type)
+│   └── version.go.tmpl         → cmd/version.go
 │
 ├── pkg/
 │   ├── server/
@@ -39,10 +41,21 @@ templates/
 │   │   ├── http_server_gin.go.tmpl
 │   │   ├── http_server_fiber.go.tmpl
 │   │   └── http_server_stdlib.go.tmpl
-│   └── logger/
-│       └── logger.go.tmpl      → pkg/logger/logger.go
+│   ├── logger/
+│   │   └── logger.go.tmpl      → pkg/logger/logger.go
+│   └── version/                # Version info + splash
+│       ├── version.go.tmpl     → pkg/version/version.go
+│       ├── splash.go.tmpl      → pkg/version/splash.go
+│       └── version_test.go.tmpl→ pkg/version/version_test.go
 │
-├── adapter/
+├── adapter/                    # Adapter root templates
+│   ├── adapter_test.go.tmpl    → <adapter>_test.go
+│   ├── http.go.tmpl            → primary/http/<name>.go (generic)
+│   ├── grpc.go.tmpl            → primary/grpc/<name>.go
+│   ├── queue.go.tmpl           → primary/queue/<name>.go
+│   ├── database.go.tmpl        → secondary/database/<name>.go
+│   ├── external.go.tmpl        → secondary/external/<name>.go
+│   ├── cache.go.tmpl           → secondary/cache/<name>.go
 │   └── primary/
 │       └── http/               # One sub-directory per framework
 │           ├── chi/
@@ -55,7 +68,7 @@ templates/
 │           ├── fiber/  (same set)
 │           └── stdlib/ (same set)
 │
-├── project/                    # Misc project-root files
+├── project/                    # Project-root files
 │   ├── main.go.tmpl            → main.go
 │   └── config.go.tmpl          → internal/config/config.go
 │
@@ -71,34 +84,38 @@ templates/
 │   └── metrics.go.tmpl         → internal/observability/metrics.go
 │
 ├── service/                    # Business logic templates
-│   ├── service.go.tmpl
-│   ├── service_test.go.tmpl
-│   └── processor.go.tmpl
+│   ├── service.go.tmpl         → service implementation
+│   ├── service_test.go.tmpl    → service tests
+│   ├── services_aggregator.go.tmpl → services.go aggregator
+│   ├── services_stub.go.tmpl   → services stub (initial)
+│   └── processor.go.tmpl       → processor (service type)
 ├── domain/                     # Domain entity templates
-│   ├── entity.go.tmpl
-│   ├── entity_test.go.tmpl
-│   ├── value_object.go.tmpl
-│   └── value_object_test.go.tmpl
+│   ├── entity.go.tmpl          → entity definition
+│   ├── entity_test.go.tmpl     → entity tests
+│   ├── errors.go.tmpl          → domain errors
+│   ├── port.go.tmpl            → repository port interface
+│   ├── value_object.go.tmpl    → value object definition
+│   └── value_object_test.go.tmpl → value object tests
 ├── worker/                     # Background worker templates
-│   ├── queue.go.tmpl
-│   ├── periodic.go.tmpl
-│   ├── event.go.tmpl
-│   ├── manager.go.tmpl
-│   └── worker_test.go.tmpl
+│   ├── queue.go.tmpl           → queue worker
+│   ├── periodic.go.tmpl        → periodic worker
+│   ├── event.go.tmpl           → event worker
+│   ├── manager.go.tmpl         → worker manager
+│   └── worker_test.go.tmpl     → worker tests
 ├── migration/                  # Database migration templates
-│   ├── up.sql.tmpl
-│   ├── down.sql.tmpl
-│   └── migrator.go.tmpl
+│   ├── up.sql.tmpl             → up migration
+│   ├── down.sql.tmpl           → down migration
+│   └── migrator.go.tmpl        → migrator command
 └── tool/                       # Infrastructure tool templates
-    ├── logger.go.tmpl
+    ├── logger.go.tmpl          → logger implementation
     ├── logger_test.go.tmpl
-    ├── validator.go.tmpl
+    ├── validator.go.tmpl       → validator
     ├── validator_test.go.tmpl
-    ├── mapper.go.tmpl
+    ├── mapper.go.tmpl          → DTO mapper
     ├── mapper_test.go.tmpl
-    ├── middleware.go.tmpl
+    ├── middleware.go.tmpl      → HTTP middleware
     ├── middleware_test.go.tmpl
-    └── generic_test.go.tmpl
+    └── generic_test.go.tmpl    → shared test utilities
 ```
 
 ---
@@ -111,7 +128,7 @@ templates/
 hexago templates list
 ```
 
-Shows all 52 built-in templates grouped by directory. Templates with an active override are annotated with `← project-local` or `← user-global`.
+Shows all 81 built-in templates grouped by directory. Templates with an active override are annotated with `← project-local` or `← user-global`.
 
 ### Check which template will be used
 
@@ -251,6 +268,10 @@ Common variables:
 | `lower` | `{{.ProjectName \| lower}}` | `my-app` |
 | `title` | `{{.ProjectName \| title}}` | `My-App` |
 | `snake` | `{{.ServiceName \| snake}}` | `create_user` |
+| `lbrace` | `{{lbrace}}` | `{{` |
+| `rbrace` | `{{rbrace}}` | `}}` |
+| `zeroVal` | `{{"string" \| zeroVal}}` | `""` |
+| `firstMethod` | `{{.Methods \| firstMethod}}` | First element of a slice |
 
 ---
 
@@ -403,7 +424,7 @@ tar xzf hexago-templates.tar.gz
 
 ## Currently Available for Customization
 
-All 52 built-in templates are available for customization. Run `hexago templates list` to see the full set. Use `hexago templates export-all` to export every template to your override directory in one step.
+All 81 built-in templates are available for customization. Run `hexago templates list` to see the full set. Use `hexago templates export-all` to export every template to your override directory in one step.
 
 ---
 

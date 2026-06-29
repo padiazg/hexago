@@ -34,8 +34,8 @@ hexago init <name> [flags]
 | `--with-observability` | | bool | `false` | Include health checks (`/health`) and Prometheus metrics (`/metrics`) registered as route handlers on the main server |
 | `--with-migrations` | | bool | `false` | Include database migration setup |
 | `--with-workers` | | bool | `false` | Include background worker pattern |
-| `--with-metrics` | | bool | `false` | Include Prometheus metrics *(deprecated — use `--with-observability`)* |
-| `--with-example` | | bool | `false` | Include example code |
+| `--with-metrics` | | bool | `false` | Include Prometheus metrics |
+| `--with-example` | | bool | `false` | Include example service, entity, and adapter illustrating the architecture |
 | `--explicit-ports` | | bool | `false` | Create an explicit `ports/` directory |
 | `--with-tests` | | bool | `false` | Enable go-testgen test generation for `add` commands. Saved to `.hexago.yaml` as `testing.enabled`. Requires [go-testgen](https://padiazg.github.io/go-testgen/) ≥ v0.1.0 on `$PATH`. |
 
@@ -173,30 +173,41 @@ hexago init my-api \
 
 ```
 my-app/
-├── cmd/
-│   ├── root.go            # Root command + Viper config
-│   └── run.go             # Server with graceful shutdown
+├── cmd/                          # CLI commands (Cobra)
+│   ├── root.go                   # Root command + Viper config
+│   ├── run.go                    # Server with graceful shutdown
+│   └── version.go                # Version command with ASCII splash
 ├── internal/
-│   ├── core/
-│   │   ├── domain/
-│   │   └── services/
-│   ├── adapters/
-│   │   ├── primary/
-│   │   │   └── http/
-│   │   │       └── server.go  # Framework-specific lifecycle
-│   │   └── secondary/
-│   │       └── database/
-│   ├── config/
-│   └── observability/     # (with --with-observability)
-├── pkg/
-│   ├── logger/
-│   └── server/
-│       └── server.go      # Shared Server interface
-├── main.go
-├── Makefile
-├── Dockerfile             # (with --with-docker)
-├── compose.yaml           # (with --with-docker)
-├── .hexago.yaml           # HexaGo project configuration
+│   ├── core/                     # 🎯 CORE — No external dependencies
+│   │   ├── domain/               # Business entities and value objects
+│   │   └── services/             # Business logic and use cases
+│   ├── adapters/                 # 🔌 ADAPTERS — External interfaces
+│   │   ├── primary/              # Inbound (drives the application)
+│   │   │   └── http/             # HTTP adapter wiring
+│   │   │       ├── http.go       # Wires server + registers route handlers
+│   │   │       ├── ping/         # GET /ping handler
+│   │   │       ├── health/       # (with --with-observability) /health
+│   │   │       └── metrics/      # (with --with-observability) /metrics
+│   │   └── secondary/            # Outbound (driven by the application)
+│   │       └── database/         # Database repositories
+│   ├── config/                   # Viper config struct and loader
+│   └── observability/            # (with --with-observability)
+│       ├── health.go             # Health checks
+│       └── metrics.go            # Prometheus metrics
+├── pkg/                          # Reusable packages
+│   ├── httpserver/               # (http-server type) Framework-specific server
+│   ├── server/                   # (http-server type) Server interface
+│   ├── logger/                   # Structured logger
+│   └── version/                  # Version info + splash
+│       ├── version.go
+│       ├── splash.go
+│       └── version_test.go
+├── main.go                       # Minimal entry point
+├── Makefile                      # Build, test, lint, docker targets
+├── Dockerfile                    # (with --with-docker)
+├── compose.yaml                  # (with --with-docker)
+├── .gitignore
+├── .hexago.yaml                  # HexaGo project configuration
 └── README.md
 ```
 
@@ -213,6 +224,8 @@ project:
   module: github.com/user/my-app
   type: http-server
   framework: echo
+  go_version: "1.25"
+  author: ""
 structure:
   adapter_style: primary-secondary
   core_logic: services
@@ -222,6 +235,8 @@ features:
   observability: false
   migrations: false
   workers: false
+  metrics: false
+  example: false
 ```
 
 All `hexago add *` commands read this file automatically — you do not need to pass framework or convention flags on every invocation.

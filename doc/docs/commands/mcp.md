@@ -222,6 +222,7 @@ All tools require a `working_directory` absolute path parameter:
 | `working_directory` | ✓ | string | Project root |
 | `name` | ✓ | string | PascalCase name (e.g. `CreateUser`) |
 | `description` | | string | One-line comment in generated file |
+| `entity` | | string | Domain entity this service manages (PascalCase); determines sub-package name |
 
 ### `hexago_add_domain_entity` / `hexago_add_domain_valueobject`
 
@@ -230,6 +231,7 @@ All tools require a `working_directory` absolute path parameter:
 | `working_directory` | ✓ | string | Project root |
 | `name` | ✓ | string | PascalCase name (e.g. `User`, `Email`) |
 | `fields` | | string | Comma-separated `name:type` pairs. E.g. `"id:string,name:string,createdAt:time.Time"` |
+| `entity` | | string | Entity name to co-locate with (entity-bound VO); omit for standalone sub-package |
 
 ### `hexago_add_adapter`
 
@@ -239,6 +241,7 @@ All tools require a `working_directory` absolute path parameter:
 | `direction` | ✓ | string | `primary` (inbound) \| `secondary` (outbound) |
 | `adapter_type` | ✓ | string | For primary: `http`, `grpc`, `queue`. For secondary: `database`, `external`, `cache` |
 | `name` | ✓ | string | PascalCase name (e.g. `UserHandler`, `UserRepository`) |
+| `entity` | | string | Domain entity this adapter serves (PascalCase); generates sub-package with CRUD handlers or repository methods |
 | `port` | | string | Port interface name to implement (only for projects with `explicit_ports`). E.g. `UserRepository`, `EmailSender` |
 
 ### `hexago_add_worker`

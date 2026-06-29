@@ -1,6 +1,6 @@
 # Installation
 
-HexaGo requires **Go 1.21 or later**. Choose your preferred installation method below.
+HexaGo requires **Go 1.25 or later**. Choose your preferred installation method below.
 
 ---
 
@@ -15,7 +15,7 @@ go install github.com/padiazg/hexago@latest
 To install a specific version:
 
 ```shell
-go install github.com/padiazg/hexago@v0.1.3
+go install github.com/padiazg/hexago@v0.1.4
 ```
 
 !!! tip
@@ -72,6 +72,8 @@ Available Commands:
   add         Add components to an existing project
   validate    Validate hexagonal architecture compliance
   version     Show version information
+  mcp         Start the MCP server for AI assistants
+  templates   List, export, or check code generation templates
 
 Flags:
   -h, --help      help for hexago
@@ -84,7 +86,7 @@ Flags:
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| Go | 1.21+ | Required to install and build |
+| Go | 1.25+ | Required to install and build |
 | Git | Any | For cloning and version control |
 
 !!! note

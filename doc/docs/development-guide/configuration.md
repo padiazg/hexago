@@ -85,12 +85,13 @@ export MY_APP_DATABASE_URL=postgres://prod-server/mydb
 
 Config is loaded in priority order (highest first):
 
-1. **Environment variable**: `TRADING_BOT_CONFIG=/path/to/config.yaml`
-2. **Current directory**: `./.trading-bot.yaml`
-3. **Home directory**: `~/.trading-bot.yaml`
-4. **Defaults**: Built-in values
+1. **Environment variables** — overrides all file-based config
+2. **Config file** — discovered in current directory, home directory, or explicit path
+3. **Defaults** — hardcoded in the generated config package
 
-The first found file is used.
+The first file found is used. Viper automatically searches for `.my-app.yaml` (where
+`my-app` is your project name) in the current directory, then the user's home directory.
+You can also set `MY_APP_CONFIG=/path/to/config.yaml` to point to an explicit path.
 
 ---
 

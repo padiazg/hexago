@@ -10,7 +10,8 @@ HexaGo generates a well-organized directory structure that enforces hexagonal ar
 my-app/
 ├── cmd/                          # CLI commands (Cobra)
 │   ├── root.go                   # Root command + Viper configuration
-│   └── run.go                    # Framework-agnostic startup + graceful shutdown
+│   ├── run.go                    # Framework-agnostic startup + graceful shutdown
+│   └── version.go                # Version command with ASCII art splash
 │
 ├── internal/                     # Private application code
 │   ├── core/                     # 🎯 CORE — No external dependencies
@@ -150,6 +151,8 @@ my-app/
 │   │   ├── domain/
 │   │   ├── usecases/             # (instead of services/)
 │   │   └── ports/                # (with --explicit-ports) Interface definitions
+│   │       ├── inbound/          # Primary port interfaces (driving)
+│   │       └── outbound/         # Secondary port interfaces (driven)
 │   └── adapters/
 │       ├── driver/               # (instead of primary/)
 │       └── driven/               # (instead of secondary/)
@@ -159,27 +162,35 @@ my-app/
 
 ## After Adding Components
 
-Running `hexago add` commands populates the structure:
+Running `hexago add` commands populates the structure (each component in its own sub-package):
 
 ```
 my-app/
 ├── internal/
 │   ├── core/
 │   │   ├── domain/
-│   │   │   ├── user.go           # hexago add domain entity User
-│   │   │   ├── user_test.go
-│   │   │   ├── email.go          # hexago add domain valueobject Email
-│   │   │   └── email_test.go
+│   │   │   ├── users/             # hexago add domain entity User
+│   │   │   │   ├── users.go
+│   │   │   │   ├── port.go
+│   │   │   │   └── users_test.go
+│   │   │   └── email/             # hexago add domain valueobject Email
+│   │   │       ├── email.go
+│   │   │       └── email_test.go
 │   │   └── services/
-│   │       ├── create_user.go    # hexago add service CreateUser
-│   │       └── create_user_test.go
+│   │       └── create_user/       # hexago add service CreateUser
+│   │           ├── create_user.go
+│   │           └── create_user_test.go
 │   └── adapters/
 │       ├── primary/http/
-│       │   └── user_handler.go   # hexago add adapter primary http UserHandler
+│       │   └── user_handler/      # hexago add adapter primary http UserHandler (with --entity)
+│       │       ├── user_handler.go
+│       │       └── user_handler_test.go
 │       └── secondary/database/
-│           └── user_repository.go # hexago add adapter secondary database UserRepository
+│           └── userrepository/    # hexago add adapter secondary database UserRepository
+│               ├── userrepository.go
+│               └── userrepository_test.go
 └── migrations/
-    ├── 000001_create_users.up.sql    # hexago add migration create_users
+    ├── 000001_create_users.up.sql  # hexago add migration create_users
     └── 000001_create_users.down.sql
 ```
 

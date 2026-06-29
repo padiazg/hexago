@@ -155,12 +155,13 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id string) (*doma
 
 ---
 
-### 4. Infrastructure (`internal/config/`, `pkg/`)
+### 4. Infrastructure (`internal/config/`, `internal/infrastructure/`, `pkg/`)
 
 Cross-cutting concerns that support all layers:
 
 - **Configuration** — Viper-based config with YAML and environment variables
 - **Logging** — Structured logger package
+- **Infrastructure tools** (`internal/infrastructure/`) — Validators, mappers, middleware, loggers
 - **Observability** — Health checks and Prometheus metrics
 
 ---

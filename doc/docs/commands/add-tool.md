@@ -60,10 +60,10 @@ internal/
 
 ## Generated Code Structure
 
-**Validator:**
+**Validator (in `internal/infrastructure/validator/post_validator.go`):**
 
 ```go
-package tools
+package validator
 
 // PostValidator validates Post-related inputs
 type PostValidator struct{}
@@ -80,10 +80,10 @@ func (v *PostValidator) Validate(input any) error {
 }
 ```
 
-**Middleware:**
+**Middleware (in `internal/infrastructure/middleware/auth_middleware.go`):**
 
 ```go
-package tools
+package middleware
 
 import "net/http"
 
@@ -106,10 +106,10 @@ func (m *AuthMiddleware) Handle(next http.Handler) http.Handler {
 }
 ```
 
-**Mapper:**
+**Mapper (in `internal/infrastructure/mapper/user_mapper.go`):**
 
 ```go
-package tools
+package mapper
 
 // UserMapper converts between domain and DTO types
 type UserMapper struct{}

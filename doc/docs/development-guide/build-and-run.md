@@ -56,19 +56,10 @@ go test -race ./...
 go test -coverprofile=coverage.out ./...
 ```
 
-### Run Modes
-
-Some generated projects include multiple run modes:
+### Run
 
 ```bash
-# Standard server mode
 go run main.go run
-
-# Simulation mode (paper trading with live data)
-go run main.go simulate --from 2024-01-01 --wfo
-
-# Replay mode (local CSV, no API key needed)
-go run main.go replay --csv testdata/sample.csv
 ```
 
 ### Lint
