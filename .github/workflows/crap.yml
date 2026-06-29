@@ -1,24 +1,19 @@
 name: crap
-
 on:
   push:
     branches: [master]
   pull_request:
 
-permissions:
-  pull-requests: write
-
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25.5'
+          go-version: '1.26.2'
           cache: true
       - run: go test -race -count=1 ./...
-      - run: go build -o hexago .
 
       - name: Lint
         uses: golangci/golangci-lint-action@v9
@@ -29,44 +24,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25.5'
-      - name: build
-        run: make build
-
-      - name: version
-        run: ./hexago version
-
+          go-version: '1.26.2'
+          cache: true
+      - name: install go-crap
+        run: go install github.com/padiazg/go-crap@latest
       - name: score
-        run: go-crap scan --format github --fail-above --threshold 1100 --exclude ".*_test.go" --verbose || true
-
+        run: go-crap scan --fail-above --threshold 300 --exclude '.*_test\.go'
       - name: generate pr comment
-        run: go-crap scan --format pr-comment --threshold 1100 --exclude ".*_test.go" --output pr-comment.md || echo "go-crap not installed" > pr-comment.md
-
-      - name: save pr number
+        run: go-crap scan --format pr-comment --threshold 300 --exclude '.*_test\.go' --output pr-comment.md || true
+      - name: get pr number
         run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
-
-      - name: upload pr comment artifacts
-        uses: actions/upload-artifact@v4
+      - name: upload artifacts
+        uses: actions/upload-artifact@v7
         with:
           name: crap-comment
           path: |
             pr-comment.md
             pr-number.txt
           if-no-files-found: ignore
-
-      - name: Generate PR comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { execFileSync } = require('child_process');
-            const comment = execFileSync('cat', ['pr-comment.md']).toString();
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
