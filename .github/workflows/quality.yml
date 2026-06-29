@@ -63,15 +63,20 @@ jobs:
         run: go install github.com/padiazg/go-crap@latest
 
       - name: crap scoring
+        id: crap
+        continue-on-error: true
         run: go-crap scan --fail-above --threshold 300 --exclude '.*_test\.go'
 
       - name: generate pr comment
+        if: always()
         run: go-crap scan --format pr-comment --threshold 300 --exclude '.*_test\.go' --output pr-comment.md || true
 
       - name: get pr number
+        if: always()
         run: echo "${{ github.event.pull_request.number }}" > pr-number.txt
 
       - name: upload artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: crap-comment
@@ -79,3 +84,7 @@ jobs:
             pr-comment.md
             pr-number.txt
           if-no-files-found: ignore
+
+      - name: fail if crap exceeded threshold
+        if: steps.crap.outcome != 'success'
+        run: exit 1
