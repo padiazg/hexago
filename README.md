@@ -184,7 +184,7 @@ my-app/
 See the full [Commands Reference](https://padiazg.github.io/hexago/commands/) for all flags, examples, and usage:
 
 | Command | Description |
-|---------|-------------|
+| - | - |
 | `hexago init` | Create a new hexagonal architecture project |
 | `hexago add service` | Add a business logic service/use case |
 | `hexago add domain` | Add a domain entity or value object |
