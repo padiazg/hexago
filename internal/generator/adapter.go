@@ -68,7 +68,7 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 	case "grpc":
 		err = g.generateGRPCAdapter(filePath, adapterName)
 	case "queue":
-		g.generateQueueAdapter(filePath, adapterName)
+		err = g.generateQueueAdapter(filePath, adapterName)
 	default:
 		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
 	}
@@ -180,7 +180,6 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 
 	fmt.Printf("📝 Creating adapter file: %s\n", filePath)
 
-	err = nil
 	switch adapterType {
 	case "database":
 		err = g.generateDatabaseAdapter(filePath, adapterName, entityName, portName)
