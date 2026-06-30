@@ -60,24 +60,20 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 
 	fmt.Printf("📝 Creating adapter file: %s\n", filePath)
 
+	// TODO: create interface for adapterType
+	var err error
 	switch adapterType {
 	case "http":
-		if err := g.generateHTTPAdapter(filePath, adapterName); err != nil {
-			return err
-		}
+		err = g.generateHTTPAdapter(filePath, adapterName)
 	case "grpc":
-		if err := g.generateGRPCAdapter(filePath, adapterName); err != nil {
-			return err
-		}
+		err = g.generateGRPCAdapter(filePath, adapterName)
 	case "queue":
-		if err := g.generateQueueAdapter(filePath, adapterName); err != nil {
-			return err
-		}
+		g.generateQueueAdapter(filePath, adapterName)
 	default:
 		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
 	}
 
-	return nil
+	return err
 }
 
 // generateHTTPHandlerPackage generates the two-file per-entity HTTP handler sub-package.
@@ -449,10 +445,7 @@ func (g *AdapterGenerator) isErrorDefined(filePath, errorName string) bool {
 			}
 
 			for _, spec := range gd.Specs {
-				vs, ok := spec.(*ast.ValueSpec)
-				if !ok {
-					continue
-				}
+				vs := spec.(*ast.ValueSpec)
 
 				for _, ident := range vs.Names {
 					if ident.Name == errorName {
