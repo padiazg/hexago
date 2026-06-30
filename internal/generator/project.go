@@ -212,10 +212,22 @@ func (g *ProjectGenerator) initGoModule() error {
 }
 
 // addDependencies adds required dependencies to go.mod
-// TODO: make dependency list configurable/updatable
 func (g *ProjectGenerator) addDependencies() error {
 	fmt.Println("📦 Adding dependencies...")
 
+	for _, dep := range g.dependenciesList() {
+		cmd := exec.Command("go", "get", dep)
+		cmd.Dir = g.projectPath
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("⚠️  Warning: failed to add dependency %s: %v\n", dep, err)
+		}
+	}
+
+	return nil
+}
+
+func (g *ProjectGenerator) dependenciesList() []string {
+	// TODO: make dependency list configurable/updatable
 	dependencies := []string{
 		"github.com/spf13/cobra@latest",
 		"github.com/spf13/viper@latest",
@@ -248,15 +260,7 @@ func (g *ProjectGenerator) addDependencies() error {
 		dependencies = append(dependencies, "github.com/gofiber/adaptor/v2@latest")
 	}
 
-	for _, dep := range dependencies {
-		cmd := exec.Command("go", "get", dep)
-		cmd.Dir = g.projectPath
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("⚠️  Warning: failed to add dependency %s: %v\n", dep, err)
-		}
-	}
-
-	return nil
+	return dependencies
 }
 
 // runGoModTidy runs go mod tidy
