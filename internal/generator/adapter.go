@@ -161,41 +161,18 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 		adapterDir, pkgName string
 	)
 
+	// TODO: create an interface for adapterType, encapsulate generateDatabaseAdapterFiles, generateOtherAdapterFiles, generateDatabaseAdapter
+	// generateExternalAdapter, generateCacheAdapter
+
+	var err error
 	if adapterType == "database" {
-		// Always use sub-package for database adapters
-		var pkgName string
-		if entityName != "" {
-			pkgName = utils.ToPlural(strings.ToLower(entityName))
-		} else {
-			pkgName = strings.ToLower(adapterName)
-		}
-		adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), "database", pkgName)
-		if err := utils.CreateDir(adapterDir); err != nil {
-			return err
-		}
-		// Ensure domain errors file exists
-		domainDir := filepath.Join("internal", "core", "domain")
-		if err := utils.CreateDir(domainDir); err != nil {
-			return fmt.Errorf("failed to create domain directory: %w", err)
-		}
-		errorsFile := filepath.Join(domainDir, "errors.go")
-		if !utils.FileExists(errorsFile) {
-			data := map[string]any{}
-			content, err := g.config.templateLoader.Render("domain/errors.go.tmpl", data)
-			if err != nil {
-				return fmt.Errorf("failed to render domain errors template: %w", err)
-			}
-			if err := utils.WriteFile(errorsFile, content); err != nil {
-				return err
-			}
-			fmt.Printf("📝 Creating domain errors file: %s\n", errorsFile)
-		}
+		adapterDir, pkgName, err = g.generateDatabaseAdapterFiles(entityName, adapterName)
 	} else {
-		adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
-		if err := utils.CreateDir(adapterDir); err != nil {
-			return err
-		}
-		pkgName = utils.ToSnakeCase(adapterName)
+		adapterDir, pkgName, err = g.generateOtherAdapterFiles(adapterType, adapterName)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	filePath := filepath.Join(adapterDir, pkgName+".go")
@@ -207,24 +184,65 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 
 	fmt.Printf("📝 Creating adapter file: %s\n", filePath)
 
+	err = nil
 	switch adapterType {
 	case "database":
-		if err := g.generateDatabaseAdapter(filePath, adapterName, entityName, portName); err != nil {
-			return err
-		}
+		err = g.generateDatabaseAdapter(filePath, adapterName, entityName, portName)
 	case "external":
-		if err := g.generateExternalAdapter(filePath, adapterName, portName, portInfo); err != nil {
-			return err
-		}
+		err = g.generateExternalAdapter(filePath, adapterName, portName, portInfo)
 	case "cache":
-		if err := g.generateCacheAdapter(filePath, adapterName, portName); err != nil {
-			return err
-		}
+		err = g.generateCacheAdapter(filePath, adapterName, portName)
 	default:
 		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
 	}
 
-	return nil
+	return err
+}
+
+func (g *AdapterGenerator) generateDatabaseAdapterFiles(entityName, adapterName string) (string, string, error) {
+	var adapterDir, pkgName string
+
+	// Always use sub-package for database adapters
+	if entityName != "" {
+		pkgName = utils.ToPlural(strings.ToLower(entityName))
+	} else {
+		pkgName = strings.ToLower(adapterName)
+	}
+
+	adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), "database", pkgName)
+	if err := utils.CreateDir(adapterDir); err != nil {
+		return "", "", err
+	}
+	// Ensure domain errors file exists
+	domainDir := filepath.Join("internal", "core", "domain")
+	if err := utils.CreateDir(domainDir); err != nil {
+		return "", "", fmt.Errorf("failed to create domain directory: %w", err)
+	}
+	errorsFile := filepath.Join(domainDir, "errors.go")
+	if !utils.FileExists(errorsFile) {
+		data := map[string]any{}
+		content, err := g.config.templateLoader.Render("domain/errors.go.tmpl", data)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to render domain errors template: %w", err)
+		}
+		if err := utils.WriteFile(errorsFile, content); err != nil {
+			return "", "", err
+		}
+		fmt.Printf("📝 Creating domain errors file: %s\n", errorsFile)
+	}
+
+	return adapterDir, pkgName, nil
+}
+
+func (g *AdapterGenerator) generateOtherAdapterFiles(adapterType, adapterName string) (string, string, error) {
+	var adapterDir, pkgName string
+	adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
+	if err := utils.CreateDir(adapterDir); err != nil {
+		return "", "", err
+	}
+	pkgName = utils.ToSnakeCase(adapterName)
+
+	return adapterDir, pkgName, nil
 }
 
 // generateHTTPAdapter generates an HTTP handler adapter

@@ -106,29 +106,7 @@ func typeToString(t types.Type) string {
 
 	switch v := t.(type) {
 	case *types.Named:
-		obj := v.Obj()
-		objName := obj.Name()
-
-		// Handle commonly used types with nil-safe checks
-		if obj.Pkg() != nil {
-			pkgPath := obj.Pkg().Path()
-			switch objName {
-			case "Context":
-				// Check if it's context.Context
-				if pkgPath == "context" {
-					return "context.Context"
-				}
-			case "Error":
-				if pkgPath == "errors" {
-					return "error"
-				}
-			case "User", "URL", "Category", "Product", "Order":
-				// For domain types, check if they're from our project
-				// Return simple name - user will add import in template
-				return objName
-			}
-		}
-		return objName
+		return getNamed(v.Obj())
 	case *types.Pointer:
 		return "*" + typeToString(v.Elem())
 	case *types.Array:
@@ -146,6 +124,31 @@ func typeToString(t types.Type) string {
 	default:
 		return t.String()
 	}
+}
+
+func getNamed(obj *types.TypeName) string {
+	objName := obj.Name()
+
+	// Handle commonly used types with nil-safe checks
+	if obj.Pkg() != nil {
+		pkgPath := obj.Pkg().Path()
+		switch objName {
+		case "Context":
+			// Check if it's context.Context
+			if pkgPath == "context" {
+				return "context.Context"
+			}
+		case "Error":
+			if pkgPath == "errors" {
+				return "error"
+			}
+		case "User", "URL", "Category", "Product", "Order":
+			// For domain types, check if they're from our project
+			// Return simple name - user will add import in template
+			return objName
+		}
+	}
+	return objName
 }
 
 // getTypeImportPath extracts the import path from a types.Type.

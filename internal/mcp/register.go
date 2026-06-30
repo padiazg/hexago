@@ -99,56 +99,45 @@ Example call:
 				mcp.Description("Generate files directly into working_directory instead of creating a <name> subdirectory. Use this when working_directory is already the intended project root."),
 			),
 		),
-		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			args := req.GetArguments()
-			wd, _ := args["working_directory"].(string)
-			name, _ := args["name"].(string)
-			cliArgs := []string{"--working-directory", wd, "init", name}
-			if v, _ := args["module"].(string); v != "" {
-				cliArgs = append(cliArgs, "--module", v)
-			}
-			if v, _ := args["project_type"].(string); v != "" {
-				cliArgs = append(cliArgs, "--project-type", v)
-			}
-			if v, _ := args["framework"].(string); v != "" {
-				cliArgs = append(cliArgs, "--framework", v)
-			}
-			if v, _ := args["adapter_style"].(string); v != "" {
-				cliArgs = append(cliArgs, "--adapter-style", v)
-			}
-			if v, _ := args["core_logic"].(string); v != "" {
-				cliArgs = append(cliArgs, "--core-logic", v)
-			}
-			if v, _ := args["with_docker"].(bool); v {
-				cliArgs = append(cliArgs, "--with-docker")
-			}
-			if v, _ := args["with_observability"].(bool); v {
-				cliArgs = append(cliArgs, "--with-observability")
-			}
-			if v, _ := args["with_migrations"].(bool); v {
-				cliArgs = append(cliArgs, "--with-migrations")
-			}
-			if v, _ := args["with_workers"].(bool); v {
-				cliArgs = append(cliArgs, "--with-workers")
-			}
-			if v, _ := args["with_metrics"].(bool); v {
-				cliArgs = append(cliArgs, "--with-metrics")
-			}
-			if v, _ := args["with_tests"].(bool); v {
-				cliArgs = append(cliArgs, "--with-tests")
-			}
-			if v, _ := args["with_example"].(bool); v {
-				cliArgs = append(cliArgs, "--with-example")
-			}
-			if v, _ := args["explicit_ports"].(bool); v {
-				cliArgs = append(cliArgs, "--explicit-ports")
-			}
-			if v, _ := args["in_place"].(bool); v {
-				cliArgs = append(cliArgs, "--in-place")
-			}
-			return toolResult(runSelf(ctx, cliArgs...))
-		},
+		initHandler,
 	)
+}
+
+func initHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	args := req.GetArguments()
+	wd, _ := args["working_directory"].(string)
+	name, _ := args["name"].(string)
+	cliArgs := []string{"--working-directory", wd, "init", name}
+
+	for _, key := range []string{
+		"module",
+		"project_type",
+		"framework",
+		"adapter_style",
+		"core_logic",
+		"with_docker",
+		"with_observability",
+		"with_migrations",
+		"with_workers",
+		"with_metrics",
+		"with_tests",
+		"with_example",
+		"explicit_ports",
+		"in_place",
+	} {
+		switch v := args[key].(type) {
+		case string:
+			if v != "" {
+				cliArgs = append(cliArgs, "--"+key, v)
+			}
+		case bool:
+			if v {
+				cliArgs = append(cliArgs, "--"+key)
+			}
+		}
+	}
+
+	return toolResult(runSelf(ctx, cliArgs...))
 }
 
 func registerAddServices(s *server.MCPServer) {
