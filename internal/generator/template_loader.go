@@ -27,11 +27,11 @@ type TemplateLoader struct {
 
 // TemplateSource represents a source of templates
 type TemplateSource struct {
+	exists   func(string) bool
+	read     func(string) ([]byte, error)
 	Name     string
 	Path     string
 	Priority int
-	exists   func(string) bool
-	read     func(string) ([]byte, error)
 }
 
 // NewTemplateLoader creates a new template loader with multi-source support
