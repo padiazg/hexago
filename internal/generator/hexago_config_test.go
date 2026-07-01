@@ -697,6 +697,418 @@ func TestHexagoConfig_validateCoreLogic(t *testing.T) {
 	}
 }
 
+func TestHexagoConfig_ModuleName(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   string
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default module name",
+			want: "value",
+		},
+		{
+			name: "custom module name",
+			want: "github.com/user/app",
+			before: func(cfg *HexagoConfig) {
+				cfg.Project.Module = "github.com/user/app"
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.ModuleName()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_ProjectName(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   string
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default project name",
+			want: "value",
+		},
+		{
+			name: "custom project name",
+			want: "myapp",
+			before: func(cfg *HexagoConfig) {
+				cfg.Project.Name = "myapp"
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.ProjectName()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_Year(t *testing.T) {
+	t.Run("returns project year", func(t *testing.T) {
+		s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+		s.Project.Year = 2024
+		r := s.Year()
+		assert.Equal(t, 2024, r)
+	})
+}
+
+func TestHexagoConfig_Author(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   string
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default author is empty",
+			want: "",
+		},
+		{
+			name: "custom author",
+			want: "Jane Doe",
+			before: func(cfg *HexagoConfig) {
+				cfg.Project.Author = "Jane Doe"
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.Author()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_GoVersion(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   string
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default go version",
+			want: "1.21",
+		},
+		{
+			name: "custom go version",
+			want: "1.25",
+			before: func(cfg *HexagoConfig) {
+				cfg.Project.GoVersion = "1.25"
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.GoVersion()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_AdapterStyle(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   string
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default adapter style",
+			want: "primary-secondary",
+		},
+		{
+			name: "driver-driven adapter style",
+			want: "driver-driven",
+			before: func(cfg *HexagoConfig) {
+				cfg.Structure.AdapterStyle = "driver-driven"
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.AdapterStyle()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_CoreLogicGetter(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   string
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default core logic",
+			want: "services",
+		},
+		{
+			name: "usecases core logic",
+			want: "usecases",
+			before: func(cfg *HexagoConfig) {
+				cfg.Structure.CoreLogic = "usecases"
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.CoreLogic()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithDocker(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithDocker = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithDocker()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithObservability(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithObservability = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithObservability()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithMigrations(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithMigrations = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithMigrations()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithWorkers(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithWorkers = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithWorkers()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithMetrics(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithMetrics = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithMetrics()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithExample(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithExample = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithExample()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
+func TestHexagoConfig_WithTests(t *testing.T) {
+	tests := []struct {
+		name   string
+		want   bool
+		before func(*HexagoConfig)
+	}{
+		{
+			name: "default false",
+			want: false,
+		},
+		{
+			name: "set true",
+			want: true,
+			before: func(cfg *HexagoConfig) {
+				cfg.Features.WithTests = true
+			},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewHexagoConfig("value", "value", ".", "http-server", "stdlib", "primary-secondary", "services", false, false, false, false, false, false, false, false)
+			if tt.before != nil {
+				tt.before(&s)
+			}
+			r := s.WithTests()
+			assert.Equal(t, tt.want, r)
+		})
+	}
+}
+
 func TestHexagoConfig_Validate(t *testing.T) {
 	tests := []struct {
 		name   string

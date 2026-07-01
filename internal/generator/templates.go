@@ -252,7 +252,7 @@ func (g *ProjectGenerator) generateFile(name string) error {
 
 	templ := item(g)
 
-	content, err := g.config.templateLoader.Render(templ.source, g.config)
+	content, err := g.config.templateLoader.Render(templ.source, &g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render %s template: %w", templ.source, err)
 	}

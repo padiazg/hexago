@@ -130,6 +130,41 @@ func (c *HexagoConfig) NeedsWebFramework() bool {
 	return c.IsHTTPServer()
 }
 
+// -- Project field getters --
+
+// ModuleName returns the Go module name (e.g. "github.com/user/my-app")
+func (c *HexagoConfig) ModuleName() string { return c.Project.Module }
+
+// ProjectName returns the project name
+func (c *HexagoConfig) ProjectName() string { return c.Project.Name }
+
+// Year returns the copyright year
+func (c *HexagoConfig) Year() int { return c.Project.Year }
+
+// Author returns the project author name
+func (c *HexagoConfig) Author() string { return c.Project.Author }
+
+// GoVersion returns the Go version used for building
+func (c *HexagoConfig) GoVersion() string { return c.Project.GoVersion }
+
+// -- Structure field getters --
+
+// AdapterStyle returns the adapter naming style (primary-secondary|driver-driven)
+func (c *HexagoConfig) AdapterStyle() string { return c.Structure.AdapterStyle }
+
+// CoreLogic returns the core logic directory name (services|usecases)
+func (c *HexagoConfig) CoreLogic() string { return c.Structure.CoreLogic }
+
+// -- Feature flag getters --
+
+func (c *HexagoConfig) WithDocker() bool        { return c.Features.WithDocker }
+func (c *HexagoConfig) WithObservability() bool { return c.Features.WithObservability }
+func (c *HexagoConfig) WithMigrations() bool    { return c.Features.WithMigrations }
+func (c *HexagoConfig) WithWorkers() bool       { return c.Features.WithWorkers }
+func (c *HexagoConfig) WithMetrics() bool       { return c.Features.WithMetrics }
+func (c *HexagoConfig) WithExample() bool       { return c.Features.WithExample }
+func (c *HexagoConfig) WithTests() bool         { return c.Features.WithTests }
+
 func (c *HexagoConfig) Validate() error {
 	if err := c.validateModuleName(); err != nil {
 		return err
