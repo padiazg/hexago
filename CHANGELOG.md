@@ -5,6 +5,23 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.4.1 - 2026-07-01  
+
+### Added
+
+- **GitHub community templates**: ISSUE_TEMPLATE, pull request template, and other community health files
+- **README badges**: Go version, build status, coverage, and other project badges
+
+### Changed
+
+- **README cleanup**: stripped noise, replaced inline documentation references with doc site links
+- Reduced cyclomatic complexity (crap scores) for `AdapterGenerator`, `ProjectGenerator.addDependencies`, and `runInit`
+
+### Fixed
+
+- Template rendering error when certain template conditions are met
+- Linting issues; lowered crap threshold for stricter CI enforcement
+
 ## v0.4.0 - 2026-06-29
 
 > **Note on version jump (v0.1.3 → v0.4.0):** Earlier releases used PATCH bumps for new features, which violates semver's rule that MINOR increments for features, PATCH for bug fixes only. We've skipped `v0.2.0` and `v0.3.0` to align our tag history with actual release content. From here forward: MINOR for features/changes, PATCH for bug fixes only.
