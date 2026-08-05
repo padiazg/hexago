@@ -14,10 +14,10 @@ const (
 
 func TestVersionParseVersion(t *testing.T) {
 	type Expect struct {
+		Extra string
 		Major int
 		Minor int
 		Patch int
-		Extra string
 	}
 	tests := []struct {
 		name    string
@@ -74,7 +74,7 @@ func TestVersionParseVersion(t *testing.T) {
 				v.Minor != tt.want.Minor ||
 				v.Patch != tt.want.Patch ||
 				v.Extra != tt.want.Extra {
-				t.Errorf("Version.ParseVersion() = %v, want %v", Expect{v.Major, v.Minor, v.Patch, v.Extra}, tt.want)
+				t.Errorf("Version.ParseVersion() = %v, want %v", Expect{Major: v.Major, Minor: v.Minor, Patch: v.Patch, Extra: v.Extra}, tt.want)
 			}
 		})
 	}
