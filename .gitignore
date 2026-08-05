@@ -42,6 +42,7 @@ dist/
 .claude
 .opencode
 tmp
+crap-current.json
 
 *.md
 !README.md

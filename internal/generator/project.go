@@ -11,8 +11,8 @@ import (
 
 // ProjectGenerator handles the generation of new projects
 type ProjectGenerator struct {
-	config      HexagoConfig
 	projectPath string
+	config      HexagoConfig
 }
 
 // NewProjectGenerator creates a new ProjectGenerator
