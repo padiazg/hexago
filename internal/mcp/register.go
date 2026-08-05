@@ -3,10 +3,19 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
+
+// cliFlag converts an MCP tool parameter name (underscore) into the CLI flag
+// name (hyphen). MCP params use underscores (project_type) while cobra flags
+// use hyphens (--project-type); without this mapping every MCP tool would pass
+// unknown flags to the CLI.
+func cliFlag(key string) string {
+	return strings.ReplaceAll(key, "_", "-")
+}
 
 func RegisterMCPTools(s *server.MCPServer) {
 	registerInit(s)
@@ -52,8 +61,9 @@ Example call:
 			mcp.WithString("project_type",
 				mcp.Description(`Project type:
   http-server — HTTP API server with a web framework (default)
-  service     — long-running daemon with no HTTP layer`),
-				mcp.Enum("http-server", "service"),
+  service     — long-running daemon with no HTTP layer
+  cli         — batch CLI with subcommands (no run command, no HTTP layer)`),
+				mcp.Enum("http-server", "service", "cli"),
 			),
 			mcp.WithString("framework",
 				mcp.Description("Web framework. Only relevant when project_type=http-server. Default: stdlib."),
@@ -70,6 +80,10 @@ Example call:
   services  — internal/core/services/ (default)
   usecases  — internal/core/usecases/`),
 				mcp.Enum("services", "usecases"),
+			),
+			mcp.WithString("db_driver",
+				mcp.Description(`Database driver for the migration scaffold: postgres (default) | sqlite3.`),
+				mcp.Enum("postgres", "sqlite3"),
 			),
 			mcp.WithBoolean("with_docker",
 				mcp.Description("Generate a multi-stage Dockerfile and docker-compose.yml."),
@@ -115,6 +129,7 @@ func initHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		"framework",
 		"adapter_style",
 		"core_logic",
+		"db_driver",
 		"with_docker",
 		"with_observability",
 		"with_migrations",
@@ -128,11 +143,11 @@ func initHandler(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolRes
 		switch v := args[key].(type) {
 		case string:
 			if v != "" {
-				cliArgs = append(cliArgs, "--"+key, v)
+				cliArgs = append(cliArgs, "--"+cliFlag(key), v)
 			}
 		case bool:
 			if v {
-				cliArgs = append(cliArgs, "--"+key)
+				cliArgs = append(cliArgs, "--"+cliFlag(key))
 			}
 		}
 	}
@@ -177,6 +192,9 @@ Example call (no entity):
 			mcp.WithString("description",
 				mcp.Description("One-line description embedded as a comment in the generated file."),
 			),
+			mcp.WithString("from_port",
+				mcp.Description("Port interface name to infer method signatures from (only used with explicit_ports projects). E.g. CategoryRepository."),
+			),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := req.GetArguments()
@@ -188,6 +206,9 @@ Example call (no entity):
 			}
 			if v, _ := args["description"].(string); v != "" {
 				cliArgs = append(cliArgs, "--description", v)
+			}
+			if v, _ := args["from_port"].(string); v != "" {
+				cliArgs = append(cliArgs, "--from-port", v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))
 		},
@@ -316,12 +337,12 @@ Adapters connect the core to the outside world. Two directions:
 
   primary   (inbound)  — drives the application; receives requests from external actors.
                          Lives in internal/adapters/primary/<adapter_type>/.
-                         Types: http, grpc, queue
-                         E.g. UserHandler (HTTP), OrderConsumer (queue)
+                         Types: http, grpc, queue, cli
+                         E.g. UserHandler (HTTP), OrderConsumer (queue), AnalyzeCmd (cli)
 
   secondary (outbound) — driven by the application; talks to external systems.
                          Lives in internal/adapters/secondary/<adapter_type>/.
-                         Types: database, external, cache
+                         Types: database, external, cache (any other string → generic adapter)
                          E.g. UserRepository (database), EmailService (external)
 
 Generates:
@@ -346,8 +367,8 @@ Example calls:
 			),
 			mcp.WithString("adapter_type",
 				mcp.Description(`Implementation technology:
-  For primary:   http, grpc, queue
-  For secondary: database, external, cache`),
+  For primary:   http, grpc, queue, cli
+  For secondary: database, external, cache (any other string → generic adapter)`),
 				mcp.Required(),
 			),
 			mcp.WithString("name",

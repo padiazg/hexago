@@ -44,10 +44,11 @@ Types:
   http   - HTTP handler
   grpc   - gRPC handler
   queue  - Message queue consumer
+  cli    - CLI subcommand (cobra)
 
 Example:
   hexago add adapter primary http UserHandler
-  hexago add adapter primary http UserHandler --from-port UserService`,
+  hexago add adapter primary cli AnalyzeCmd`,
 	Args: cobra.ExactArgs(2),
 	RunE: runAddAdapterPrimary,
 }
@@ -62,10 +63,12 @@ Types:
   database  - Database repository
   external  - External service client
   cache     - Cache adapter
+  <other>   - Any other string maps to a generic port-impl adapter (e.g. workspace, tool)
 
 Example:
   hexago add adapter secondary database UserRepository
-  hexago add adapter secondary external EmailService`,
+  hexago add adapter secondary external EmailService
+  hexago add adapter secondary workspace WorkspaceFS`,
 	Args: cobra.ExactArgs(2),
 	RunE: runAddAdapterSecondary,
 }

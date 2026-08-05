@@ -20,9 +20,11 @@ import (
 	"syscall"
 	"time"
 
-	"{{.ModuleName}}/internal/observability"
+	"{{.ModuleName}}/internal/core/{{.CoreLogic}}"
 	"{{.ModuleName}}/pkg/logger"
-	"{{.ModuleName}}/internal/core/services"
+{{- if .WithObservability}}
+	"{{.ModuleName}}/internal/observability"
+{{- end}}
 	"github.com/spf13/cobra"
 )
 
@@ -71,7 +73,7 @@ and performs a graceful shutdown with a configurable timeout.`,
 {{- end}}
 
 		// Create your service/processor
-		processor, err := services.NewProcessor(&services.ProcessorConfig{
+		processor, err := {{.CoreLogic}}.NewProcessor(&{{.CoreLogic}}.ProcessorConfig{
 			Config: cfg,
 			Logger: log,
 			{{if .WithObservability}}Metrics: metrics,{{end}}

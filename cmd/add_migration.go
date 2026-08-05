@@ -69,7 +69,7 @@ func runAddMigration(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Type: %s\n\n", migrationType)
 
 	// Generate migration
-	gen := generator.NewMigrationGenerator(config)
+	gen := generator.NewMigrationGenerator(config, workingDir)
 	migrationNumber, err := gen.Generate(migrationName)
 	if err != nil {
 		return fmt.Errorf("failed to generate migration: %w", err)

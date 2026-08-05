@@ -34,10 +34,12 @@ Architecture (Ports & Adapters) pattern, including:
 Project Types:
   http-server  - HTTP API server with web framework
   service      - Long-running daemon/service (no web framework for main logic)
+  cli          - Batch CLI with subcommands (no run command, no HTTP layer)
 
 Example:
   hexago init my-api --module github.com/user/my-api --project-type http-server --framework echo
-  hexago init my-service --module github.com/user/my-service --project-type service`,
+  hexago init my-service --module github.com/user/my-service --project-type service
+  hexago init my-tool --module github.com/user/my-tool --project-type cli`,
 	Args: cobra.ExactArgs(1),
 	RunE: runInit,
 }
@@ -49,8 +51,9 @@ func init() {
 	initCmd.Flags().StringP("module", "m", "", "Go module name (e.g., github.com/user/my-app)")
 
 	// Project type and architecture choices
-	initCmd.Flags().StringP("project-type", "t", "http-server", "Project type (http-server|service)")
+	initCmd.Flags().StringP("project-type", "t", "http-server", "Project type (http-server|service|cli)")
 	initCmd.Flags().StringP("framework", "f", "stdlib", "Web framework for http-server (echo|gin|chi|fiber|stdlib)")
+	initCmd.Flags().String("db-driver", "postgres", "Database driver for the migration scaffold (postgres|sqlite3)")
 	initCmd.Flags().String("adapter-style", "primary-secondary", "Adapter naming style (primary-secondary|driver-driven)")
 	initCmd.Flags().String("core-logic", "services", "Core business logic directory name (services|usecases)")
 

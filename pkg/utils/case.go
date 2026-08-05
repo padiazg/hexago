@@ -9,14 +9,26 @@ import (
 func ToPlural(s string) string {
 	s = strings.ToLower(s)
 	switch {
-	case strings.HasSuffix(s, "y"):
+	case strings.HasSuffix(s, "y") && len(s) > 1 && !isVowel(s[len(s)-2]):
 		return s[:len(s)-1] + "ies"
+	case strings.HasSuffix(s, "is"):
+		// analysis → analyses, basis → bases
+		return s[:len(s)-2] + "es"
 	case strings.HasSuffix(s, "s") || strings.HasSuffix(s, "x") ||
 		strings.HasSuffix(s, "ch") || strings.HasSuffix(s, "sh"):
 		return s + "es"
 	default:
 		return s + "s"
 	}
+}
+
+// isVowel reports whether the byte c is an ASCII vowel.
+func isVowel(c byte) bool {
+	switch c {
+	case 'a', 'e', 'i', 'o', 'u':
+		return true
+	}
+	return false
 }
 
 // toSnakeCase converts PascalCase to snake_case

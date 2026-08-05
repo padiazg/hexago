@@ -37,7 +37,7 @@ coverage:
 	go test -race -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 
-preflight: vet fmt lint
+preflight: vet lint
 	gremlins unleash --timeout-coefficient 20 -S "l" --integration --output=mutation.json && \
 	go-crap scan --exclude ".*_test.go" --top 10 --mutation-report mutation.json
 

@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"time"
+{{ if .PortImport }}
+	outbound {{ .PortImport }}
+{{ end }}
 )
-
-{{if .PortImport}}
-{{.PortImport}}
-{{end}}
 
 {{if .PortName}}
 // compile-time check that {{.CacheName}} satisfies the {{.PortName}} port.
-var _ {{.PortImport}} = (*{{.CacheName}})(nil)
+var _ outbound.{{.PortName}} = (*{{.CacheName}})(nil)
 {{end}}
 
 

@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -76,12 +77,27 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string,
 		return err
 	}
 
+	// Entity-bound services are generated with uuid.NewString() and need the dep.
+	if hasEntity {
+		g.ensureUUIDDep()
+	}
+
 	if err := g.upsertAggregator(baseServiceDir); err != nil {
 		// Non-fatal: aggregator update failure should not block the service generation
 		fmt.Printf("⚠️  Warning: failed to update services aggregator: %v\n", err)
 	}
 
 	return nil
+}
+
+// ensureUUIDDep runs `go get github.com/google/uuid` (non-fatal) since
+// entity-bound services are generated with uuid.NewString().
+func (g *ServiceGenerator) ensureUUIDDep() {
+	cmd := exec.Command("go", "get", "github.com/google/uuid")
+	cmd.Dir = g.config.OutputDir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("⚠️  Warning: could not add dependency github.com/google/uuid: %s\n", strings.TrimSpace(string(out)))
+	}
 }
 
 // generateServiceFile generates the service implementation file
@@ -147,7 +163,7 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 			RepoField:     utils.ToTitleCase(pkgName) + "Repository",
 			RepoInterface: entityName + "Repository",
 			ServiceField:  utils.ToTitleCase(pkgName),
-			ServiceType:   entityName + "Service",
+			ServiceType:   serviceTypeName(entityName, hasEntity),
 			HasEntity:     hasEntity,
 		})
 	}
@@ -172,20 +188,39 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 	return utils.WriteFile(aggregatorPath, content)
 }
 
+// serviceTypeName returns the generated service struct name for the given entity.
+// Entity-bound services generate "XxxService"; plain use cases generate "Xxx".
+func serviceTypeName(entityName string, hasEntity bool) string {
+	if hasEntity {
+		return entityName + "Service"
+	}
+	return entityName
+}
+
 // extractServiceInfo scans a service Go file for the first `type XxxService struct`
-// declaration and returns the entity name ("Xxx") plus whether the service is
-// entity-bound (i.e. it imports from internal/core/domain/).
+// (or `type Xxx struct` for plain use cases) declaration and returns the entity
+// name ("Xxx") plus whether the service is entity-bound (i.e. it imports from
+// internal/core/domain/).
 func (g *ServiceGenerator) extractServiceInfo(filePath string) (entityName string, hasEntity bool, err error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", false, err
 	}
-	re := regexp.MustCompile(`type (\w+)Service struct`)
-	matches := re.FindSubmatch(content)
-	if len(matches) < 2 {
+	re := regexp.MustCompile(`type (\w+?)(?:Service)? struct`)
+	for _, m := range re.FindAllSubmatch(content, -1) {
+		if len(m) < 2 {
+			continue
+		}
+		name := string(m[1])
+		if strings.HasSuffix(name, "Input") || strings.HasSuffix(name, "Output") || name == "Config" {
+			continue
+		}
+		entityName = name
+		break
+	}
+	if entityName == "" {
 		return "", false, fmt.Errorf("no XxxService struct found in %s", filePath)
 	}
-	entityName = string(matches[1])
 	hasEntity = strings.Contains(string(content), `/internal/core/domain/`)
 	return entityName, hasEntity, nil
 }

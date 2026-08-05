@@ -85,14 +85,22 @@ func(s *{{$serviceName}}){{.Name}}({{range $i, $p := .Params}}{{if $i}}, {{end}}
 {{end}}
 {{else}}
 
+type {{.ServiceName}}Input struct{}
+
+type {{.ServiceName}}Output struct{}
+
 type {{.ServiceName}} struct{}
 
 func New{{.ServiceName}}()*{{.ServiceName}}{
 	return &{{.ServiceName}}{}
 }
 
-func(s *{{.ServiceName}}) Execute(ctx context.Context) error{
-	return nil
+// Execute runs the {{.ServiceName}} use case.
+// TODO: populate {{.ServiceName}}Input with the inputs this use case needs and
+// fill in {{.ServiceName}}Output before returning.
+func(s *{{.ServiceName}}) Execute(ctx context.Context, input {{.ServiceName}}Input)({{.ServiceName}}Output, error){
+	// TODO: Implement business logic here
+	return {{.ServiceName}}Output{}, nil
 }
 {{end}}
 

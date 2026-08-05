@@ -492,7 +492,16 @@ func TestHexagoConfig_validateProjectType(t *testing.T) {
 		{
 			name: "invalid project type returns error",
 			checks: checkHexagoConfigValidate(
-				checkConfigValidateError("invalid project type 'cli'"),
+				checkConfigValidateError("invalid project type 'cgi'"),
+			),
+			before: func(cfg *HexagoConfig) {
+				cfg.Project.Type = "cgi"
+			},
+		},
+		{
+			name: "cli project type is valid",
+			checks: checkHexagoConfigValidate(
+				checkConfigValidateError(""),
 			),
 			before: func(cfg *HexagoConfig) {
 				cfg.Project.Type = "cli"
@@ -1154,11 +1163,22 @@ func TestHexagoConfig_Validate(t *testing.T) {
 		{
 			name: "invalid project type returns error",
 			checks: checkHexagoConfigValidate(
-				checkConfigValidateError("invalid project type 'cli'"),
+				checkConfigValidateError("invalid project type 'cgi'"),
+			),
+			before: func(cfg *HexagoConfig) {
+				cfg.Project.Module = "github.com/user/app"
+				cfg.Project.Type = "cgi"
+			},
+		},
+		{
+			name: "cli project type is valid",
+			checks: checkHexagoConfigValidate(
+				checkConfigValidateError(""),
 			),
 			before: func(cfg *HexagoConfig) {
 				cfg.Project.Module = "github.com/user/app"
 				cfg.Project.Type = "cli"
+				cfg.Project.Framework = "stdlib"
 			},
 		},
 		{
