@@ -13,31 +13,38 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"os"
 
-	"{{.ModuleName}}/pkg/version"
+	"{{.ModuleName}}/internal/version"
 	"github.com/spf13/cobra"
 )
 
+// versionCmd represents the version command
 var (
-	simple     bool
 	versionCmd = &cobra.Command{
 		Use:   "version",
-		Short: "Show version information",
-		Long:  `Display application version, build date, and commit information.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			simple, _ := cmd.Flags().GetBool("simple")
-			if simple {
-				fmt.Printf("%s", version.CurrentVersion().Version)
-				return
-			}
-
-			version.Splash()
-		},
+		Short: "Shows HexaGo version",
+		Run:   runVersion,
 	}
 )
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
-
 	versionCmd.Flags().BoolP("simple", "s", false, "Prints only the version, useful for scripting")
+}
+
+func runVersion(cmd *cobra.Command, args []string) {
+	simple, _ := cmd.Flags().GetBool("simple")
+	if simple {
+		fmt.Printf("%s", version.CurrentVersion().Version)
+		return
+	}
+
+	var (
+		stdWriter io.Writer = os.Stdout
+		errWriter io.Writer = os.Stderr
+	)
+
+	version.Splash(stdWriter, errWriter)
 }
