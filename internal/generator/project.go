@@ -52,6 +52,22 @@ func (g *ProjectGenerator) Generate() error {
 		return fmt.Errorf("failed to generate files: %w", err)
 	}
 
+	// Generate migration manager if migrations are enabled
+	if g.config.Features.WithMigrations {
+		migGen := NewMigrationGenerator(&g.config, g.projectPath)
+		if err := migGen.EnsureMigrationManager(); err != nil {
+			fmt.Printf("⚠️  Warning: failed to create migration manager: %v\n", err)
+		}
+	}
+
+	// Write .hexago.yaml to persist init-time settings.
+	// Written before go mod tidy so the config survives even if dependency
+	// resolution fails (tidy is the step most likely to abort generation).
+	if err := g.saveHexagoConfig(); err != nil {
+		fmt.Printf("⚠️  Warning: failed to write .hexago.yaml: %v\n", err)
+		// non-fatal — project is still fully usable
+	}
+
 	// Initialize go.mod
 	if err := g.initGoModule(); err != nil {
 		return fmt.Errorf("failed to initialize go module: %w", err)
@@ -66,12 +82,6 @@ func (g *ProjectGenerator) Generate() error {
 	if err := g.formatCode(); err != nil {
 		// Non-fatal - just warn
 		fmt.Printf("⚠️  Warning: failed to format code: %v\n", err)
-	}
-
-	// Write .hexago.yaml to persist init-time settings
-	if err := g.saveHexagoConfig(); err != nil {
-		fmt.Printf("⚠️  Warning: failed to write .hexago.yaml: %v\n", err)
-		// non-fatal — project is still fully usable
 	}
 
 	g.printSuccess()
@@ -124,17 +134,21 @@ func (g *ProjectGenerator) generateFiles() error {
 		mainTemplate,
 		rootTemplate,
 		versionCmdTemplate,
-		runTemplate,
 	}
 
 	switch g.config.Project.Type {
 
-	// Generate processor for service type
+	// Long-running service/daemon: run command + processor
 	case "service":
-		queue = append(queue, processorTemplate)
+		queue = append(queue, runTemplate, processorTemplate)
+
+	// Batch CLI: no run command, subcommands added via `hexago add adapter primary cli`
+	case "cli":
+		// no run/processor
 
 	// Generate pkg/httpserver and adapter wiring (http-server type only)
 	case "http-server":
+		queue = append(queue, runTemplate)
 		queue = append(queue, []string{
 			servicesStubTemplate,
 			httpServerInterfaceTemplate,
@@ -260,6 +274,11 @@ func (g *ProjectGenerator) dependenciesList() []string {
 		dependencies = append(dependencies, "github.com/gofiber/adaptor/v2@latest")
 	}
 
+	// Add database migration dependencies
+	if g.config.Features.WithMigrations {
+		dependencies = append(dependencies, "github.com/golang-migrate/migrate/v4@latest")
+	}
+
 	return dependencies
 }
 
@@ -303,6 +322,10 @@ func (g *ProjectGenerator) printSuccess() {
 	fmt.Println("\n✅ Project generated successfully!")
 	fmt.Println("\n📚 Next steps:")
 	fmt.Printf("  cd %s\n", g.config.Project.Name)
-	fmt.Println("  go run main.go run")
+	nextCmd := "go run main.go run"
+	if g.config.IsCLI() {
+		nextCmd = "go run main.go version"
+	}
+	fmt.Println("  " + nextCmd)
 	fmt.Println("\n📖 Read the README.md for more information about the project structure.")
 }

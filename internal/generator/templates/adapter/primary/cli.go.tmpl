@@ -1,0 +1,37 @@
+{{/*
+Template: adapter/primary/cli.go.tmpl
+Description: CLI primary (inbound) adapter — a Cobra subcommand factory.
+These commands are meant to be registered on the project's root command
+(./cmd/root.go) in a batch CLI project (--project-type cli).
+Variables:
+  - CommandName: string - adapter/command name (PascalCase)
+  - UseName: string - lower-case invocation name for the subcommand
+*/}}
+package cli
+
+import (
+	"github.com/spf13/cobra"
+)
+
+// {{.CommandName}} implements the {{.UseName}} CLI subcommand.
+type {{.CommandName}} struct{}
+
+// New{{.CommandName}} creates the {{.UseName}} subcommand.
+func New{{.CommandName}}() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "{{.UseName}}",
+		Short: "Run the {{.UseName}} command",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// TODO: implement {{.CommandName}} logic
+			return nil
+		},
+	}
+
+	// TODO: add flags and wire dependencies here
+	return cmd
+}
+
+// Register adds the {{.UseName}} command to the root command.
+func Register{{.CommandName}}(root *cobra.Command) {
+	root.AddCommand(New{{.CommandName}}())
+}

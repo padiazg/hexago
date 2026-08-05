@@ -33,13 +33,14 @@ type HexagoConfig struct {
 
 // HexagoProjectConfig holds basic project metadata
 type HexagoProjectConfig struct {
-	Name      string `yaml:"name" mapstructure:"name"`
-	Module    string `yaml:"module" mapstructure:"module"`
-	Type      string `yaml:"type" mapstructure:"type"`
-	Framework string `yaml:"framework,omitempty" mapstructure:"framework"`
-	GoVersion string `yaml:"go_version" mapstructure:"go_version"`
-	Author    string `yaml:"author,omitempty" mapstructure:"author"`
-	Year      int    `yaml:"year,omitempty" mapstructure:"year"`
+	Name           string `yaml:"name" mapstructure:"name"`
+	Module         string `yaml:"module" mapstructure:"module"`
+	Type           string `yaml:"type" mapstructure:"type"`
+	Framework      string `yaml:"framework,omitempty" mapstructure:"framework"`
+	DatabaseDriver string `yaml:"database_driver,omitempty" mapstructure:"database_driver"`
+	GoVersion      string `yaml:"go_version" mapstructure:"go_version"`
+	Author         string `yaml:"author,omitempty" mapstructure:"author"`
+	Year           int    `yaml:"year,omitempty" mapstructure:"year"`
 }
 
 // HexagoStructureConfig holds architecture naming conventions
@@ -68,12 +69,13 @@ func NewHexagoConfig(
 
 	return HexagoConfig{
 		Project: HexagoProjectConfig{
-			Name:      projectName,
-			Module:    moduleName,
-			Type:      projectType,
-			Framework: framework,
-			GoVersion: "1.21",
-			Year:      time.Now().Year(),
+			Name:           projectName,
+			Module:         moduleName,
+			Type:           projectType,
+			Framework:      framework,
+			DatabaseDriver: "postgres",
+			GoVersion:      "1.21",
+			Year:           time.Now().Year(),
 		},
 		Structure: HexagoStructureConfig{
 			AdapterStyle:  adapterStyle,
@@ -123,6 +125,11 @@ func (c *HexagoConfig) IsHTTPServer() bool {
 // IsService returns true if project is a long-running service/daemon
 func (c *HexagoConfig) IsService() bool {
 	return c.Project.Type == "service"
+}
+
+// IsCLI returns true if project is a batch CLI with subcommands
+func (c *HexagoConfig) IsCLI() bool {
+	return c.Project.Type == "cli"
 }
 
 // NeedsWebFramework returns true if project needs a web framework for main logic
@@ -207,10 +214,11 @@ func (c *HexagoConfig) validateProjectType() error {
 	validTypes := map[string]bool{
 		"http-server": true,
 		"service":     true,
+		"cli":         true,
 	}
 
 	if !validTypes[c.Project.Type] {
-		return fmt.Errorf("invalid project type '%s'. Valid options: http-server, service", c.Project.Type)
+		return fmt.Errorf("invalid project type '%s'. Valid options: http-server, service, cli", c.Project.Type)
 	}
 
 	return nil
@@ -313,6 +321,7 @@ func LoadInitConfig(v *viper.Viper, dir string, cmd *cobra.Command) (*HexagoConf
 func setInitDefaults(v *viper.Viper) {
 	v.SetDefault("project.type", "http-server")
 	v.SetDefault("project.framework", "stdlib")
+	v.SetDefault("project.database_driver", "postgres")
 	v.SetDefault("project.go_version", "1.21")
 	v.SetDefault("project.year", time.Now().Year())
 	v.SetDefault("structure.adapter_style", "primary-secondary")
@@ -332,6 +341,7 @@ func bindInitFlags(v *viper.Viper, cmd *cobra.Command) {
 		{"project.module", "module"},
 		{"project.type", "project-type"},
 		{"project.framework", "framework"},
+		{"project.database_driver", "db-driver"},
 		{"structure.adapter_style", "adapter-style"},
 		{"structure.core_logic", "core-logic"},
 		{"structure.explicit_ports", "explicit-ports"},

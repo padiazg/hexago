@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -13,20 +14,32 @@ var migrationUpFilePattern = regexp.MustCompile(`^(\d{6})_.*\.up\.sql$`)
 
 // MigrationGenerator generates database migration files
 type MigrationGenerator struct {
-	config *HexagoConfig
+	config      *HexagoConfig
+	projectPath string
 }
 
-// NewMigrationGenerator creates a new migration generator
-func NewMigrationGenerator(config *HexagoConfig) *MigrationGenerator {
+// NewMigrationGenerator creates a new migration generator.
+// projectPath is the absolute path to the project root.
+func NewMigrationGenerator(config *HexagoConfig, projectPath string) *MigrationGenerator {
 	return &MigrationGenerator{
-		config: config,
+		config:      config,
+		projectPath: projectPath,
 	}
 }
 
 // Generate creates migration files with sequential numbering
 func (g *MigrationGenerator) Generate(migrationName string) (int, error) {
+	base := g.projectPath
+	if base == "" {
+		var err error
+		base, err = os.Getwd()
+		if err != nil {
+			return 0, fmt.Errorf("failed to get working directory: %w", err)
+		}
+	}
+
 	// Create migrations directory if it doesn't exist
-	migrationsDir := "migrations"
+	migrationsDir := filepath.Join(base, "migrations")
 	if err := utils.CreateDir(migrationsDir); err != nil {
 		return 0, err
 	}
@@ -59,7 +72,7 @@ func (g *MigrationGenerator) Generate(migrationName string) (int, error) {
 	}
 
 	// Generate or update migration manager (first time only)
-	if err := g.ensureMigrationManager(); err != nil {
+	if err := g.EnsureMigrationManager(); err != nil {
 		// Non-fatal - just warn
 		fmt.Printf("⚠️  Warning: failed to ensure migration manager: %v\n", err)
 	}
@@ -127,9 +140,17 @@ func (g *MigrationGenerator) generateDownMigration(filePath, migrationName strin
 	return utils.WriteFile(filePath, content)
 }
 
-// ensureMigrationManager creates the migration manager if it doesn't exist
-func (g *MigrationGenerator) ensureMigrationManager() error {
-	dbDir := filepath.Join("internal", "infrastructure", "database")
+// EnsureMigrationManager creates the migration manager if it doesn't exist.
+func (g *MigrationGenerator) EnsureMigrationManager() error {
+	base := g.projectPath
+	if base == "" {
+		var err error
+		base, err = os.Getwd()
+		if err != nil {
+			return fmt.Errorf("failed to get working directory: %w", err)
+		}
+	}
+	dbDir := filepath.Join(base, "internal", "infrastructure", "database")
 	managerPath := filepath.Join(dbDir, "migrator.go")
 
 	// If manager already exists, don't overwrite
@@ -146,6 +167,7 @@ func (g *MigrationGenerator) ensureMigrationManager() error {
 
 	data := map[string]any{
 		"ModuleName": g.config.Project.Module,
+		"DBDriver":   g.config.Project.DatabaseDriver,
 	}
 
 	content, err := g.config.templateLoader.Render("migration/migrator.go.tmpl", data)

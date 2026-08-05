@@ -168,7 +168,7 @@ func parseFields(fieldsStr string) ([]generator.Field, error) {
 			continue
 		}
 
-		fieldParts := strings.Split(part, ":")
+		fieldParts := strings.SplitN(part, ":", 2)
 		if len(fieldParts) != 2 {
 			return nil, fmt.Errorf("invalid field format '%s'. Expected 'name:type'", part)
 		}

@@ -5,8 +5,12 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	{{- if eq .DBDriver "sqlite3" }}
+	"github.com/golang-migrate/migrate/v4/database/sqlite"
+	{{- else }}
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	{{- end }}
 
 	"{{.ModuleName}}/pkg/logger"
 )
@@ -81,17 +85,29 @@ func (m *Migrator) Version() (uint, bool, error) {
 	return version, dirty, nil
 }
 
-// newMigration creates a migrate instance
+// newMigration creates a migrate instance from the configured driver.
 func (m *Migrator) newMigration() (*migrate.Migrate, error) {
+	{{- if eq .DBDriver "sqlite3" }}
+	driver, err := sqlite.WithInstance(m.db, &sqlite.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	return migrate.NewWithDatabaseInstance(
+		"file://migrations",
+		"sqlite3",
+		driver,
+	)
+	{{- else }}
 	driver, err := postgres.WithInstance(m.db, &postgres.Config{})
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Update database name if not using postgres
 	return migrate.NewWithDatabaseInstance(
 		"file://migrations",
 		"postgres",
 		driver,
 	)
+	{{- end }}
 }

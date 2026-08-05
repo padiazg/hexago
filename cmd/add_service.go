@@ -10,6 +10,8 @@ import (
 
 	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/internal/generator"
+	"github.com/padiazg/hexago/internal/testgen"
+	"github.com/padiazg/hexago/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +20,14 @@ var (
 	serviceEntity      string
 	serviceFromPort    string
 )
+
+// servicePackageName mirrors the sub-package derivation in ServiceGenerator.
+func servicePackageName(serviceName, entityName string) string {
+	if entityName != "" {
+		return utils.ToPlural(strings.ToLower(entityName))
+	}
+	return strings.ToLower(serviceName)
+}
 
 // addServiceCmd represents the add service command
 var addServiceCmd = &cobra.Command{
@@ -49,6 +59,9 @@ func init() {
 	addServiceCmd.Flags().StringVarP(&serviceDescription, "description", "d", "", "Service description")
 	addServiceCmd.Flags().StringVarP(&serviceEntity, "entity", "e", "", "Domain entity this service manages (PascalCase); determines sub-package name")
 	addServiceCmd.Flags().StringVarP(&serviceFromPort, "from-port", "", "", "Port interface name to infer method signatures from")
+	addServiceCmd.Flags().Bool("with-test", false, "Generate tests for this component (overrides config)")
+	addServiceCmd.Flags().Bool("no-test", false, "Skip test generation for this component (overrides config)")
+	addServiceCmd.MarkFlagsMutuallyExclusive("with-test", "no-test")
 }
 
 func runAddService(cmd *cobra.Command, args []string) error {
@@ -91,6 +104,11 @@ func runAddService(cmd *cobra.Command, args []string) error {
 	gen := generator.NewServiceGenerator(config)
 	if err := gen.Generate(serviceName, serviceEntity, serviceDescription, portInfo); err != nil {
 		return fmt.Errorf("failed to generate service: %w", err)
+	}
+
+	if effectiveWithTests(cmd, config) {
+		pkgName := servicePackageName(serviceName, serviceEntity)
+		_ = testgen.GenerateForPackage(cmd.Context(), config.OutputDir, "./internal/core/"+config.CoreLogicDir()+"/"+pkgName)
 	}
 
 	fmt.Println("\n✅ Service added successfully!")

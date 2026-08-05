@@ -69,8 +69,10 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 		err = g.generateGRPCAdapter(filePath, adapterName)
 	case "queue":
 		err = g.generateQueueAdapter(filePath, adapterName)
+	case "cli":
+		err = g.generateCLIAdapter(filePath, adapterName)
 	default:
-		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
+		return fmt.Errorf("adapter type %s not yet implemented. Valid types: http, grpc, queue, cli", adapterType)
 	}
 
 	return err
@@ -142,23 +144,11 @@ func (g *AdapterGenerator) generateHTTPHandlerPackage(adapterName, entityName st
 // For database adapters, entityName (optional) drives the sub-package and entity wiring.
 // portInfo (optional) provides method signatures for code generation.
 func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityName, portName string, portInfo *analyzer.PortInfo) error {
-	// Validate adapter type
-	validTypes := map[string]bool{
-		"database": true,
-		"external": true,
-		"cache":    true,
-	}
-
-	if !validTypes[adapterType] {
-		return fmt.Errorf("invalid secondary adapter type '%s'. Valid types: database, external, cache", adapterType)
-	}
-
+	// database and cache have dedicated templates; any other string (external,
+	// tool, workspace, filesystem, ...) maps to the generic port-impl template.
 	var (
 		adapterDir, pkgName string
 	)
-
-	// TODO: create an interface for adapterType, encapsulate generateDatabaseAdapterFiles, generateOtherAdapterFiles, generateDatabaseAdapter
-	// generateExternalAdapter, generateCacheAdapter
 
 	var err error
 	if adapterType == "database" {
@@ -183,12 +173,11 @@ func (g *AdapterGenerator) GenerateSecondary(adapterType, adapterName, entityNam
 	switch adapterType {
 	case "database":
 		err = g.generateDatabaseAdapter(filePath, adapterName, entityName, portName)
-	case "external":
-		err = g.generateExternalAdapter(filePath, adapterName, portName, portInfo)
 	case "cache":
-		err = g.generateCacheAdapter(filePath, adapterName, portName)
+		err = g.generateCacheAdapter(filePath, adapterName, portInfo)
 	default:
-		return fmt.Errorf("adapter type %s not yet implemented", adapterType)
+		// external + any free-form type → generic secondary port impl
+		err = g.generateGenericAdapter(filePath, adapterType, adapterName, portName, portInfo)
 	}
 
 	return err
@@ -208,24 +197,6 @@ func (g *AdapterGenerator) generateDatabaseAdapterFiles(entityName, adapterName 
 	if err := utils.CreateDir(adapterDir); err != nil {
 		return "", "", err
 	}
-	// Ensure domain errors file exists
-	domainDir := filepath.Join("internal", "core", "domain")
-	if err := utils.CreateDir(domainDir); err != nil {
-		return "", "", fmt.Errorf("failed to create domain directory: %w", err)
-	}
-	errorsFile := filepath.Join(domainDir, "errors.go")
-	if !utils.FileExists(errorsFile) {
-		data := map[string]any{}
-		content, err := g.config.templateLoader.Render("domain/errors.go.tmpl", data)
-		if err != nil {
-			return "", "", fmt.Errorf("failed to render domain errors template: %w", err)
-		}
-		if err := utils.WriteFile(errorsFile, content); err != nil {
-			return "", "", err
-		}
-		fmt.Printf("📝 Creating domain errors file: %s\n", errorsFile)
-	}
-
 	return adapterDir, pkgName, nil
 }
 
@@ -288,6 +259,25 @@ func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) e
 	return utils.WriteFile(filePath, content)
 }
 
+// generateCLIAdapter generates a CLI (cobra subcommand) primary adapter.
+func (g *AdapterGenerator) generateCLIAdapter(filePath, commandName string) error {
+	if len(commandName) < 2 {
+		return fmt.Errorf("cli adapter name is too short")
+	}
+	useName := utils.ToSnakeCase(commandName)
+	data := map[string]any{
+		"CommandName": commandName,
+		"UseName":     useName,
+	}
+
+	content, err := g.config.templateLoader.Render("adapter/primary/cli.go.tmpl", data)
+	if err != nil {
+		return fmt.Errorf("failed to render cli adapter template: %w", err)
+	}
+
+	return utils.WriteFile(filePath, content)
+}
+
 // generateDatabaseAdapter generates a database repository adapter
 func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityName, portName string) error {
 	// Ensure ErrNotFound exists in domain before generating adapter
@@ -297,11 +287,12 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 
 	// Derive entity-related template variables
 	var resolvedEntity, pkgName, entityImportAlias string
-	if entityName != "" {
+	hasEntity := entityName != ""
+	if hasEntity {
 		resolvedEntity = entityName
 		pkgName = utils.ToPlural(strings.ToLower(entityName))
 	} else {
-		resolvedEntity = repoName
+		resolvedEntity = ""
 		pkgName = strings.ToLower(repoName)
 	}
 	entityImportAlias = pkgName + "Domain"
@@ -310,6 +301,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 		"ModuleName":        g.config.Project.Module,
 		"PackageName":       pkgName,
 		"RepoName":          repoName,
+		"HasEntity":         hasEntity,
 		"EntityName":        resolvedEntity,
 		"EntityPackage":     pkgName,
 		"EntityImportAlias": entityImportAlias,
@@ -329,23 +321,29 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 //
 //	internal/adapters/secondary/external/q_r_client.go, it should create it's own folder
 
-// generateExternalAdapter generates an external service adapter
-func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portName string, portInfo *analyzer.PortInfo) error {
+// generateGenericAdapter generates a generic secondary adapter (port implementation).
+// Used for "external" clients and any free-form adapter type (tool, workspace,
+// filesystem, ...). When a port is provided via --from-port it infers method
+// signatures and emits a compile-time interface assertion.
+func (g *AdapterGenerator) generateGenericAdapter(filePath, adapterType, serviceName, portName string, portInfo *analyzer.PortInfo) error {
 	data := map[string]any{
+		"PackageName": adapterType,
 		"ServiceName": serviceName,
-		"PortName":    portName,
 	}
 
-	// Set PortImport if portName is provided (via --port or --from-port)
-	if portName != "" {
-		portImport := fmt.Sprintf("%q", g.config.Project.Module+"/internal/core/ports/outbound")
-		data["PortImport"] = portImport
-	}
-
+	// Set PortImport if a port was actually discovered (via --from-port).
 	if portInfo != nil {
 		if portInfo.Name != "" {
 			data["PortName"] = portInfo.Name
 		}
+
+		// Use the port's real package path so the import resolves regardless of
+		// whether the project uses explicit ports or per-entity port files.
+		portImport := portInfo.ImportPath
+		if portImport == "" {
+			portImport = g.config.Project.Module + "/internal/core/ports/outbound"
+		}
+		data["PortImport"] = fmt.Sprintf("%q", portImport)
 
 		// Collect domain imports from method parameters
 		domainAliasMap := portInfo.DomainAliasMap(g.config.Project.Module)
@@ -355,16 +353,16 @@ func (g *AdapterGenerator) generateExternalAdapter(filePath, serviceName, portNa
 		data["DomainImports"] = domainAliasMap
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/secondary/external.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/secondary/generic.go.tmpl", data)
 	if err != nil {
-		return fmt.Errorf("failed to render external adapter template: %w", err)
+		return fmt.Errorf("failed to render generic adapter template: %w", err)
 	}
 
 	return utils.WriteFile(filePath, content)
 }
 
 // generateCacheAdapter generates a cache adapter
-func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName string) error {
+func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName string, portInfo *analyzer.PortInfo) error {
 	// Ensure ErrNotFound exists in domain before generating adapter
 	if err := g.EnsureDomainError("ErrNotFound", "entity not found"); err != nil {
 		return err
@@ -372,15 +370,20 @@ func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName, portName st
 
 	data := map[string]any{
 		"CacheName": cacheName,
-		"PortName":  portName,
 	}
 
-	if portName != "" {
-		portImport := fmt.Sprintf("%q", g.config.Project.Module+"/internal/core/ports/outbound")
-		data["PortImport"] = portImport
+	if portInfo != nil {
+		if portInfo.Name != "" {
+			data["PortName"] = portInfo.Name
+		}
+		portImport := portInfo.ImportPath
+		if portImport == "" {
+			portImport = g.config.Project.Module + "/internal/core/ports/outbound"
+		}
+		data["PortImport"] = fmt.Sprintf("%q", portImport)
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/cache.go.tmpl", data)
+	content, err := g.config.templateLoader.Render("adapter/secondary/cache.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render cache adapter template: %w", err)
 	}

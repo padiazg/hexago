@@ -8,20 +8,25 @@ package config
 
 import (
 	"fmt"
+{{- if .IsHTTPServer}}
 	"time"
+{{- end}}
 
 	"github.com/spf13/viper"
 )
 
 // Config holds all application configuration
 type Config struct {
+	{{- if .IsHTTPServer}}
 	Server        ServerConfig
+	{{- end}}
 	Observability ObservabilityConfig
 	LogLevel      string
 	LogFormat     string
 }
 
 // ServerConfig holds HTTP server configuration
+{{- if .IsHTTPServer}}
 type ServerConfig struct {
 	Port            int
 	Host            string
@@ -30,6 +35,7 @@ type ServerConfig struct {
 	IdleTimeout     time.Duration
 	ShutdownTimeout time.Duration
 }
+{{- end}}
 
 // ObservabilityConfig holds observability server configuration
 type ObservabilityConfig struct {
@@ -75,12 +81,14 @@ func Load(cfgFile string) (*Config, error) {
 
 func setDefaults() {
 	// Server defaults
+	{{- if .IsHTTPServer}}
 	viper.SetDefault("server.port", 8080)
 	viper.SetDefault("server.host", "0.0.0.0")
 	viper.SetDefault("server.readtimeout", 15*time.Second)
 	viper.SetDefault("server.writetimeout", 15*time.Second)
 	viper.SetDefault("server.idletimeout", 60*time.Second)
 	viper.SetDefault("server.shutdowntimeout", 30*time.Second)
+	{{- end}}
 
 	// Logger defaults
 	viper.SetDefault("loglevel", "info")

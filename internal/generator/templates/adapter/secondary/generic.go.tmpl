@@ -1,0 +1,55 @@
+{{/*
+Template: adapter/secondary/generic.go.tmpl
+Description: Generic secondary (outbound/driven) adapter implementation.
+Used for any adapter that does not map to a dedicated template: "external"
+service clients, filesystem/workspace utilities, batch outputs, etc.
+When --from-port is provided, it infers method signatures from the port and
+emits a compile-time interface assertion; otherwise it emits a TODO stub.
+Variables:
+  - PackageName: string - adapter package name (adapter type)
+  - ServiceName: string - adapter name (PascalCase)
+  - PortName: string - port interface name ("" when none)
+  - PortImport: string - quoted port package import path
+  - Methods: []analyzer.MethodInfo - inferred port methods
+  - DomainImports: map[string]string - domain import path → alias
+*/}}
+package {{.PackageName}}
+
+import (
+	"context"
+	{{ if not .Methods }}"fmt"
+	{{ end -}}
+{{ if .PortImport }}
+	outbound {{ .PortImport }}
+{{ end -}}
+{{ range $path, $alias := .DomainImports }}
+	{{ $alias }} "{{ $path }}"
+{{ end -}}
+)
+
+{{if .PortName -}}
+// compile-time check that {{.ServiceName}} satisfies the {{.PortName}} port.
+var _ outbound.{{.PortName}} = (*{{.ServiceName}})(nil)
+
+{{end -}}
+// {{.ServiceName}} implements {{if .PortName}}the {{.PortName}} port{{else}}{{.ServiceName}}{{end}}.
+type {{.ServiceName}} struct{}
+
+// New{{.ServiceName}} creates a new {{.ServiceName}}.
+func New{{.ServiceName}}() *{{.ServiceName}} {
+	return &{{.ServiceName}}{}
+}
+{{- if .Methods }}
+{{- $svcName := .ServiceName }}
+{{ range .Methods }}
+func (s *{{$svcName}}) {{.Name}}({{range $i, $p := .Params}}{{if $i}}, {{end}}{{$p.Name}} {{$p.Type}}{{end}})({{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type}}{{end}}) {
+	// TODO: implement {{.Name}} using {{$svcName}}'s dependencies.
+	return {{range $i, $r := .Returns}}{{if $i}}, {{end}}{{$r.Type | zeroVal}}{{end}}
+}
+{{ end }}
+{{ else }} 
+// TODO: add the outbound methods your port requires, then delete this placeholder.
+func (s *{{.ServiceName}}) Example(ctx context.Context) error {
+	return fmt.Errorf("not implemented")
+}
+{{ end }}
