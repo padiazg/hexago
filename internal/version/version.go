@@ -17,15 +17,15 @@ var (
 )
 
 type VersionInfo struct {
-	Version   string
-	Commit    string
+	TimeStamp *time.Time
 	BuildDate string
 	BuiltBy   string
+	Commit    string
+	Extra     string
+	Version   string
 	Major     int
 	Minor     int
 	Patch     int
-	Extra     string
-	TimeStamp *time.Time
 }
 
 func (v *VersionInfo) ParseVersion() {
