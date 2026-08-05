@@ -6,9 +6,9 @@ import (
 
 // PackageInfo contains basic information about a loaded Go package.
 type PackageInfo struct {
-	Name       string
-	ImportPath string
 	FileSet    *token.FileSet
+	ImportPath string
+	Name       string
 }
 
 // MethodInfo represents a single method signature.

@@ -19,9 +19,9 @@ const (
 // FuncSummary mirrors go-testgen's analyzer.FuncSummary (JSON subset we need).
 type FuncSummary struct {
 	FuncSpec       string         `json:"funcSpec"`
-	TestExists     bool           `json:"testExists"`
 	SuggestedStyle string         `json:"suggestedStyle,omitempty"`
 	InterfaceDeps  []InterfaceDep `json:"interfaceDeps"`
+	TestExists     bool           `json:"testExists"`
 }
 
 // InterfaceDep mirrors go-testgen's analyzer.InterfaceDep.
