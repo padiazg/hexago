@@ -1,5 +1,5 @@
 {{/*
-Template: pkg/version/version.go
+Template: version/version.go
 Description: Version information with build-time injection via ldflags
 Variables:
   - ModuleName: string - Go module name
@@ -27,15 +27,15 @@ var (
 )
 
 type VersionInfo struct {
-	Version   string
-	Commit    string
+	TimeStamp *time.Time
 	BuildDate string
 	BuiltBy   string
+	Commit    string
+	Extra     string
+	Version   string
 	Major     int
 	Minor     int
 	Patch     int
-	Extra     string
-	TimeStamp *time.Time
 }
 
 func ParseInt(s string) int {

@@ -16,6 +16,7 @@ const (
 	versionTemplate             string = "version"
 	versionSplashTemplate       string = "version-splash"
 	versionTestTemplate         string = "version-test"
+	versionSplashTestTemplate   string = "version-splash-test"
 	versionCmdTemplate          string = "version-cmd"
 	processorTemplate           string = "processor"
 	configTemplate              string = "config"
@@ -86,20 +87,26 @@ var templateMap = map[string]templateFn{
 	},
 	versionTemplate: func(g *ProjectGenerator) templateItem {
 		return templateItem{
-			source: "pkg/version/version.go.tmpl",
-			target: filepath.Join("pkg", "version", "version.go"),
+			source: "version/version.go.tmpl",
+			target: filepath.Join("internal", "version", "version.go"),
 		}
 	},
 	versionSplashTemplate: func(g *ProjectGenerator) templateItem {
 		return templateItem{
-			source: "pkg/version/splash.go.tmpl",
-			target: filepath.Join("pkg", "version", "splash.go"),
+			source: "version/splash.go.tmpl",
+			target: filepath.Join("internal", "version", "splash.go"),
+		}
+	},
+	versionSplashTestTemplate: func(g *ProjectGenerator) templateItem {
+		return templateItem{
+			source: "version/splash_test.go.tmpl",
+			target: filepath.Join("internal", "version", "splash_test.go"),
 		}
 	},
 	versionTestTemplate: func(g *ProjectGenerator) templateItem {
 		return templateItem{
-			source: "pkg/version/version_test.go.tmpl",
-			target: filepath.Join("pkg", "version", "version_test.go"),
+			source: "version/version_test.go.tmpl",
+			target: filepath.Join("internal", "version", "version_test.go"),
 		}
 	},
 	versionCmdTemplate: func(g *ProjectGenerator) templateItem {
@@ -108,6 +115,7 @@ var templateMap = map[string]templateFn{
 			target: filepath.Join("cmd", "version.go"),
 		}
 	},
+
 	processorTemplate: func(g *ProjectGenerator) templateItem {
 		return templateItem{
 			source: "service/processor.go.tmpl",

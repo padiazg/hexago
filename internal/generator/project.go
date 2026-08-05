@@ -100,7 +100,7 @@ func (g *ProjectGenerator) generateDirectoryStructure() error {
 		fmt.Sprintf("internal/adapters/%s/database", g.config.AdapterOutboundDir()),
 		"internal/config",
 		"pkg/logger",
-		"pkg/version",
+		"internal/version",
 	}
 
 	// Add optional directories
@@ -160,14 +160,15 @@ func (g *ProjectGenerator) generateFiles() error {
 	}
 
 	queue = append(queue, []string{
-		configTemplate,        // Generate config
-		loggerTemplate,        // Generate logger
-		versionTemplate,       // Generate version package
-		versionSplashTemplate, // Generate splash
-		versionTestTemplate,   // Generate version test
-		makefileTemplate,      // Generate Makefile
-		gitignoreTemplate,     // Generate .gitignore
-		readmeTemplate,        // Generate README
+		configTemplate,            // Generate config
+		loggerTemplate,            // Generate logger
+		versionTemplate,           // Generate version package
+		versionSplashTemplate,     // Generate splash
+		versionSplashTestTemplate, // Generate splash test
+		versionTestTemplate,       // Generate version test
+		makefileTemplate,          // Generate Makefile
+		gitignoreTemplate,         // Generate .gitignore
+		readmeTemplate,            // Generate README
 	}...)
 
 	// Docker files
