@@ -195,6 +195,10 @@ Example call (no entity):
 			mcp.WithString("from_port",
 				mcp.Description("Port interface name to infer method signatures from (only used with explicit_ports projects). E.g. CategoryRepository."),
 			),
+			mcp.WithString("with_test",
+				mcp.Description(`Force test generation for this component: "with-test" (force on) or "no-test" (force off). Overrides project config.`),
+				mcp.Enum("with-test", "no-test"),
+			),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			args := req.GetArguments()
@@ -209,6 +213,9 @@ Example call (no entity):
 			}
 			if v, _ := args["from_port"].(string); v != "" {
 				cliArgs = append(cliArgs, "--from-port", v)
+			}
+			if v, _ := args["with_test"].(string); v != "" {
+				cliArgs = append(cliArgs, "--"+v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))
 		},
@@ -380,10 +387,10 @@ Example calls:
   primary   http — generates sub-package with two files: <snake_entity>.go (Config/DTOs) + handlers.go (List/Create/GetByID/Update)
   secondary database — generates sub-package implementing the entity's Repository port`),
 			),
-			mcp.WithString("from-port",
+			mcp.WithString("from_port",
 				mcp.Description("Port interface name to implement (only used with explicit_ports projects). E.g. UserRepository, EmailSender."),
 			),
-			mcp.WithString("test",
+			mcp.WithString("with_test",
 				mcp.Description(`Test generation for this component: "with-test" (force on) or "no-test" (force off). Overrides project config.`),
 				mcp.Enum("with-test", "no-test"),
 			),
@@ -398,10 +405,10 @@ Example calls:
 			if v, _ := args["entity"].(string); v != "" {
 				cliArgs = append(cliArgs, "--entity", v)
 			}
-			if v, _ := args["from-port"].(string); v != "" {
+			if v, _ := args["from_port"].(string); v != "" {
 				cliArgs = append(cliArgs, "--from-port", v)
 			}
-			if v, _ := args["test"].(string); v != "" {
+			if v, _ := args["with_test"].(string); v != "" {
 				cliArgs = append(cliArgs, "--"+v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))
@@ -437,7 +444,7 @@ Example calls:
 				mcp.Description("Worker name in PascalCase. E.g. EmailWorker, ReportWorker, CleanupWorker."),
 				mcp.Required(),
 			),
-			mcp.WithString("worker_type",
+			mcp.WithString("type",
 				mcp.Description("queue (default) | periodic | event"),
 				mcp.Enum("queue", "periodic", "event"),
 			),
@@ -456,7 +463,7 @@ Example calls:
 			wd, _ := args["working_directory"].(string)
 			name, _ := args["name"].(string)
 			cliArgs := []string{"--working-directory", wd, "add", "worker", name}
-			if v, _ := args["worker_type"].(string); v != "" {
+			if v, _ := args["type"].(string); v != "" {
 				cliArgs = append(cliArgs, "--type", v)
 			}
 			if v, _ := args["interval"].(string); v != "" {
@@ -498,7 +505,7 @@ Example calls:
 				mcp.Description("Migration name in snake_case describing the schema change. E.g. create_users_table, add_email_index."),
 				mcp.Required(),
 			),
-			mcp.WithString("migration_type",
+			mcp.WithString("type",
 				mcp.Description("Migration format: sql (default) or go."),
 				mcp.Enum("sql", "go"),
 			),
@@ -508,7 +515,7 @@ Example calls:
 			wd, _ := args["working_directory"].(string)
 			name, _ := args["name"].(string)
 			cliArgs := []string{"--working-directory", wd, "add", "migration", name}
-			if v, _ := args["migration_type"].(string); v != "" {
+			if v, _ := args["type"].(string); v != "" {
 				cliArgs = append(cliArgs, "--type", v)
 			}
 			return toolResult(runSelf(ctx, cliArgs...))

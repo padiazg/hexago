@@ -31,13 +31,16 @@ mod-tidy:
 	go mod tidy
 
 install: build
-	cp $(BINARY) $(GOPATH)/bin/
+	cp $(BINARY) $(shell go env GOPATH)/bin/
 
 coverage:
 	go test -race -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out
 
-preflight: vet lint
+fieldalignment:
+	fieldalignment -test=false ./...	
+
+preflight: vet lint test fieldalignment
 	@gremlins unleash --timeout-coefficient 20 -S "l" --integration --output=mutation.json && \
 	go-crap scan --exclude ".*_test.go" --top 10 --mutation-report mutation.json
 
