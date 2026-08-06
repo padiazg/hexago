@@ -5,7 +5,33 @@ All notable changes to HexaGo will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v0.4.1 - 2026-07-01  
+## v0.5.0 - 2026-08-05
+
+### Added
+
+- **`with_test` on `hexago_add_service`** — new MCP tool param to force test generation for services
+- **`from_port` on `hexago_add_service`** — new MCP tool param for port-based signature inference
+- **`cli` project type** in MCP init tool (was already CLI-flagged but missing from MCP tool)
+- **`db_driver` on init MCP tool** — postgres|sqlite3 selection
+- **`fieldalignment` target** in Makefile, added to preflight
+- **`e2e` target** in Makefile for full generator E2E tests
+
+### Changed
+
+- **MCP param rename**: `worker_type` → `type`, `migration_type` → `type`, `from-port` → `from_port`, `test` → `with_test` — aligns MCP tool params with Go struct field naming
+- **`GOPATH` in Makefile** → `$(shell go env GOPATH)` for cross-platform portability
+
+### Fixed
+
+- **MCP tool args now correctly mapped to CLI flags** — `cliFlag()` helper auto-converts snake_case MCP params to hyphenated cobra flags (`--project-type`, `--core_logic` → `--core-logic`), preventing unknown-flag errors
+
+### Refactored
+
+- Extracted `cliFlag()` from `internal/mcp/register.go` — single source of truth for MCP→CLI flag mapping
+
+---
+
+## v0.4.1 - 2026-07-01
 
 ### Added
 
@@ -450,9 +476,9 @@ None (initial release)
 ## How to Update
 
 ```bash
-go install github.com/padiazg/hexago@v0.0.1
+go install github.com/padiazg/hexago@v0.5.0
 ```
 
-Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.0.1)
+Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.5.0)
 
 [0.0.1]: https://github.com/padiazg/hexago/releases/tag/v0.0.1

@@ -58,6 +58,8 @@ Required:  working_directory, name  (PascalCase, e.g. "Category", "Order")
 Optional:
   entity        Domain entity this service manages. Determines sub-package name (e.g. "Category" → categories/).
   description   One-line comment embedded in the generated file.
+  from_port     Port interface name to infer method signatures from (for explicit_ports projects).
+  with_test     "with-test" | "no-test" — force test generation (overrides config)
 
 ────────────────────────────────────────────────────────────────────────────────
 ## hexago_add_domain_entity — add a domain entity
@@ -103,8 +105,8 @@ Required:  working_directory, direction, adapter_type, name  (PascalCase)
 
 Optional:
   entity      Domain entity this adapter serves (PascalCase); determines sub-package for database adapters
-  from-port   Port interface name to implement (for explicit_ports projects). E.g. "UserRepository"
-  test        "with-test" | "no-test" — force on/off test generation (overrides config)
+  from_port   Port interface name to implement (for explicit_ports projects). E.g. "UserRepository"
+  with_test   "with-test" | "no-test" — force test generation (overrides config)
 
 	Example calls:
 	  direction=primary,   adapter_type=http,      name=UserHandler
@@ -122,15 +124,15 @@ Generated: internal/workers/<name>.go
 
 Required:  working_directory, name  (PascalCase, e.g. "EmailWorker")
 Optional:
-  worker_type   "queue" (default) | "periodic" | "event"
-  interval      Duration string for periodic workers. Default "5m". E.g. "30s", "1h", "15m".
-  workers       int — goroutine pool size for queue workers. Default 5.
-  queue_size    int — buffered channel size for queue workers. Default 100.
+  type        "queue" (default) | "periodic" | "event"
+  interval    Duration string for periodic workers. Default "5m". E.g. "30s", "1h", "15m".
+  workers     int — goroutine pool size for queue workers. Default 5.
+  queue_size  int — buffered channel size for queue workers. Default 100.
 
 Examples:
-  name=EmailWorker,       worker_type=queue,    workers=10, queue_size=200
-  name=CleanupWorker,     worker_type=periodic,  interval=1h
-  name=AlertWorker,       worker_type=event
+  name=EmailWorker,       type=queue,    workers=10, queue_size=200
+  name=CleanupWorker,     type=periodic,  interval=1h
+  name=AlertWorker,       type=event
 
 ────────────────────────────────────────────────────────────────────────────────
 ## hexago_add_migration — add a database migration file pair
@@ -141,7 +143,7 @@ Sequence number is auto-incremented from existing migrations.
 
 Required:  working_directory, name  (snake_case, e.g. "create_users_table")
 Optional:
-  migration_type   "sql" (default) | "go"
+  type   "sql" (default) | "go"
 
 ────────────────────────────────────────────────────────────────────────────────
 ## hexago_add_tool — add an infrastructure utility

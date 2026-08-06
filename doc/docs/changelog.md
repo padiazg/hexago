@@ -7,98 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## v0.1.3 - 2026-04-06
+## v0.5.0 - 2026-08-05
 
-### Version command included in base generation
+### Added
 
-All generated projects now include a `version` command with ASCII art splash output:
+- **`with_test` on `hexago_add_service`** — new MCP tool param to force test generation for services
+- **`from_port` on `hexago_add_service`** — new MCP tool param for port-based signature inference
+- **`cli` project type** in MCP init tool (was already CLI-flagged but missing from MCP tool)
+- **`db_driver` on init MCP tool** — postgres|sqlite3 selection
+- **`fieldalignment` target** in Makefile, added to preflight
+- **`e2e` target** in Makefile for full generator E2E tests
 
-```shell
-$ myapp version
-┓┏      ┏┓    Version: 1.0.0
-┣┫┏┓┓┏┏┓┃┓┏┓  Build: 2026-04-06T12:00:00Z
-┛┗┗ ┛┗┗┻┗┛┗┛  Commit: abc1234
-```
+### Changed
 
-The `--simple` flag outputs just the version string for scripting:
+- **MCP param rename**: `worker_type` → `type`, `migration_type` → `type`, `from-port` → `from_port`, `test` → `with_test` — aligns MCP tool params with Go struct field naming
+- **`GOPATH` in Makefile** → `$(shell go env GOPATH)` for cross-platform portability
 
-```shell
-$ myapp version --simple
-v1.0.0
-```
+### Fixed
 
-Version info is injected at build time via Makefile ldflags:
+- **MCP tool args now correctly mapped to CLI flags** — `cliFlag()` helper auto-converts snake_case MCP params to hyphenated cobra flags (`--project-type`, `--core_logic` → `--core-logic`), preventing unknown-flag errors
 
-```makefile
-build: pkg={{.ModuleName}}/pkg/version
-build: ldflags = -X $(pkg).version=$(shell git describe --tags --always --dirty)
-build: ldflags += -X $(pkg).commit=$(shell git rev-parse HEAD)
-build: ldflags += -X $(pkg).buildDate=$(shell date -Iseconds)
-```
+### Refactored
 
-### Handler plugin pattern (`Use(ServerHandler) Server`)
+- Extracted `cliFlag()` from `internal/mcp/register.go` — single source of truth for MCP→CLI flag mapping
 
-The `Server` interface in `pkg/server/server.go` now exposes a fluent `Use(ServerHandler) Server` method. Any type that implements `ServerHandler` (a single `Configure(Server)` method) can be registered on the server — each handler mounts its own routes when called, enabling self-contained, isolated handler packages.
+---
 
-### `pkg/httpserver` — exported framework server
+## v0.4.1 - 2026-07-01
 
-Framework-specific server implementations moved to `pkg/httpserver/`. Each server exposes its underlying router/engine as a public field so handlers can register routes directly:
+### Added
 
-| Framework | Public field |
-|-----------|-------------|
-| chi | `Server.Router chi.Router` |
-| echo | `Server.Echo *echo.Echo` |
-| gin | `Server.Router *gin.Engine` |
-| fiber | `Server.App *fiber.App` |
-| stdlib | `Server.Mux *http.ServeMux` |
+- **GitHub community templates**: ISSUE_TEMPLATE, pull request template, and other community health files
+- **README badges**: Go version, build status, coverage, and other project badges
 
-### Observability integrated into main server
+### Changed
 
-Health checks and Prometheus metrics are now registered as `ServerHandler` instances on the **main HTTP server** — no separate port, no extra process. The dedicated `observability.Server` (and its CLI flags `--observability` / `--observability-addr`) has been removed.
+- **README cleanup**: stripped noise, replaced inline documentation references with doc site links
+- Reduced cyclomatic complexity (crap scores) for `AdapterGenerator`, `ProjectGenerator.addDependencies`, and `runInit`
 
-### Isolated route handler packages
+### Fixed
 
-Each route group lives in its own sub-package inside `internal/adapters/{inbound}/http/`:
-
-- `ping/` — `/ping`
-- `health/` — `/health`, `/health/ready`, `/health/live` (with `--with-observability`)
-- `metrics/` — `/metrics` (with `--with-observability`)
-
-A new wiring file `internal/adapters/{inbound}/http/http.go` creates the server and registers all handlers, keeping `cmd/run.go` fully framework-agnostic.
-
-### Template directory restructured
-
-Template paths now mirror the generated project structure for intuitive discovery. The `//go:embed` directive was changed from `templates/**/*.tmpl` to `//go:embed templates` to support deeply nested subdirectories.
-
-```shell
-hexago templates list   # shows the updated layout
-```
-
-### Route groups with middleware examples in HTTP adapter templates
-
-All five HTTP adapter templates now include a commented `/api/v1` route group with route-scoped middleware examples (request-id injection, logging, panic recovery, authorization):
-
-| Framework | Group mechanism |
-|-----------|----------------|
-| chi | `router.Route("/api/v1", func(r chi.Router) { r.Use(...) })` |
-| echo | `v1 := srv.Echo.Group("/api/v1")` + `v1.Use(...)` |
-| fiber | `v1 := srv.App.Group("/api/v1")` + `v1.Use(...)` |
-| gin | `v1 := srv.Router.Group("/api/v1")` + `v1.Use(...)` |
-| stdlib | nested `http.NewServeMux()` mounted via `http.StripPrefix("/api/v1", ...)` |
-
-For stdlib, per-group middlewares are applied by wrapping the sub-mux before mounting it on the main `ServeMux`.
-
-### Cross-platform embed fix
-
-Embedded FS path lookups in `template_loader.go` changed from `filepath.Join` to `path.Join` — `embed.FS` always uses forward slashes; `filepath.Join` would fail on Windows.
-
-### Template code style (`interface{}` → `any`)
-
-All generated code templates use the `any` type alias (Go 1.18+) instead of `interface{}` — adapter, tool, worker, observability, and project templates updated for consistency with modern Go style.
-
-### Enhanced service generation
-
-Service generation now distinguishes between entity-bound services (requiring repository dependencies) and standalone services. Entity-bound services generate CRUD methods (Create, GetByID, Update, List), while standalone services generate an Execute method for custom business logic. The services aggregator has been updated to correctly handle both service types during initialization.
+- Template rendering error when certain template conditions are met
+- Linting issues; lowered crap threshold for stricter CI enforcement
 
 ---
 
@@ -106,272 +56,393 @@ Service generation now distinguishes between entity-bound services (requiring re
 
 > **Note on version jump (v0.1.3 → v0.4.0):** Earlier releases used PATCH bumps for new features, which violates semver's rule that MINOR increments for features, PATCH for bug fixes only. We've skipped `v0.2.0` and `v0.3.0` to align our tag history with actual release content. From here forward: MINOR for features/changes, PATCH for bug fixes only.
 
-### Semantic Code Analysis via `go/packages`
+### Added
 
-HexaGo now loads and analyzes the target project's Go source code without LSP dependencies:
+#### Semantic Code Analysis via `go/packages`
 
-- `internal/analyzer/` — core analysis package
-    - `loader.go` — loads project packages using `go/packages`
-    - `interfaces.go` — discovers port interfaces in `internal/core/`
-    - `structs.go` — discovers domain structs
-    - `types.go` — core types: `PortInfo`, `MethodInfo`, `ParamInfo`, `DomainStruct`, `FieldInfo`
+- **New package `internal/analyzer/`** provides Go semantic analysis without LSP dependencies
+  - `loader.go` — loads project packages using `go/packages`
+  - `interfaces.go` — discovers port interfaces in `internal/core/`
+  - `structs.go` — discovers domain structs
+  - `types.go` — core types: `PortInfo`, `MethodInfo`, `ParamInfo`, `DomainStruct`, `FieldInfo`
 
-### `--from-port` Flag for Semantic Generation
+- **New CLI flags for semantic code generation**:
+  - `--from-port <PortName>` — infers method signatures from an existing port interface
 
-New CLI flag on `hexago add adapter`:
+- **go-testgen integration for `add adapter`** (requires [`go-testgen`](https://padiazg.github.io/go-testgen/) ≥ v0.1.0):
+  - New `testing:` block in `.hexago.yaml` with `enabled` field
+  - `hexago init --with-tests` — sets `testing.enabled: true` in the generated config
+  - `hexago add adapter primary|secondary --with-test` — enables test generation for this run
+  - `hexago add adapter primary|secondary --no-test` — disables test generation for this run (overrides config)
+  - After adapter generation, HexaGo runs `go-testgen report --format json` on the adapter package
+    and executes the suggested `go-testgen gen` command for each untested exported function
+  - If `go-testgen` is missing or outdated, a warning is printed and generation continues normally
+  - New package `internal/testgen/` encapsulates all `go-testgen` exec, version check, and JSON parsing
 
-```shell
-hexago add adapter secondary database UserRepository --from-port UserRepository
-```
+- **Templates now generate code with actual signatures**:
+  - `service/service.go.tmpl` — generates methods from port interface
+  - `adapter/external.go.tmpl` — generates methods from port interface
+  - Includes compile-time interface verification: `var _ PortName = (*Adapter)(nil)`
 
-Infers method signatures from an existing port interface, eliminating manual signature entry.
+- **Template helper function `zeroVal`** — returns correct zero values for Go types:
+  - `string` → `""`
+  - `error` → `nil`
+  - `int`, `int64` → `0`
+  - `bool` → `false`
+  - `float64` → `0`
 
-### go-testgen Integration
+### Changed
 
-HexaGo integrates with [`go-testgen`](https://padiazg.github.io/go-testgen/) for automatic test scaffolding:
+#### Adapter Template Directory Restructured into `primary/` and `secondary/`
+- Adapter templates reorganized to mirror the generated project's `adapters/primary` and
+  `adapters/secondary` split:
 
-- **`--with-tests`** on `hexago init` sets `testing.enabled: true` in `.hexago.yaml`
-- **`--with-test` / `--no-test`** on `add adapter` overrides config per-component
-- After generation, `go-testgen report --format json` runs on the adapter package
-- For each untested exported function, `go-testgen gen` is called automatically
-- If `go-testgen` is missing or below v0.1.0, a warning is printed and generation continues
+  | Old path | New path |
+  |---|---|
+  | `templates/adapter/http.go.tmpl` | `templates/adapter/primary/http.go.tmpl` |
+  | `templates/adapter/grpc.go.tmpl` | `templates/adapter/primary/grpc.go.tmpl` |
+  | `templates/adapter/database.go.tmpl` | `templates/adapter/secondary/database.go.tmpl` |
+  | `templates/adapter/external.go.tmpl` | `templates/adapter/secondary/external.go.tmpl` |
+  | `templates/adapter/cache.go.tmpl` | `templates/adapter/secondary/cache.go.tmpl` |
 
-### Domain Constructor Parameters Auto-Generated
+- `internal/generator/adapter.go` render calls updated to use the new paths
 
-Entity and value object templates now emit real constructor parameters and initializers:
+#### Domain Constructor Parameters Auto-Generated from Field Definitions
+- `domain/entity.go.tmpl` and `domain/value_object.go.tmpl` updated to use
+  `{{.ConstructorParams}}` and `{{.ConstructorInit}}` — constructors now emit real parameter
+  lists and struct initializers derived from `--fields` at generation time
+- Replaces the previous `/* TODO: Add constructor parameters */` and `// TODO: Initialize fields`
+  placeholders; generated entities and value objects are immediately usable
+- Powered by two new helpers in `internal/generator/domain.go`:
+  - `constructorParams(fields []Field) string` — comma-separated `paramName type` list
+  - `constructorInit(fields []Field) string` — indented `FieldName: paramName,` block
 
-- `{{.ConstructorParams}}` — comma-separated `paramName type` list
-- `{{.ConstructorInit}}` — indented `FieldName: paramName,` block
-- Replaces `/* TODO: Add constructor parameters */` / `// TODO: Initialize fields` placeholders
-- Generated entities are immediately usable
-
-### Go Reserved Keyword Sanitisation
-
-Field names that lower-case to a Go reserved keyword (e.g. `type`, `map`, `range`) are automatically renamed in constructor parameters by appending `Val` (e.g. `type string` → `typeVal string`). Uses `go/token.IsKeyword()` from the standard library.
-
-### Adapter Template Directory Restructured
-
-Adapter templates reorganized to mirror `adapters/primary` and `adapters/secondary`:
-
-| Old path | New path |
-|----------|----------|
-| `templates/adapter/http.go.tmpl` | `templates/adapter/primary/http.go.tmpl` |
-| `templates/adapter/grpc.go.tmpl` | `templates/adapter/primary/grpc.go.tmpl` |
-| `templates/adapter/database.go.tmpl` | `templates/adapter/secondary/database.go.tmpl` |
-| `templates/adapter/external.go.tmpl` | `templates/adapter/secondary/external.go.tmpl` |
-| `templates/adapter/cache.go.tmpl` | `templates/adapter/secondary/cache.go.tmpl` |
-
-### Bug Fixes
+### Fixed
 
 - Output directory paths now correctly use `OutputDir` from project config
-- Database adapter generation auto-creates `internal/core/domain/errors.go` (exports `ErrNotFound`) when missing, resolving import errors
+
+- Database adapter generation now auto-creates `internal/core/domain/errors.go` (exports
+  `ErrNotFound`) when the file does not exist, resolving import errors in generated repositories
+
+#### Go Reserved Keyword Sanitisation in Constructor Parameters
+- Field names that lower-case to a Go reserved keyword (e.g. `type`, `map`, `range`) are now
+  automatically renamed in constructor parameter lists by appending `Val`
+  (e.g. `type string` → `typeVal string`) — the struct field name is left unchanged
+- Uses `go/token.IsKeyword()` from the standard library; covers all 25 Go keywords with zero
+  maintenance overhead
+- Affected helpers: `constructorParams()` and `constructorInit()` in `internal/generator/domain.go`
+- New utilities in `pkg/utils/case.go`:
+  - `SafeParamName(name string) string` — lowercases first letter, appends `Val` on keyword collision
+  - `LcFirst(s string) string` — lowercases the first rune of a string
+  - `ZeroValueFor(typ string) string` — returns correct Go zero-value literal for a type string
+
+---
+
+## v0.1.3 - 2026-04-07
+
+### Added
+
+#### Handler Plugin Pattern (`Use(ServerHandler) Server`)
+
+- **`Server` interface** in `pkg/server/server.go` extended with `Use(ServerHandler) Server` — a fluent
+  registration method that accepts any type implementing `ServerHandler`
+- **`ServerHandler` interface**: a single `Configure(Server)` method — each handler package mounts its
+  own routes when called, enabling self-contained, isolated handler units
+- Route handlers are now registered on the main server through `Use()` instead of being wired directly
+  inside the adapter constructor
+
+#### `pkg/httpserver` — Exported Framework Server
+
+- Framework-specific server implementations moved from `internal/adapters/{inbound}/http/` to
+  `pkg/httpserver/` (package name `httpsrv`)
+- Each framework server (`chi`, `echo`, `gin`, `fiber`, `stdlib`) exposes its underlying router/engine
+  as a **public field** so handlers can register routes without casting:
+  - Chi → `Server.Router chi.Router`
+  - Echo → `Server.Echo *echo.Echo`
+  - Gin → `Server.Router *gin.Engine`
+  - Fiber → `Server.App *fiber.App`
+  - stdlib → `Server.Mux *http.ServeMux`
+- `Use(handler srv.ServerHandler) srv.Server` implemented on every framework server
+- `ServerConfig.Metrics` field removed — metrics are now registered as a regular handler
+
+#### Observability Integrated into Main Server (No Separate Port)
+
+- Health checks (`/health`, `/health/ready`, `/health/live`) and Prometheus metrics (`/metrics`) are
+  now registered as `ServerHandler` instances on the **main HTTP server** via `Use()`
+- Eliminated the separate observability server (`observability.Server`) that previously ran on a
+  dedicated port (`:8081`)
+- `--observability` / `--observability-addr` CLI flags removed from the run command
+- Templates `observability/server.go.tmpl` deleted
+
+#### Isolated Route Handler Packages
+
+- Each route group ships as its own sub-package inside `internal/adapters/{inbound}/http/`:
+  - `ping/` — health ping at `/ping`
+  - `health/` — Kubernetes probes at `/health`, `/health/ready`, `/health/live` (with `--with-observability`)
+  - `metrics/` — Prometheus scrape endpoint at `/metrics` (with `--with-observability`)
+- New adapter wiring file `internal/adapters/{inbound}/http/http.go` creates the server and registers
+  all handlers in one place, keeping `cmd/run.go` completely framework-agnostic
+- All five frameworks (`chi`, `echo`, `gin`, `fiber`, `stdlib`) have a full set of handler templates
+
+#### Idiomatic Route Groups with Middleware Examples in HTTP Adapter Templates
+- All five HTTP adapter templates now include a commented `/api/v1` route group with route-scoped
+  middleware examples (request-id, logging, panic recovery, authorization):
+  - **chi** — `router.Route("/api/v1", func(r chi.Router) { r.Use(...) })` (idiomatic sub-router)
+  - **echo** — `v1 := srv.Echo.Group("/api/v1"); v1.Use(...)`
+  - **fiber** — `v1 := srv.App.Group("/api/v1"); v1.Use(...)`
+  - **gin** — `v1 := srv.Router.Group("/api/v1"); v1.Use(...)`
+  - **stdlib** — nested `http.NewServeMux()` mounted with `http.StripPrefix("/api/v1", ...)`;
+    per-group middlewares applied by wrapping the sub-mux before mounting
+
+### Changed
+
+#### Template Directory Restructured to Mirror Generated Project
+- Template paths now mirror the generated project structure for intuitive discovery:
+
+  | Template path | Generates |
+  |---|---|
+  | `templates/pkg/server/server_interface.go.tmpl` | `pkg/server/server.go` |
+  | `templates/pkg/httpserver/http_server_{fw}.go.tmpl` | `pkg/httpserver/server.go` |
+  | `templates/adapter/primary/http/{fw}/http_adapter.go.tmpl` | `internal/adapters/{inbound}/http/http.go` |
+  | `templates/adapter/primary/http/{fw}/http_ping.go.tmpl` | `internal/adapters/{inbound}/http/ping/ping.go` |
+  | `templates/adapter/primary/http/{fw}/http_health.go.tmpl` | `internal/adapters/{inbound}/http/health/health.go` |
+  | `templates/adapter/primary/http/{fw}/http_metrics.go.tmpl` | `internal/adapters/{inbound}/http/metrics/metrics.go` |
+
+- `//go:embed` directive changed from `templates/**/*.tmpl` to `//go:embed templates` to support
+  deeply nested subdirectories (Go's `**` glob does not recurse beyond one level)
+
+#### `template_loader.go` Cross-Platform Fix
+- Embedded FS path lookups changed from `filepath.Join` to `path.Join` — `embed.FS` always uses
+  forward slashes; `filepath.Join` produces backslashes on Windows and would fail to find templates
+
+### Fixed
+
+#### Template Code Style (`interface{}` → `any`)
+- All generated code templates updated to use the `any` type alias (Go 1.18+) in place of
+  `interface{}` — affects adapter, tool, worker, observability, and project templates
+- Matching documentation examples updated to `any` as well
 
 ---
 
 ## v0.0.3 - 2026-03-04
 
-### `--working-directory` global flag
+### Added
 
-- New **`-w` / `--working-directory`** persistent flag on the root command — every subcommand can now target a project in a different directory without `cd`-ing into it first.
-- All `hexago add *` and `hexago validate` commands accept the flag and pass it to the project detector. When omitted, the current working directory is used as before.
-- `hexago init --working-directory <dir>` creates the project under `<dir>` instead of the current directory.
+#### `--working-directory` global flag
+- **`-w` / `--working-directory` persistent flag** on the root command — every subcommand
+  can now target a project in a different directory without `cd`-ing into it first
+- `hexago init --working-directory <dir>` uses the supplied path as `OutputDir`, so the
+  project is scaffolded relative to `<dir>` instead of the current working directory
+- All `add *` and `validate` commands pass the flag value to `GetCurrentProjectConfig`,
+  which falls back to `os.Getwd()` when the flag is not supplied
 
-```shell
-# Add a service to a project located elsewhere — no cd required
-hexago add service CreateUser --working-directory /home/user/projects/my-api
-```
+#### `--in-place` flag for `hexago init`
+- New `--in-place` bool flag: generates project files directly into `working_directory`
+  instead of creating a `<name>` subdirectory inside it
+- Useful when the target directory already exists and is the intended project root (e.g.
+  a freshly cloned empty repo or the current working directory)
+- `InPlace bool` field added to `ProjectConfig` in `internal/generator/types.go`
+- `ProjectGenerator.Generate()` checks `config.InPlace`: when true it uses `OutputDir`
+  as the project path directly and skips the "directory already exists" guard
 
-### `--in-place` flag for `hexago init`
+#### Built-in MCP Server (`hexago mcp`)
+- **`cmd/mcp.go`** (new): `hexago mcp` starts a stdio
+  [Model Context Protocol](https://modelcontextprotocol.io/) server using
+  `github.com/mark3labs/mcp-go v0.44.0`
+- Nine tools registered — each tool calls back into the running hexago binary with
+  `--working-directory`, so all generation logic is shared with the regular CLI:
 
-- New **`--in-place`** bool flag: generates project files directly into `working_directory` instead of creating a `<name>` subdirectory inside it.
-- Useful when the target directory already exists and is the intended project root (e.g. a freshly cloned empty repo or the current working directory).
+  | Tool | Equivalent CLI call |
+  |------|---------------------|
+  | `hexago_init` | `hexago [--wd W] init <name> [flags]` |
+  | `hexago_add_service` | `hexago [--wd W] add service <name>` |
+  | `hexago_add_domain_entity` | `hexago [--wd W] add domain entity <name>` |
+  | `hexago_add_domain_valueobject` | `hexago [--wd W] add domain valueobject <name>` |
+  | `hexago_add_adapter` | `hexago [--wd W] add adapter <direction> <type> <name>` |
+  | `hexago_add_worker` | `hexago [--wd W] add worker <name>` |
+  | `hexago_add_migration` | `hexago [--wd W] add migration <name>` |
+  | `hexago_add_tool` | `hexago [--wd W] add tool <type> <name>` |
+  | `hexago_validate` | `hexago [--wd W] validate` |
 
-```shell
-# Scaffold into the current directory
-hexago init my-api --module github.com/user/my-api --in-place
+- **MCP server instructions** (`server.WithInstructions`) delivered on every
+  `initialize` handshake — covers all tool parameters, valid enum values, defaults,
+  field format, and a "do not run shell commands" directive that prevents AI agents
+  from falling back to raw CLI calls
+- All MCP tool descriptions enriched with: generated file paths, architectural layer
+  context, valid enum values for every string parameter, defaults for every optional
+  parameter, and concrete call examples
+- `github.com/mark3labs/mcp-go v0.44.0` added as a direct dependency
+- MCP server version sourced from `version.CurrentVersion()` instead of a hardcoded string
 
-# Scaffold into an existing remote directory
-hexago init my-api --module github.com/user/my-api \
-  --working-directory /home/user/projects/my-api \
-  --in-place
-```
-
-### Built-in MCP Server (`hexago mcp`)
-
-HexaGo now ships with a built-in [Model Context Protocol](https://modelcontextprotocol.io/) server, letting AI assistants scaffold hexagonal architecture projects without leaving the conversation.
-
-```shell
-hexago mcp   # start the stdio MCP server
-```
-
-Register with Claude Code:
-
-```shell
-claude mcp add --scope project hexago -- hexago mcp
-```
-
-**Nine tools** are available — each delegates to the hexago CLI with `--working-directory`:
-
-| Tool | What it does |
-|------|-------------|
-| `hexago_init` | Bootstrap a new project |
-| `hexago_add_service` | Add a business-logic service |
-| `hexago_add_domain_entity` | Add a domain entity |
-| `hexago_add_domain_valueobject` | Add a domain value object |
-| `hexago_add_adapter` | Add a primary or secondary adapter |
-| `hexago_add_worker` | Add a background worker |
-| `hexago_add_migration` | Add a database migration |
-| `hexago_add_tool` | Add an infrastructure utility |
-| `hexago_validate` | Validate architecture compliance |
-
-The server delivers comprehensive usage instructions on every `initialize` handshake, covering all parameter names, valid enum values, defaults, field format, and a directive that prevents AI agents from falling back to raw CLI shell calls.
-
-See [`hexago mcp`](commands/mcp.md) for client configuration examples (Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed).
+#### MCP client registration documentation
+- New **`## MCP Server`** section in `README.md` with config snippets for six clients:
+  Claude Code, Claude Desktop, VS Code, Cursor, Windsurf, Zed
+- Quick-reference table comparing config file paths, top-level JSON keys, and whether
+  `"type": "stdio"` is required per client
 
 ### Changed
-
-- `GetCurrentProjectConfig()` signature updated to `GetCurrentProjectConfig(dir string)` — empty string falls back to `os.Getwd()`. All call sites updated.
-- `cmd/init.go` resolves `OutputDir` from the `--working-directory` flag value with an `os.Getwd()` fallback.
-- `internal/generator/project.go` and `detector.go` migrated from `pkg/fileutil` to `pkg/utils` for file-system helpers (internal refactor, no behaviour change).
-
----
-
-## [0.0.2] — 2026-02-26
-
-!!! success "Release Highlights"
-    Template management commands, project config file, and cleaner generated HTTP server architecture.
-
-### Template Management (`hexago templates`)
-
-Full control over the templates HexaGo uses to generate your projects:
-
-- **`hexago templates list`** — Lists all built-in templates grouped by directory. Templates with an active override are annotated with `← project-local` or `← user-global`.
-- **`hexago templates which <name>`** — Shows which source wins for a given template (embedded, project-local, user-global, or binary-local) with its full path.
-- **`hexago templates export <name> [--global]`** — Copies a built-in template to `.hexago/templates/<name>` (project-local) or `~/.hexago/templates/<name>` (user-global) for customization.
-- **`hexago templates export-all [--global] [--force]`** — Bulk-exports every embedded template at once; skips templates that already have an override unless `--force` is passed.
-- **`hexago templates validate <path>`** — Parses a template file and reports `text/template` syntax errors. Prints `✓` on success, `✗ <error>` on failure.
-- **`hexago templates reset <name> [--global]`** — Removes a custom override, reverting to the next-priority source.
-
-See [Template Customization](customization/templates.md) for full details.
-
-### `.hexago.yaml` Project Configuration File
-
-- **`hexago init` now writes `.hexago.yaml`** into the generated project root after scaffolding, persisting all init-time settings (framework, adapter style, features, etc.).
-- **`hexago add *` reads `.hexago.yaml` automatically** — no need to repeat flags on every invocation. Settings detected from the config file supplement filesystem heuristics.
-- **Acts as a defaults layer** — priority is `flags > .hexago.yaml > hardcoded defaults`. Any flag not explicitly passed is filled from `.hexago.yaml`, enabling personal or team-wide preferences.
-- Useful for sharing consistent conventions across a team without enforcing every flag.
-
-### HTTP Server Architecture (Generated Code)
-
-- **Shared `Server` interface** in `pkg/server/server.go` — a single `Run(errChan chan<- error)` / `Stop(ctx context.Context) error` contract shared across all adapters.
-- **Framework-specific `server.go`** extracted into `internal/adapters/{primary|driver}/http/server.go` for all five supported frameworks (Echo, Gin, Chi, Fiber, stdlib). Each adapter's `New()` constructor returns the shared `srv.Server` interface, hiding all framework types behind the abstraction boundary.
-- **Thin `cmd/run.go` orchestrator** — now completely framework-agnostic: no framework imports, no repeated signal/shutdown boilerplate. Just calls `httpserver.New()`, `srv.Run()`, and `srv.Stop()`.
-- **Compile-time interface guards** (`var _ srv.Server = (*server)(nil)`) catch implementation drift at build time.
-
-### Refactored (Internal — No Generated-Code Change)
-
-- **Removed global template loader singleton** — `TemplateLoader` is now a field on `ProjectConfig`, scoping it to its owning config and making generators straightforward to test in isolation.
-- **New `pkg/utils` package** — `ToSnakeCase` and `ToTitleCase` helpers replace multiple identical local copies across the generator.
-- **Observability templates moved** — `misc/health.go.tmpl`, `misc/metrics.go.tmpl`, and `misc/server.go.tmpl` relocated to `observability/` to match the generated `internal/observability/` package structure.
-- **Extended `pkg/fileutil`** — `HomeDir()` and `BinaryDir()` migrated from the generator package into `pkg/fileutil`, removing private helpers from the generator.
+- `GetCurrentProjectConfig()` signature changed to `GetCurrentProjectConfig(dir string)`;
+  empty string falls back to `os.Getwd()`. All call sites updated.
+- `cmd/init.go` resolves `OutputDir` from the `--working-directory` flag value (with
+  `os.Getwd()` fallback) and explicitly sets `config.OutputDir` before calling the generator
+- `internal/generator/project.go` and `internal/generator/detector.go` migrated from
+  `pkg/fileutil` to `pkg/utils` for file-system helpers (internal refactor, no behaviour change)
 
 ---
 
-## [0.0.1] — 2026-02-17
+## v0.0.2 - 2026-02-26
 
-!!! success "MVP Release"
-    Initial public release of HexaGo.
+### Added
 
-### Core Features
+#### Template Management Commands (`hexago templates`)
+- **`hexago templates list`**: lists all embedded templates grouped by directory; annotates overrides with `← project-local` or `← user-global`
+- **`hexago templates which <name>`**: shows the winning source (embedded, project-local, user-global, or binary-local) with its full path
+- **`hexago templates export <name> [--global]`**: copies a built-in template to `.hexago/templates/<name>` or `~/.hexago/templates/<name>` for customization
+- **`hexago templates export-all [--global] [--force]`**: bulk-exports every embedded template at once; skips templates that already have an override unless `--force` is passed
+- **`hexago templates validate <path>`**: parses a template file and reports `text/template` syntax errors — prints `✓` on success, `✗ <error>` on failure
+- **`hexago templates reset <name> [--global]`**: removes a custom override, reverting to the next-priority source; errors clearly when no override exists
+- `TemplateLoader.Validate(path string) error` and `TemplateLoader.Reset(name string, global bool) error` added to `internal/generator/template_loader.go`
 
+#### `.hexago.yaml` Project Configuration File
+- **`internal/generator/hexago_config.go`** (new): typed YAML structs (`HexagoConfig`, `HexagoProjectConfig`, `HexagoStructureConfig`, `HexagoFeaturesConfig`) plus four helpers:
+  - `HexagoConfigFromProject(cfg)` — maps `ProjectConfig` → YAML struct
+  - `(h) ToProjectConfig()` — maps YAML struct → `ProjectConfig`
+  - `LoadHexagoConfig(dir)` — reads `{dir}/.hexago.yaml` with `gopkg.in/yaml.v3`
+  - `SaveHexagoConfig(dir, cfg)` — writes `{dir}/.hexago.yaml` with a comment header
+- **`hexago init` writes `.hexago.yaml`** into the generated project root after scaffolding, persisting all init-time settings (framework, adapter style, features, etc.) that could not be recovered from the filesystem alone
+- **`hexago add *` reads `.hexago.yaml` first**: `DetectConfig()` in `detector.go` now tries `LoadHexagoConfig` before falling back to filesystem heuristics — giving every `add` command access to the full original config (including `Framework`, `ProjectType`, `Author`, `GoVersion`, feature flags)
+- **`hexago init` honours `.hexago.yaml` as a defaults layer**: priority is `flags > .hexago.yaml > hardcoded defaults`. Any flag not explicitly passed on the command line is filled from a `.hexago.yaml` found in the current working directory, enabling a personal or team-wide preferences file without forcing every flag on every invocation. Uses Cobra's `cmd.Flags().Changed()` to distinguish user-supplied flags from default values
+- `gopkg.in/yaml.v3` added as a direct dependency
+
+#### HTTP Server Interface Pattern
+- **Shared `Server` interface** in `pkg/server/server.go`: a single `Run(errChan chan<- error)` / `Stop(ctx context.Context) error` contract lives in a public, framework-agnostic package instead of being re-declared in every adapter
+- **`http_server_interface.go.tmpl`**: new template that generates `pkg/server/server.go` for every `http-server` project
+- **Compile-time interface guard** in every framework adapter: `var _ srv.Server = (*server)(nil)` catches implementation drift at build time, not at runtime
+
+#### HTTP Server Adapter Refactoring
+- **Framework-specific `server.go`** files extracted from `cmd/run.go` into `internal/adapters/{primary|driver}/http/server.go` for all five supported frameworks (Echo, Gin, Chi, Fiber, stdlib):
+  - Framework instance creation, middleware wiring, and `http.Server` configuration are now encapsulated inside each adapter
+  - `setupRoutes` promoted from a package-level function to a method on `*server`, giving it direct access to the framework instance without parameter passing
+  - Each adapter's `New()` constructor returns `srv.Server` (the shared interface), hiding all framework types behind the abstraction boundary
+- **Thin `cmd/run.go` orchestrator**: the run command is now completely framework-agnostic — it only calls `httpserver.New()`, `srv.Run()`, and `srv.Stop()`. No framework imports, no repeated signal/shutdown boilerplate per framework
+
+### Changed
+- `cmd/run.go` (generated) no longer contains `setupRoutes` or any web-framework imports
+- `internal/adapters/{inbound}/http/server.go` (generated) now owns all framework-specific lifecycle code
+- `pkg/server/server.go` (generated, new) is the single source of truth for the `Server` interface contract
+
+### Refactored (internal — no generated-code change)
+
+#### Remove global template loader singleton
+- **`globalTemplateLoader` package-level variable and `init()` removed** from `internal/generator/templates.go`
+- `TemplateLoader` is now a field (`templateLoader *TemplateLoader`) on `ProjectConfig`, initialized in `NewProjectConfig()`
+- All generator methods that previously called `globalTemplateLoader.Render(...)` now call `g.config.templateLoader.Render(...)` — scoping the loader to its owning config and making generators straightforward to test in isolation
+
+#### New `pkg/utils` package
+- `pkg/utils/case.go` added with two exported helpers:
+  - `ToSnakeCase(s string) string` — converts CamelCase identifiers to snake_case file names
+  - `ToTitleCase(s string) string` — uppercases the first letter of a string
+- Eliminates at least three identical local `toSnakeCase` copies that existed independently in `service.go`, `tool.go`, `worker.go`, `domain.go`, `adapter.go`, and `cmd/add_tool.go`
+- `createTemplateFuncMap()` in `template_loader.go` now references `utils.ToSnakeCase` and `utils.ToTitleCase` for the `"snake"` and `"title"` template functions
+
+#### Observability templates moved to dedicated directory
+- **`internal/generator/templates/misc/health.go.tmpl`** → **`observability/health.go.tmpl`**
+- **`internal/generator/templates/misc/metrics.go.tmpl`** → **`observability/metrics.go.tmpl`**
+- **`internal/generator/templates/misc/server.go.tmpl`** → **`observability/server.go.tmpl`**
+- `generateObservability()` in `templates_misc.go` updated to reference the new `observability/` prefix
+- `misc/` now contains only pure project-support files (Makefile, README, Dockerfile, compose.yaml, .gitignore); observability templates have their own top-level group matching the generated `internal/observability/` package
+
+#### Extended `pkg/fileutil`
+- `HomeDir() string` and `BinaryDir() string` migrated from `internal/generator/template_loader.go` into `pkg/fileutil/fileutil.go`
+- `template_loader.go` now uses `fileutil.HomeDir()`, `fileutil.BinaryDir()`, and `fileutil.FileExists` — removing three private helper functions from the generator package
+
+---
+
+## [0.0.1] - 2026-02-17
+
+### Added - MVP Release
+
+#### Core Features
 - **Project Type Support**: Generate projects with different architectural patterns
-    - `http-server` — HTTP API server with framework support (Echo, Gin, Chi, Fiber, stdlib)
-    - `service` — Long-running daemon/service with no web framework for main logic
-- **Hexagonal Architecture** — Strict separation of concerns with core/adapters structure
-- **Framework Support** — Echo, Gin, Chi, Fiber, and Go stdlib for HTTP servers
-- **Graceful Shutdown** — Context-based cancellation with signal handling for all project types
-- **Configuration Management** — Viper-based config with YAML files and environment variable support
-- **Structured Logging** — Logger package with configurable levels and formats
+  - `http-server`: HTTP API server with framework support (Echo, Gin, Chi, Fiber, stdlib)
+  - `service`: Long-running daemon/service with no web framework for main logic
+- **Hexagonal Architecture**: Strict separation of concerns with core/adapters structure
+- **Framework Support**: Echo, Gin, Chi, Fiber, and Go stdlib for HTTP servers
+- **Graceful Shutdown**: Context-based cancellation with signal handling for all project types
+- **Configuration Management**: Viper-based config with YAML files and environment variable support
+- **Structured Logging**: Logger package with configurable levels and formats
 
-### Observability
-
+#### Observability (Available for All Project Types)
 - **Health Checks**:
-    - `/health` — Complete health report with component status
-    - `/health/ready` — Kubernetes readiness probe
-    - `/health/live` — Kubernetes liveness probe
-- **Prometheus Metrics** — Request counters, latency histograms, active operations gauge
-- **Separate Observability Server** — Runs on independent port (default: 8080)
-- **Component Registration** — Register custom health checks for databases, queues, etc.
+  - `/health` - Complete health report with component status
+  - `/health/ready` - Kubernetes readiness probe
+  - `/health/live` - Kubernetes liveness probe
+- **Prometheus Metrics**: Request counters, latency histograms, active operations gauge
+- **Separate Observability Server**: Runs on independent port (default: 8080)
+- **Component Registration**: Register custom health checks for databases, queues, etc.
 
-### Service Pattern (Long-Running Daemon)
+#### Service Pattern (Long-Running Daemon)
+- **Processor Pattern**: Main business logic in `Processor.Start(ctx)` method
+- **Context-Based Shutdown**: Clean cancellation and resource cleanup
+- **Background Processing**: Example implementations for queues, schedulers, file watchers
+- **Signal Handling**: SIGINT, SIGTERM, SIGQUIT support
+- **Configurable Timeouts**: Grace period for shutdown operations
 
-- **Processor Pattern** — Main business logic in `Processor.Start(ctx)` method
-- **Context-Based Shutdown** — Clean cancellation and resource cleanup
-- **Background Processing** — Example implementations for queues, schedulers, file watchers
-- **Signal Handling** — SIGINT, SIGTERM, SIGQUIT support
-- **Configurable Timeouts** — Grace period for shutdown operations
-
-### Template System
-
-- **Externalized Templates** — All code templates can be customized
+#### Template System
+- **Externalized Templates**: All code templates can be customized
 - **Multi-Source Loading**:
-    - Binary-local: `templates/` (next to executable)
-    - Project-local: `.hexago/templates/` (per-project customization)
-    - User-global: `~/.hexago/templates/` (user-wide customization)
-    - Embedded: Fallback templates compiled into binary
-- **Company Branding** — Easy to customize headers, comments, and code style
-- **Version Control** — Share custom templates across teams
+  - Binary-local: `templates/` (next to executable)
+  - Project-local: `.hexago/templates/` (per-project customization)
+  - User-global: `~/.hexago/templates/` (user-wide customization)
+  - Embedded: Fallback templates compiled into binary
+- **Company Branding**: Easy to customize headers, comments, and code style
+- **Version Control**: Share custom templates across teams
 
-### Code Generation
-
+#### Code Generation
 - **Component Generators**:
-    - Services/UseCases — Business logic layer
-    - Domain Entities — Core domain objects with fields
-    - Value Objects — Immutable domain values
-    - HTTP Adapters — Framework-specific handlers
-    - Database Adapters — Repository implementations
-    - External Service Adapters — API client wrappers
-    - Cache Adapters — Redis/memory cache implementations
-    - Queue Adapters — Message queue consumers
-- **Background Workers** — Queue-based, periodic, and event-driven patterns
-- **Database Migrations** — Sequential numbered migrations with golang-migrate support
-- **Infrastructure Tools** — Loggers, validators, mappers, middleware
+  - Services/UseCases: Business logic layer
+  - Domain Entities: Core domain objects with fields
+  - Value Objects: Immutable domain values
+  - HTTP Adapters: Framework-specific handlers
+  - Database Adapters: Repository implementations
+  - External Service Adapters: API client wrappers
+  - Cache Adapters: Redis/memory cache implementations
+  - Queue Adapters: Message queue consumers
+- **Background Workers**: Queue-based, periodic, and event-driven patterns
+- **Database Migrations**: Sequential numbered migrations with golang-migrate support
+- **Infrastructure Tools**: Loggers, validators, mappers, middleware
 
-### Project Flexibility
-
-- **Optional Features** — All features opt-in via flags (default: false)
-    - `--with-docker` — Docker files (Dockerfile, compose.yaml)
-    - `--with-observability` — Health checks and metrics
-    - `--with-migrations` — Database migration setup
-    - `--with-workers` — Background worker pattern
-    - `--with-metrics` — Prometheus metrics *(deprecated, use `--with-observability`)*
-    - `--with-example` — Example code
-    - `--explicit-ports` — Explicit ports/ directory structure
+#### Project Flexibility
+- **Optional Features**: All features opt-in via flags (default: false)
+  - `--with-docker`: Docker files (Dockerfile, compose.yaml)
+  - `--with-observability`: Health checks and metrics
+  - `--with-migrations`: Database migration setup
+  - `--with-workers`: Background worker pattern
+  - `--with-metrics`: Prometheus metrics (deprecated, use --with-observability)
+  - `--with-example`: Example code
+  - `--explicit-ports`: Explicit ports/ directory structure
 - **Naming Conventions**:
-    - Adapter style: `primary-secondary` or `driver-driven`
-    - Core logic: `services` or `usecases`
-- **Architecture Validation** — Auto-detection of existing project conventions
+  - Adapter style: `primary-secondary` or `driver-driven`
+  - Core logic: `services` or `usecases`
+- **Architecture Validation**: Auto-detection of existing project conventions
 
-### Developer Experience
+#### Developer Experience
+- **Cobra CLI**: Command structure with subcommands
+- **Auto-Detection**: Respects existing project structure and conventions
+- **Smart Defaults**: Sensible defaults with override options
+- **Helpful Messages**: Clear error messages and configuration summaries
+- **Educational Comments**: Generated code includes architecture guidance
 
-- **Cobra CLI** — Command structure with subcommands
-- **Auto-Detection** — Respects existing project structure and conventions
-- **Smart Defaults** — Sensible defaults with override options
-- **Helpful Messages** — Clear error messages and configuration summaries
-- **Educational Comments** — Generated code includes architecture guidance
-
-### Build & Release
-
-- **GoReleaser Integration** — Automated multi-platform builds
-- **GitHub Actions** — CI/CD workflow for releases
+#### Build & Release
+- **GoReleaser Integration**: Automated multi-platform builds
+- **GitHub Actions**: CI/CD workflow for releases
 - **Platform Support**:
-    - Linux: x86_64, arm64
-    - macOS: x86_64 (Intel), arm64 (Apple Silicon)
-- **Static Binaries** — `CGO_ENABLED=0` for portability
-- **Homebrew Support** — Ready for homebrew-tap publication
+  - Linux: x86_64, arm64
+  - macOS: x86_64 (Intel), arm64 (Apple Silicon)
+- **Static Binaries**: CGO_ENABLED=0 for portability
+- **Homebrew Support**: Ready for homebrew-tap publication
 
 ### Documentation
-
 - Comprehensive README with examples
 - Quick start guide
 - Architecture documentation
@@ -380,15 +451,17 @@ See [Template Customization](customization/templates.md) for full details.
 
 ### Project Types Use Cases
 
-**HTTP Server (`http-server`)** — Perfect for:
+#### HTTP Server (`http-server`)
 
+Perfect for:
 - REST APIs
 - GraphQL servers
 - Microservices with HTTP interfaces
 - Web applications with API backends
 
-**Service (`service`)** — Perfect for:
+#### Service (`service`)
 
+Perfect for:
 - MQTT/Kafka message consumers
 - File system watchers
 - Background job processors
@@ -396,21 +469,22 @@ See [Template Customization](customization/templates.md) for full details.
 - Periodic task schedulers
 - Data pipeline processors
 
-### Security
+### Breaking Changes
+None (initial release)
 
+### Security
 - No external dependencies in core (stdlib only)
 - Static binary compilation
-- No code execution from templates (`text/template`, not `html/template`)
+- No code execution from templates (text/template, not html/template)
 
 ---
 
 ## How to Update
 
-```shell
-go install github.com/padiazg/hexago@v0.4.0
+```bash
+go install github.com/padiazg/hexago@v0.5.0
 ```
 
-Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.4.0).
+Or download binaries from [GitHub Releases](https://github.com/padiazg/hexago/releases/tag/v0.5.0)
 
-[0.0.2]: https://github.com/padiazg/hexago/releases/tag/v0.0.2
 [0.0.1]: https://github.com/padiazg/hexago/releases/tag/v0.0.1
