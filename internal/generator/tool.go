@@ -54,7 +54,7 @@ func (g *ToolGenerator) generateLogger(dir, name, description string) error {
 		"Description": getDescription(description, "is a custom logger implementation"),
 	}
 
-	content, err := g.config.templateLoader.Render("tool/logger.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("tool/logger.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render logger template: %w", err)
 	}
@@ -78,7 +78,7 @@ func (g *ToolGenerator) generateValidator(dir, name, description string) error {
 		"Description": getDescription(description, "validates input data"),
 	}
 
-	content, err := g.config.templateLoader.Render("tool/validator.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("tool/validator.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render validator template: %w", err)
 	}
@@ -103,7 +103,7 @@ func (g *ToolGenerator) generateMapper(dir, name, description string) error {
 		"ModuleName":  g.config.Project.Module,
 	}
 
-	content, err := g.config.templateLoader.Render("tool/mapper.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("tool/mapper.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render mapper template: %w", err)
 	}
@@ -128,7 +128,7 @@ func (g *ToolGenerator) generateMiddleware(dir, name, description string) error 
 		"ModuleName":  g.config.Project.Module,
 	}
 
-	content, err := g.config.templateLoader.Render("tool/middleware.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("tool/middleware.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render middleware template: %w", err)
 	}

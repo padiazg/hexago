@@ -23,24 +23,12 @@ const hexagoConfigHeader = `# .hexago.yaml - HexaGo project configuration
 // HexagoConfig is the top-level structure for .hexago.yaml.
 // It is the single runtime config type used throughout the codebase.
 type HexagoConfig struct {
-	templateLoader *TemplateLoader
+	TemplateLoader *TemplateLoader       `yaml:"-" mapstructure:"-"`
 	OutputDir      string                `yaml:"-" mapstructure:"-"`
 	Structure      HexagoStructureConfig `yaml:"structure" mapstructure:"structure"`
 	Project        HexagoProjectConfig   `yaml:"project" mapstructure:"project"`
 	Features       HexagoFeaturesConfig  `yaml:"features" mapstructure:"features"`
 	InPlace        bool                  `yaml:"-" mapstructure:"-"`
-}
-
-// HexagoProjectConfig holds basic project metadata
-type HexagoProjectConfig struct {
-	Name           string `yaml:"name" mapstructure:"name"`
-	Module         string `yaml:"module" mapstructure:"module"`
-	Type           string `yaml:"type" mapstructure:"type"`
-	Framework      string `yaml:"framework,omitempty" mapstructure:"framework"`
-	DatabaseDriver string `yaml:"database_driver,omitempty" mapstructure:"database_driver"`
-	GoVersion      string `yaml:"go_version" mapstructure:"go_version"`
-	Author         string `yaml:"author,omitempty" mapstructure:"author"`
-	Year           int    `yaml:"year,omitempty" mapstructure:"year"`
 }
 
 // HexagoStructureConfig holds architecture naming conventions
@@ -66,8 +54,7 @@ func NewHexagoConfig(
 	projectName, moduleName, outputDir, projectType, framework, adapterStyle, coreLogic string,
 	withDocker, withExample, withMigrations, withMetrics, explicitPorts, withWorkers, withObservability, withTests bool,
 ) HexagoConfig {
-
-	return HexagoConfig{
+	config := HexagoConfig{
 		Project: HexagoProjectConfig{
 			Name:           projectName,
 			Module:         moduleName,
@@ -92,8 +79,12 @@ func NewHexagoConfig(
 			WithTests:         withTests,
 		},
 		OutputDir:      outputDir,
-		templateLoader: NewTemplateLoader(),
+		TemplateLoader: NewTemplateLoader(),
 	}
+
+	config.Validate()
+
+	return config
 }
 
 // AdapterInboundDir returns the directory name for inbound adapters
@@ -173,6 +164,8 @@ func (c *HexagoConfig) WithExample() bool       { return c.Features.WithExample 
 func (c *HexagoConfig) WithTests() bool         { return c.Features.WithTests }
 
 func (c *HexagoConfig) Validate() error {
+	c.Project.Validate()
+
 	if err := c.validateModuleName(); err != nil {
 		return err
 	}
@@ -283,7 +276,8 @@ func LoadHexagoConfig(dir string) (*HexagoConfig, error) {
 		return nil, fmt.Errorf("parse %s: %w", HexagoConfigFile, err)
 	}
 
-	cfg.templateLoader = NewTemplateLoader()
+	cfg.TemplateLoader = NewTemplateLoader()
+	cfg.Project.Validate()
 
 	return &cfg, nil
 }
@@ -313,7 +307,7 @@ func LoadInitConfig(v *viper.Viper, dir string, cmd *cobra.Command) (*HexagoConf
 	}
 
 	cfg.OutputDir = dir
-	cfg.templateLoader = NewTemplateLoader()
+	cfg.TemplateLoader = NewTemplateLoader()
 
 	return &cfg, nil
 }

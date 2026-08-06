@@ -44,7 +44,7 @@ func (d *ProjectDetector) DetectConfig() (*HexagoConfig, error) {
 	}
 
 	config := &HexagoConfig{
-		templateLoader: NewTemplateLoader(),
+		TemplateLoader: NewTemplateLoader(),
 	}
 
 	// Detect module name from go.mod
@@ -71,6 +71,7 @@ func (d *ProjectDetector) DetectConfig() (*HexagoConfig, error) {
 
 	// Set output directory
 	config.OutputDir = d.projectPath
+	config.Project.Validate()
 
 	return config, nil
 }

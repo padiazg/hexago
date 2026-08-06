@@ -1,4 +1,4 @@
-package generator
+package adapter
 
 import (
 	"fmt"
@@ -8,17 +8,22 @@ import (
 	"strings"
 
 	"github.com/padiazg/hexago/internal/analyzer"
+	"github.com/padiazg/hexago/internal/generator"
 	"github.com/padiazg/hexago/pkg/utils"
 	"golang.org/x/tools/go/packages"
 )
 
+type Adapter interface {
+	Generate() error
+}
+
 // AdapterGenerator generates adapter files
 type AdapterGenerator struct {
-	config *HexagoConfig
+	config *generator.HexagoConfig
 }
 
 // NewAdapterGenerator creates a new adapter generator
-func NewAdapterGenerator(config *HexagoConfig) *AdapterGenerator {
+func NewAdapterGenerator(config *generator.HexagoConfig) *AdapterGenerator {
 	return &AdapterGenerator{
 		config: config,
 	}
@@ -40,104 +45,27 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 		return fmt.Errorf("invalid primary adapter type '%s'. Valid types: http, grpc, queue, cli", adapterType)
 	}
 
-	// HTTP + entity → sub-package with two files
-	if adapterType == "http" && entityName != "" {
-		return g.generateHTTPHandlerPackage(adapterName, entityName)
-	}
+	// if adapterType == "http" && entityName != "" {
+	// 	return newHttpHandlerAdapter(g.config, entityName).Generate()
+	// }
 
 	// Default: flat directory
-	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), adapterType)
-	if err := utils.CreateDir(adapterDir); err != nil {
-		return err
-	}
-
-	fileName := utils.ToSnakeCase(adapterName) + ".go"
-	filePath := filepath.Join(adapterDir, fileName)
-
-	if utils.FileExists(filePath) {
-		return fmt.Errorf("adapter file %s already exists", filePath)
-	}
-
-	fmt.Printf("📝 Creating adapter file: %s\n", filePath)
-
-	// TODO: create interface for adapterType
-	var err error
-	switch adapterType {
-	case "http":
-		err = g.generateHTTPAdapter(filePath, adapterName)
-	case "grpc":
-		err = g.generateGRPCAdapter(filePath, adapterName)
-	case "queue":
-		err = g.generateQueueAdapter(filePath, adapterName)
-	case "cli":
-		err = g.generateCLIAdapter(filePath, adapterName)
+	var adapter Adapter
+	switch {
+	// HTTP + entity → sub-package with two files
+	case adapterType == "http":
+		adapter = newHttpAdapter(g.config, adapterName, entityName)
+	case adapterType == "grpc":
+		adapter = newGRPCAdapter(g.config, adapterName)
+	case adapterType == "queue":
+		adapter = newQueueAdapter(g.config, adapterName)
+	case adapterType == "cli":
+		adapter = newCLIAdapter(g.config, adapterName)
 	default:
 		return fmt.Errorf("adapter type %s not yet implemented. Valid types: http, grpc, queue, cli", adapterType)
 	}
 
-	return err
-}
-
-// generateHTTPHandlerPackage generates the two-file per-entity HTTP handler sub-package.
-func (g *AdapterGenerator) generateHTTPHandlerPackage(adapterName, entityName string) error {
-	pkgName := utils.ToPlural(strings.ToLower(entityName))
-	adapterDir := filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", pkgName)
-
-	if err := utils.CreateDir(adapterDir); err != nil {
-		return err
-	}
-
-	configFile := filepath.Join(adapterDir, utils.ToSnakeCase(entityName)+".go")
-	handlersFile := filepath.Join(adapterDir, "handlers.go")
-
-	if utils.FileExists(configFile) {
-		return fmt.Errorf("handler file %s already exists", configFile)
-	}
-
-	entityVarName := strings.ToLower(entityName[:1]) + entityName[1:]
-	servicePkgName := pkgName
-	serviceImportAlias := pkgName + "Svc"
-	entityImportAlias := pkgName + "Domain"
-	serviceField := utils.ToTitleCase(pkgName)
-	routePrefix := pkgName
-
-	data := map[string]any{
-		"ModuleName":         g.config.Project.Module,
-		"CoreLogic":          g.config.CoreLogicDir(),
-		"PackageName":        pkgName,
-		"EntityName":         entityName,
-		"EntityVarName":      entityVarName,
-		"EntityPackage":      pkgName,
-		"EntityImportAlias":  entityImportAlias,
-		"ServicePackage":     servicePkgName,
-		"ServiceImportAlias": serviceImportAlias,
-		"ServiceName":        entityName,
-		"ServiceField":       serviceField,
-		"RoutePrefix":        routePrefix,
-	}
-
-	framework := g.config.Project.Framework
-	if framework == "" {
-		framework = "chi"
-	}
-
-	fmt.Printf("📝 Creating handler config file: %s\n", configFile)
-	configTmpl := fmt.Sprintf("adapter/primary/http/%s/handler_config.go.tmpl", framework)
-	configContent, err := g.config.templateLoader.Render(configTmpl, data)
-	if err != nil {
-		return fmt.Errorf("failed to render handler config template: %w", err)
-	}
-	if err := utils.WriteFile(configFile, configContent); err != nil {
-		return err
-	}
-
-	fmt.Printf("📝 Creating handler methods file: %s\n", handlersFile)
-	methodsTmpl := fmt.Sprintf("adapter/primary/http/%s/handler_methods.go.tmpl", framework)
-	methodsContent, err := g.config.templateLoader.Render(methodsTmpl, data)
-	if err != nil {
-		return fmt.Errorf("failed to render handler methods template: %w", err)
-	}
-	return utils.WriteFile(handlersFile, methodsContent)
+	return adapter.Generate()
 }
 
 // GenerateSecondary generates a secondary (outbound) adapter.
@@ -211,73 +139,6 @@ func (g *AdapterGenerator) generateOtherAdapterFiles(adapterType, adapterName st
 	return adapterDir, pkgName, nil
 }
 
-// generateHTTPAdapter generates an HTTP handler adapter
-func (g *AdapterGenerator) generateHTTPAdapter(filePath, handlerName string) error {
-	data := map[string]any{
-		"ModuleName":  g.config.Project.Module,
-		"CoreLogic":   g.config.CoreLogicDir(),
-		"HandlerName": handlerName,
-	}
-
-	content, err := g.config.templateLoader.Render("adapter/primary/http.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render HTTP adapter template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
-// generateGRPCAdapter generates a gRPC handler adapter
-func (g *AdapterGenerator) generateGRPCAdapter(filePath, handlerName string) error {
-	data := map[string]any{
-		"ModuleName":  g.config.Project.Module,
-		"CoreLogic":   g.config.CoreLogicDir(),
-		"HandlerName": handlerName,
-	}
-
-	content, err := g.config.templateLoader.Render("adapter/primary/grpc.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render gRPC adapter template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
-// generateQueueAdapter generates a message queue consumer adapter
-func (g *AdapterGenerator) generateQueueAdapter(filePath, consumerName string) error {
-	data := map[string]any{
-		"ModuleName":   g.config.Project.Module,
-		"CoreLogic":    g.config.CoreLogicDir(),
-		"ConsumerName": consumerName,
-	}
-
-	content, err := g.config.templateLoader.Render("adapter/queue.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render queue adapter template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
-// generateCLIAdapter generates a CLI (cobra subcommand) primary adapter.
-func (g *AdapterGenerator) generateCLIAdapter(filePath, commandName string) error {
-	if len(commandName) < 2 {
-		return fmt.Errorf("cli adapter name is too short")
-	}
-	useName := utils.ToSnakeCase(commandName)
-	data := map[string]any{
-		"CommandName": commandName,
-		"UseName":     useName,
-	}
-
-	content, err := g.config.templateLoader.Render("adapter/primary/cli.go.tmpl", data)
-	if err != nil {
-		return fmt.Errorf("failed to render cli adapter template: %w", err)
-	}
-
-	return utils.WriteFile(filePath, content)
-}
-
 // generateDatabaseAdapter generates a database repository adapter
 func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityName, portName string) error {
 	// Ensure ErrNotFound exists in domain before generating adapter
@@ -307,7 +168,7 @@ func (g *AdapterGenerator) generateDatabaseAdapter(filePath, repoName, entityNam
 		"EntityImportAlias": entityImportAlias,
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/secondary/database.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("adapter/secondary/database.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render database adapter template: %w", err)
 	}
@@ -353,7 +214,7 @@ func (g *AdapterGenerator) generateGenericAdapter(filePath, adapterType, service
 		data["DomainImports"] = domainAliasMap
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/secondary/generic.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("adapter/secondary/generic.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render generic adapter template: %w", err)
 	}
@@ -383,7 +244,7 @@ func (g *AdapterGenerator) generateCacheAdapter(filePath, cacheName string, port
 		data["PortImport"] = fmt.Sprintf("%q", portImport)
 	}
 
-	content, err := g.config.templateLoader.Render("adapter/secondary/cache.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("adapter/secondary/cache.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render cache adapter template: %w", err)
 	}
@@ -416,7 +277,7 @@ func (g *AdapterGenerator) createErrorsFile(filePath, errorName, errorMessage st
 		"ErrorDescription": strings.ToLower(errorMessage),
 	}
 
-	content, err := g.config.templateLoader.Render("domain/errors.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("domain/errors.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render errors template: %w", err)
 	}

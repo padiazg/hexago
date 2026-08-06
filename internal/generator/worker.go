@@ -81,7 +81,7 @@ func (g *WorkerGenerator) generateQueueWorker(filePath, workerName string, confi
 		"QueueSize":  config.QueueSize,
 	}
 
-	content, err := g.config.templateLoader.Render("worker/queue.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("worker/queue.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render queue worker template: %w", err)
 	}
@@ -97,7 +97,7 @@ func (g *WorkerGenerator) generatePeriodicWorker(filePath, workerName string, co
 		"Interval":   config.Interval,
 	}
 
-	content, err := g.config.templateLoader.Render("worker/periodic.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("worker/periodic.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render periodic worker template: %w", err)
 	}
@@ -112,7 +112,7 @@ func (g *WorkerGenerator) generateEventWorker(filePath, workerName string, confi
 		"WorkerName": workerName,
 	}
 
-	content, err := g.config.templateLoader.Render("worker/event.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("worker/event.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render event worker template: %w", err)
 	}
@@ -136,7 +136,7 @@ func (g *WorkerGenerator) ensureWorkerManager(workersDir string) error {
 		"ModuleName": g.config.Project.Module,
 	}
 
-	content, err := g.config.templateLoader.Render("worker/manager.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("worker/manager.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render worker manager template: %w", err)
 	}

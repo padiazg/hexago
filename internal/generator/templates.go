@@ -141,69 +141,32 @@ var templateMap = map[string]templateFn{
 		}
 	},
 	httpServerFileTemplate: func(g *ProjectGenerator) templateItem {
-		// TODO: manage this at the config package
-		framework := g.config.Project.Framework
-		if framework == "" {
-			framework = "stdlib"
-		}
-
 		return templateItem{
-			source: fmt.Sprintf("pkg/httpserver/http_server_%s.go.tmpl", framework),
+			source: fmt.Sprintf("pkg/httpserver/http_server_%s.go.tmpl", g.config.Project.Framework),
 			target: filepath.Join("pkg", "httpserver", "server.go"),
 		}
 	},
-	// httpServerHandlerTemplate: func(g *ProjectGenerator) templateItem {
-	// 	framework := g.config.Project.Framework
-	// 	if framework == "" {
-	// 		framework = "stdlib"
-	// 	}
-
-	// 	return templateItem{
-	// 		source: fmt.Sprintf("pkg/httpserver/http_server_handler_%s.go.tmpl", framework),
-	// 		target: filepath.Join("pkg", "httpserver", "handler.go"),
-	// 	}
-	// },
 	httpAdapterTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Project.Framework
-		if framework == "" {
-			framework = "stdlib"
-		}
-
 		return templateItem{
-			source: fmt.Sprintf("adapter/primary/http/%s/http_adapter.go.tmpl", framework),
+			source: fmt.Sprintf("adapter/primary/http/%s/http_adapter.go.tmpl", g.config.Project.Framework),
 			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "http.go"),
 		}
 	},
 	httpPingTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Project.Framework
-		if framework == "" {
-			framework = "stdlib"
-		}
-
 		return templateItem{
-			source: fmt.Sprintf("adapter/primary/http/%s/http_ping.go.tmpl", framework),
+			source: fmt.Sprintf("adapter/primary/http/%s/http_ping.go.tmpl", g.config.Project.Framework),
 			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "ping", "ping.go"),
 		}
 	},
 	httpHealthTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Project.Framework
-		if framework == "" {
-			framework = "stdlib"
-		}
-
 		return templateItem{
-			source: fmt.Sprintf("adapter/primary/http/%s/http_health.go.tmpl", framework),
+			source: fmt.Sprintf("adapter/primary/http/%s/http_health.go.tmpl", g.config.Project.Framework),
 			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "health", "health.go"),
 		}
 	},
 	httpMetricsTemplate: func(g *ProjectGenerator) templateItem {
-		framework := g.config.Project.Framework
-		if framework == "" {
-			framework = "stdlib"
-		}
-
 		return templateItem{
-			source: fmt.Sprintf("adapter/primary/http/%s/http_metrics.go.tmpl", framework),
+			source: fmt.Sprintf("adapter/primary/http/%s/http_metrics.go.tmpl", g.config.Project.Framework),
 			target: filepath.Join("internal", "adapters", g.config.AdapterInboundDir(), "http", "metrics", "metrics.go"),
 		}
 	},
@@ -260,7 +223,7 @@ func (g *ProjectGenerator) generateFile(name string) error {
 
 	templ := item(g)
 
-	content, err := g.config.templateLoader.Render(templ.source, &g.config)
+	content, err := g.config.TemplateLoader.Render(templ.source, &g.config)
 	if err != nil {
 		return fmt.Errorf("failed to render %s template: %w", templ.source, err)
 	}

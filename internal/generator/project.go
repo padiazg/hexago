@@ -323,10 +323,10 @@ func (g *ProjectGenerator) printSuccess() {
 	fmt.Println("\n✅ Project generated successfully!")
 	fmt.Println("\n📚 Next steps:")
 	fmt.Printf("  cd %s\n", g.config.Project.Name)
-	nextCmd := "go run main.go run"
+	nextCmd := "run"
 	if g.config.IsCLI() {
-		nextCmd = "go run main.go version"
+		nextCmd = "version"
 	}
-	fmt.Println("  " + nextCmd)
+	fmt.Println("  go run main.go " + nextCmd)
 	fmt.Println("\n📖 Read the README.md for more information about the project structure.")
 }

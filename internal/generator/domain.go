@@ -56,32 +56,46 @@ func resolveDomainImports(module string) map[string]string {
 		if err != nil || d.IsDir() {
 			return nil
 		}
+
 		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
 		}
-		f, perr := parser.ParseFile(token.NewFileSet(), path, nil, 0)
-		if perr != nil {
-			return nil
-		}
-		pkgRel := filepath.ToSlash(filepath.Dir(path))
-		pkgRel = strings.TrimPrefix(pkgRel, filepath.ToSlash("internal/core/domain"))
-		pkgRel = strings.TrimPrefix(pkgRel, "/")
-		importPath := module + "/internal/core/domain/" + pkgRel
-		for _, decl := range f.Decls {
-			gd, ok := decl.(*ast.GenDecl)
-			if !ok || gd.Tok != token.TYPE {
-				continue
-			}
-			for _, spec := range gd.Specs {
-				ts, ok := spec.(*ast.TypeSpec)
-				if ok && ts.Name.IsExported() {
-					index[ts.Name.Name] = importPath
-				}
-			}
-		}
+
+		parsePath(path, module, func(i, importPath string) { index[i] = importPath })
 		return nil
 	})
+
 	return index
+}
+
+func parsePath(path string, module string, addFn func(string, string)) {
+	f, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+	if err != nil {
+		return
+	}
+
+	importPath := builImportpath(path, module)
+	for _, decl := range f.Decls {
+		gd, ok := decl.(*ast.GenDecl)
+		if !ok || gd.Tok != token.TYPE {
+			continue
+		}
+		for _, spec := range gd.Specs {
+			ts, ok := spec.(*ast.TypeSpec)
+			if ok && ts.Name.IsExported() {
+				addFn(ts.Name.Name, importPath)
+				// index[ts.Name.Name] = importPath
+			}
+		}
+	}
+}
+
+func builImportpath(path string, module string) string {
+	pkgRel := filepath.ToSlash(filepath.Dir(path))
+	pkgRel = strings.TrimPrefix(pkgRel, filepath.ToSlash("internal/core/domain"))
+	pkgRel = strings.TrimPrefix(pkgRel, "/")
+	importPath := module + "/internal/core/domain/" + pkgRel
+	return importPath
 }
 
 // packageAlias returns the default package name for an import path
@@ -144,6 +158,7 @@ func qualifyField(f Field, index map[string]string, selfPkg string) Field {
 	default:
 		f.Type = qualifyNamed(t)
 	}
+
 	return f
 }
 
@@ -160,7 +175,9 @@ func renderImportBlock(imports map[string]bool) string {
 	var sb strings.Builder
 	sb.WriteString("import (\n")
 	for _, p := range paths {
-		sb.WriteString("\t" + strconv.Quote(p) + "\n")
+		sb.WriteString("\t")
+		sb.WriteString(strconv.Quote(p))
+		sb.WriteString("\n")
 	}
 	sb.WriteString(")")
 	return sb.String()
@@ -360,7 +377,7 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName, pkgName strin
 		"ConstructorInit":   constructorInit(qualified),
 	}
 
-	content, err := g.config.templateLoader.Render("domain/entity.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("domain/entity.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render entity template: %w", err)
 	}
@@ -379,7 +396,7 @@ func (g *DomainGenerator) generatePortFile(filePath, entityName, pkgName string)
 		"EntityName":  entityName,
 	}
 
-	content, err := g.config.templateLoader.Render("domain/port.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("domain/port.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render port template: %w", err)
 	}
@@ -419,7 +436,7 @@ func (g *DomainGenerator) generateValueObjectFile(filePath, voName, pkgName stri
 		"ConstructorInit":   constructorInit(qualified),
 	}
 
-	content, err := g.config.templateLoader.Render("domain/value_object.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("domain/value_object.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render value object template: %w", err)
 	}
