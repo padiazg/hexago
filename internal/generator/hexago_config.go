@@ -82,7 +82,7 @@ func NewHexagoConfig(
 		TemplateLoader: NewTemplateLoader(),
 	}
 
-	config.Validate()
+	_ = config.Validate()
 
 	return config
 }

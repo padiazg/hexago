@@ -51,15 +51,15 @@ func (g *AdapterGenerator) GeneratePrimary(adapterType, adapterName, entityName,
 
 	// Default: flat directory
 	var adapter Adapter
-	switch {
+	switch adapterType {
 	// HTTP + entity → sub-package with two files
-	case adapterType == "http":
+	case "http":
 		adapter = newHttpAdapter(g.config, adapterName, entityName)
-	case adapterType == "grpc":
+	case "grpc":
 		adapter = newGRPCAdapter(g.config, adapterName)
-	case adapterType == "queue":
+	case "queue":
 		adapter = newQueueAdapter(g.config, adapterName)
-	case adapterType == "cli":
+	case "cli":
 		adapter = newCLIAdapter(g.config, adapterName)
 	default:
 		return fmt.Errorf("adapter type %s not yet implemented. Valid types: http, grpc, queue, cli", adapterType)
