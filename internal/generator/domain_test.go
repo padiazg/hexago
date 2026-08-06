@@ -341,7 +341,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "builtin types add no imports",
+			name:    "builtin types add no imports",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "ID", Type: "string"},
@@ -354,7 +354,7 @@ func Test_collectImports(t *testing.T) {
 			checks: checkcollectImports(),
 		},
 		{
-			name:   "time.Time adds time import",
+			name:    "time.Time adds time import",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "CreatedAt", Type: "time.Time"},
@@ -364,7 +364,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "uuid.UUID adds uuid import",
+			name:    "uuid.UUID adds uuid import",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "ID", Type: "uuid.UUID"},
@@ -374,7 +374,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "json.RawMessage adds json import",
+			name:    "json.RawMessage adds json import",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "Data", Type: "json.RawMessage"},
@@ -384,7 +384,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "json.Number adds json import",
+			name:    "json.Number adds json import",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "Amount", Type: "json.Number"},
@@ -394,7 +394,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "custom domain type from index",
+			name:    "custom domain type from index",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "Email", Type: "email.Email"},
@@ -407,7 +407,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "skips self-pkg types",
+			name:    "skips self-pkg types",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "Status", Type: "Status"},
@@ -420,7 +420,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "mixed builtin and domain types",
+			name:    "mixed builtin and domain types",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "ID", Type: "string"},
@@ -440,8 +440,8 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "base imports not duplicated by fields",
-			selfPkg: module + "/internal/core/domain/user",
+			name:        "base imports not duplicated by fields",
+			selfPkg:     module + "/internal/core/domain/user",
 			baseImports: []string{"fmt"},
 			fields: []Field{
 				{Name: "Name", Type: "string"},
@@ -451,7 +451,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "unexported type field adds nothing",
+			name:    "unexported type field adds nothing",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "inner", Type: "innerType"},
@@ -461,7 +461,7 @@ func Test_collectImports(t *testing.T) {
 			),
 		},
 		{
-			name:   "slice of custom type",
+			name:    "slice of custom type",
 			selfPkg: module + "/internal/core/domain/user",
 			fields: []Field{
 				{Name: "Tags", Type: "[]tag.Tag"},

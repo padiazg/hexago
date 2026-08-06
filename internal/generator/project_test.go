@@ -132,16 +132,16 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 	}
 
 	tests := []struct {
-		name          string
-		framework     string
-		withMetrics   bool
-		withObs       bool
+		name           string
+		framework      string
+		withMetrics    bool
+		withObs        bool
 		withMigrations bool
-		withFiberObs  bool
-		checks        []checkProjectGeneratordependenciesListFn
+		withFiberObs   bool
+		checks         []checkProjectGeneratordependenciesListFn
 	}{
 		{
-			name:   "base dependencies only",
+			name:      "base dependencies only",
 			framework: "echo",
 			checks: checkProjectGeneratordependenciesList(
 				contains("github.com/spf13/cobra@latest"),
@@ -153,7 +153,7 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 			),
 		},
 		{
-			name:   "gin framework",
+			name:      "gin framework",
 			framework: "gin",
 			checks: checkProjectGeneratordependenciesList(
 				contains("github.com/gin-gonic/gin@latest"),
@@ -163,7 +163,7 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 			),
 		},
 		{
-			name:   "chi framework",
+			name:      "chi framework",
 			framework: "chi",
 			checks: checkProjectGeneratordependenciesList(
 				contains("github.com/go-chi/chi/v5@latest"),
@@ -172,7 +172,7 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 			),
 		},
 		{
-			name:   "fiber framework",
+			name:      "fiber framework",
 			framework: "fiber",
 			checks: checkProjectGeneratordependenciesList(
 				contains("github.com/gofiber/fiber/v2@latest"),
@@ -190,9 +190,9 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 			),
 		},
 		{
-			name:        "with observability",
-			framework:   "echo",
-			withObs:     true,
+			name:      "with observability",
+			framework: "echo",
+			withObs:   true,
 			checks: checkProjectGeneratordependenciesList(
 				contains("github.com/prometheus/client_golang@latest"),
 				contains("golang.org/x/sync@latest"),
@@ -207,10 +207,10 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 			),
 		},
 		{
-			name:           "fiber with observability needs adaptor",
-			framework:      "fiber",
-			withObs:        true,
-			withFiberObs:   true,
+			name:         "fiber with observability needs adaptor",
+			framework:    "fiber",
+			withObs:      true,
+			withFiberObs: true,
 			checks: checkProjectGeneratordependenciesList(
 				contains("github.com/gofiber/fiber/v2@latest"),
 				contains("golang.org/x/sync@latest"),
@@ -239,9 +239,9 @@ func TestProjectGenerator_dependenciesList(t *testing.T) {
 						Framework: tt.framework,
 					},
 					Features: HexagoFeaturesConfig{
-						WithMetrics:      tt.withMetrics,
+						WithMetrics:       tt.withMetrics,
 						WithObservability: tt.withObs,
-						WithMigrations:   tt.withMigrations,
+						WithMigrations:    tt.withMigrations,
 					},
 				},
 			}
