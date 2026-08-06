@@ -117,7 +117,7 @@ func (g *MigrationGenerator) generateUpMigration(filePath, migrationName string)
 		"Timestamp":     "now", // Could use time.Now() for actual timestamp
 	}
 
-	content, err := g.config.templateLoader.Render("migration/up.sql.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("migration/up.sql.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render UP migration template: %w", err)
 	}
@@ -132,7 +132,7 @@ func (g *MigrationGenerator) generateDownMigration(filePath, migrationName strin
 		"Timestamp":     "now",
 	}
 
-	content, err := g.config.templateLoader.Render("migration/down.sql.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("migration/down.sql.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render DOWN migration template: %w", err)
 	}
@@ -170,7 +170,7 @@ func (g *MigrationGenerator) EnsureMigrationManager() error {
 		"DBDriver":   g.config.Project.DatabaseDriver,
 	}
 
-	content, err := g.config.templateLoader.Render("migration/migrator.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("migration/migrator.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render migrator template: %w", err)
 	}

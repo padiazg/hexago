@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/padiazg/hexago/internal/adapter"
 	"github.com/padiazg/hexago/internal/analyzer"
 	"github.com/padiazg/hexago/internal/generator"
 	"github.com/padiazg/hexago/internal/testgen"
@@ -108,7 +109,7 @@ func runAddAdapterPrimary(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Project: %s\n", config.Project.Name)
 	fmt.Printf("   Adapter dir: %s\n\n", config.AdapterInboundDir())
 
-	gen := generator.NewAdapterGenerator(config)
+	gen := adapter.NewAdapterGenerator(config)
 	if err := gen.GeneratePrimary(adapterType, adapterName, adapterPrimaryEntity, fromPort); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}
@@ -161,7 +162,7 @@ func runAddAdapterSecondary(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gen := generator.NewAdapterGenerator(config)
+	gen := adapter.NewAdapterGenerator(config)
 	if err := gen.GenerateSecondary(adapterType, adapterName, adapterEntity, fromPort, portInfo); err != nil {
 		return fmt.Errorf("failed to generate adapter: %w", err)
 	}

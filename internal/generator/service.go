@@ -130,7 +130,7 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 		data["PortName"] = portInfo.Name
 	}
 
-	content, err := g.config.templateLoader.Render("service/service.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("service/service.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render service template: %w", err)
 	}
@@ -179,7 +179,7 @@ func (g *ServiceGenerator) upsertAggregator(baseServiceDir string) error {
 		"Entries":    serviceEntries,
 	}
 
-	content, err := g.config.templateLoader.Render("service/services_aggregator.go.tmpl", data)
+	content, err := g.config.TemplateLoader.Render("service/services_aggregator.go.tmpl", data)
 	if err != nil {
 		return fmt.Errorf("failed to render aggregator template: %w", err)
 	}
