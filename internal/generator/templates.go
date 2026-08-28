@@ -64,9 +64,11 @@ var templateMap = map[string]templateFn{
 	},
 	runTemplate: func(g *ProjectGenerator) templateItem {
 		var templateName string
+		fileName := "run.go"
 		switch g.config.Project.Type {
 		case "http-server":
-			templateName = "cmd/run_http_server.go.tmpl"
+			templateName = "cmd/http_serve.go.tmpl"
+			fileName = "serve.go"
 		case "service":
 			templateName = "cmd/run_service.go.tmpl"
 		default:
@@ -76,7 +78,7 @@ var templateMap = map[string]templateFn{
 
 		return templateItem{
 			source: templateName,
-			target: filepath.Join("cmd", "run.go"),
+			target: filepath.Join("cmd", fileName),
 		}
 	},
 	rootTemplate: func(g *ProjectGenerator) templateItem {

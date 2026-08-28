@@ -8,47 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_builImportpath(t *testing.T) {
-	tests := []struct {
-		name   string
-		path   string
-		module string
-		want   string
-	}{
-		{
-			name:   "sub-package with one level",
-			path:   "internal/core/domain/user/user.go",
-			module: "github.com/padiazg/hexago",
-			want:   "github.com/padiazg/hexago/internal/core/domain/user",
-		},
-		{
-			name:   "sub-package with two levels",
-			path:   "internal/core/domain/money/money.go",
-			module: "github.com/myorg/myservice",
-			want:   "github.com/myorg/myservice/internal/core/domain/money",
-		},
-		{
-			name:   "file at domain root",
-			path:   "internal/core/domain/user.go",
-			module: "github.com/padiazg/hexago",
-			want:   "github.com/padiazg/hexago/internal/core/domain/",
-		},
-		{
-			name:   "unix-style path",
-			path:   "internal/core/domain/address/address.go",
-			module: "example.com/myproject",
-			want:   "example.com/myproject/internal/core/domain/address",
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			r := builImportpath(tt.path, tt.module)
-			assert.Equal(t, tt.want, r)
-		})
-	}
-}
-
 type parsePathCheckFn func(*testing.T, map[string]string)
 
 var checkparsePath = func(fns ...parsePathCheckFn) []parsePathCheckFn { return fns }
@@ -126,7 +85,8 @@ func Test_parsePath(t *testing.T) {
 			}
 
 			index := map[string]string{}
-			parsePath(path, tt.module, func(i, importPath string) { index[i] = importPath })
+		modulePath := tt.module + "/internal/core/domain/user"
+		parsePath(path, tt.module, modulePath, func(i, importPath string) { index[i] = importPath })
 			for _, c := range tt.checks {
 				c(t, index)
 			}
@@ -282,7 +242,7 @@ func Test_resolveDomainImports(t *testing.T) {
 			defer os.Chdir(cwd)
 			os.Chdir(tmpDir)
 
-			r := resolveDomainImports(tt.module)
+			r := resolveDomainImports(tt.module, tmpDir)
 			for _, c := range tt.checks {
 				c(t, r)
 			}

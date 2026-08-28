@@ -49,8 +49,8 @@ func fieldBaseType(t string) string {
 
 // resolveDomainImports scans internal/core/domain (including sub-packages) and
 // returns a map of exported type name → module import path.
-func resolveDomainImports(module string) map[string]string {
-	domainDir := filepath.Join("internal", "core", "domain")
+func resolveDomainImports(module, projectRoot string) map[string]string {
+	domainDir := filepath.Join(projectRoot, "internal", "core", "domain")
 	index := map[string]string{}
 	_ = filepath.WalkDir(domainDir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
@@ -61,20 +61,26 @@ func resolveDomainImports(module string) map[string]string {
 			return nil
 		}
 
-		parsePath(path, module, func(i, importPath string) { index[i] = importPath })
+		pkgRel := filepath.Dir(path)
+		rel, err := filepath.Rel(domainDir, pkgRel)
+		if err != nil {
+			return nil
+		}
+		rel = strings.TrimPrefix(rel, ".")
+		importPath := module + "/internal/core/domain/" + filepath.ToSlash(rel)
+		parsePath(path, module, importPath, func(i, ip string) { index[i] = ip })
 		return nil
 	})
 
 	return index
 }
 
-func parsePath(path string, module string, addFn func(string, string)) {
+func parsePath(path string, module, importPath string, addFn func(string, string)) {
 	f, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
 	if err != nil {
 		return
 	}
 
-	importPath := builImportpath(path, module)
 	for _, decl := range f.Decls {
 		gd, ok := decl.(*ast.GenDecl)
 		if !ok || gd.Tok != token.TYPE {
@@ -84,18 +90,9 @@ func parsePath(path string, module string, addFn func(string, string)) {
 			ts, ok := spec.(*ast.TypeSpec)
 			if ok && ts.Name.IsExported() {
 				addFn(ts.Name.Name, importPath)
-				// index[ts.Name.Name] = importPath
 			}
 		}
 	}
-}
-
-func builImportpath(path string, module string) string {
-	pkgRel := filepath.ToSlash(filepath.Dir(path))
-	pkgRel = strings.TrimPrefix(pkgRel, filepath.ToSlash("internal/core/domain"))
-	pkgRel = strings.TrimPrefix(pkgRel, "/")
-	importPath := module + "/internal/core/domain/" + pkgRel
-	return importPath
 }
 
 // packageAlias returns the default package name for an import path
@@ -185,13 +182,16 @@ func renderImportBlock(imports map[string]bool) string {
 
 // DomainGenerator generates domain entities and value objects
 type DomainGenerator struct {
-	config *HexagoConfig
+	config      *HexagoConfig
+	projectRoot string
 }
 
-// NewDomainGenerator creates a new domain generator
-func NewDomainGenerator(config *HexagoConfig) *DomainGenerator {
+// NewDomainGenerator creates a new domain generator.
+// projectRoot is the absolute path to the project root.
+func NewDomainGenerator(config *HexagoConfig, projectRoot string) *DomainGenerator {
 	return &DomainGenerator{
-		config: config,
+		config:      config,
+		projectRoot: projectRoot,
 	}
 }
 
@@ -232,7 +232,7 @@ func constructorInit(fields []Field) string {
 
 // GenerateEntity creates a new domain entity
 func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) error {
-	baseDomainDir := filepath.Join("internal", "core", "domain")
+	baseDomainDir := filepath.Join(g.config.OutputDir, "internal", "core", "domain")
 	if !utils.FileExists(baseDomainDir) {
 		return fmt.Errorf("directory %s does not exist", baseDomainDir)
 	}
@@ -271,7 +271,7 @@ func (g *DomainGenerator) GenerateEntity(entityName string, fields []Field) erro
 // If entityName is non-empty, the VO is co-located inside that entity's sub-package.
 // If entityName is empty, the VO gets its own standalone sub-package.
 func (g *DomainGenerator) GenerateValueObject(voName, entityName string, fields []Field) error {
-	baseDomainDir := filepath.Join("internal", "core", "domain")
+	baseDomainDir := filepath.Join(g.config.OutputDir, "internal", "core", "domain")
 	if !utils.FileExists(baseDomainDir) {
 		return fmt.Errorf("directory %s does not exist", baseDomainDir)
 	}
@@ -345,7 +345,7 @@ func (g *DomainGenerator) generateEntityFile(filePath, entityName, pkgName strin
 	}
 
 	selfPkgImport := g.config.Project.Module + "/internal/core/domain/" + pkgName
-	index := resolveDomainImports(g.config.Project.Module)
+	index := resolveDomainImports(g.config.Project.Module, g.config.OutputDir)
 	qualified := make([]Field, len(fields))
 	for i, f := range fields {
 		qualified[i] = qualifyField(f, index, selfPkgImport)
@@ -407,7 +407,7 @@ func (g *DomainGenerator) generatePortFile(filePath, entityName, pkgName string)
 // generateValueObjectFile generates the value object implementation
 func (g *DomainGenerator) generateValueObjectFile(filePath, voName, pkgName string, fields []Field) error {
 	selfPkgImport := g.config.Project.Module + "/internal/core/domain/" + pkgName
-	index := resolveDomainImports(g.config.Project.Module)
+	index := resolveDomainImports(g.config.Project.Module, g.config.OutputDir)
 	qualified := make([]Field, len(fields))
 	for i, f := range fields {
 		qualified[i] = qualifyField(f, index, selfPkgImport)

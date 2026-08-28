@@ -103,7 +103,7 @@ func runAddWorker(cmd *cobra.Command, args []string) error {
 	fmt.Println("\n✅ Worker added successfully!")
 	fmt.Printf("\n📝 Next steps:\n")
 	fmt.Printf("  1. Implement the worker logic in the process method\n")
-	fmt.Printf("  2. Register the worker in cmd/run.go:\n")
+	fmt.Printf("  2. Register the worker in cmd/run.go or cmd/serve.go:\n")
 	fmt.Printf("     - Create worker instance\n")
 	fmt.Printf("     - Add to worker manager\n")
 	fmt.Printf("     - Start with context\n")

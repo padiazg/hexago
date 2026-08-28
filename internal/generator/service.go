@@ -58,14 +58,14 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string,
 		resolvedEntity = ""
 	}
 
-	serviceDir := filepath.Join("internal", "core", g.config.CoreLogicDir(), pkgName)
+	serviceDir := filepath.Join(g.config.OutputDir, "internal", "core", g.config.CoreLogicDir(), pkgName)
 	if err := utils.CreateDir(serviceDir); err != nil {
 		return fmt.Errorf("creating directory %s: %w", serviceDir, err)
 	}
 
 	fileName := pkgName + ".go"
 
-	filePath := filepath.Join(g.config.OutputDir, serviceDir, fileName)
+	filePath := filepath.Join(serviceDir, fileName)
 
 	if utils.FileExists(filePath) {
 		return fmt.Errorf("service file %s already exists", filePath)

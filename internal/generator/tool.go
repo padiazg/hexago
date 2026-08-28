@@ -22,7 +22,7 @@ func NewToolGenerator(config *HexagoConfig) *ToolGenerator {
 // Generate creates a new infrastructure tool
 func (g *ToolGenerator) Generate(toolType, toolName, description string) error {
 	// Create directory
-	toolDir := filepath.Join("internal", "infrastructure", toolType)
+	toolDir := filepath.Join(g.config.OutputDir, "internal", "infrastructure", toolType)
 	if err := utils.CreateDir(toolDir); err != nil {
 		return err
 	}

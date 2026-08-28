@@ -29,9 +29,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// runCmd represents the run command
-var runCmd = &cobra.Command{
-	Use:   "run",
+// serveCmd represents the serve command
+var serveCmd = &cobra.Command{
+	Use:   "serve",
 	Short: "Start the {{.ProjectName}} HTTP server",
 	Long:  `Start the {{.ProjectName}} HTTP API server with graceful shutdown support.
 
@@ -115,5 +115,5 @@ and perform a graceful shutdown with a configurable timeout.`,
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(serveCmd)
 }

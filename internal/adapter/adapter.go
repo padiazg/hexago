@@ -121,7 +121,7 @@ func (g *AdapterGenerator) generateDatabaseAdapterFiles(entityName, adapterName 
 		pkgName = strings.ToLower(adapterName)
 	}
 
-	adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), "database", pkgName)
+	adapterDir = filepath.Join(g.config.OutputDir, "internal", "adapters", g.config.AdapterOutboundDir(), "database", pkgName)
 	if err := utils.CreateDir(adapterDir); err != nil {
 		return "", "", err
 	}
@@ -130,7 +130,7 @@ func (g *AdapterGenerator) generateDatabaseAdapterFiles(entityName, adapterName 
 
 func (g *AdapterGenerator) generateOtherAdapterFiles(adapterType, adapterName string) (string, string, error) {
 	var adapterDir, pkgName string
-	adapterDir = filepath.Join("internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
+	adapterDir = filepath.Join(g.config.OutputDir, "internal", "adapters", g.config.AdapterOutboundDir(), adapterType)
 	if err := utils.CreateDir(adapterDir); err != nil {
 		return "", "", err
 	}
