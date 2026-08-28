@@ -85,8 +85,8 @@ func Test_parsePath(t *testing.T) {
 			}
 
 			index := map[string]string{}
-		modulePath := tt.module + "/internal/core/domain/user"
-		parsePath(path, tt.module, modulePath, func(i, importPath string) { index[i] = importPath })
+			modulePath := tt.module + "/internal/core/domain/user"
+			parsePath(path, tt.module, modulePath, func(i, importPath string) { index[i] = importPath })
 			for _, c := range tt.checks {
 				c(t, index)
 			}
