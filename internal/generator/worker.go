@@ -30,7 +30,7 @@ func NewWorkerGenerator(config *HexagoConfig) *WorkerGenerator {
 // Generate creates worker files
 func (g *WorkerGenerator) Generate(workerName string, workerConfig WorkerConfig) error {
 	// Create workers directory if it doesn't exist
-	workersDir := filepath.Join("internal", "workers")
+	workersDir := filepath.Join(g.config.OutputDir, "internal", "workers")
 	if err := utils.CreateDir(workersDir); err != nil {
 		return err
 	}

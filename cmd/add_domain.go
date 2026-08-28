@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/padiazg/hexago/internal/generator"
@@ -100,7 +101,11 @@ func runAddDomainEntity(cmd *cobra.Command, args []string) error {
 	}
 
 	// Generate entity
-	gen := generator.NewDomainGenerator(config)
+	projectRoot := workingDir
+	if projectRoot == "" {
+		projectRoot, _ = os.Getwd()
+	}
+	gen := generator.NewDomainGenerator(config, projectRoot)
 	if err := gen.GenerateEntity(entityName, fields); err != nil {
 		return fmt.Errorf("failed to generate entity: %w", err)
 	}
@@ -137,7 +142,11 @@ func runAddDomainValueObject(cmd *cobra.Command, args []string) error {
 	}
 
 	// Generate value object
-	gen := generator.NewDomainGenerator(config)
+	projectRoot := workingDir
+	if projectRoot == "" {
+		projectRoot, _ = os.Getwd()
+	}
+	gen := generator.NewDomainGenerator(config, projectRoot)
 	if err := gen.GenerateValueObject(voName, voEntity, fields); err != nil {
 		return fmt.Errorf("failed to generate value object: %w", err)
 	}

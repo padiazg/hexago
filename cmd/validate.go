@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/padiazg/hexago/internal/generator"
 	"github.com/spf13/cobra"
@@ -56,7 +57,11 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	fmt.Printf("   Core logic: %s\n\n", config.Structure.CoreLogic)
 
 	// Run validation
-	validator := generator.NewValidator(config)
+	projectRoot := workingDir
+	if projectRoot == "" {
+		projectRoot, _ = os.Getwd()
+	}
+	validator := generator.NewValidator(config, projectRoot)
 	result := validator.Validate()
 
 	// Print results

@@ -31,14 +31,23 @@ func (r *ValidationResult) ErrorCount() int {
 
 // Validator validates hexagonal architecture compliance
 type Validator struct {
-	config *HexagoConfig
+	config      *HexagoConfig
+	projectRoot string
 }
 
 // NewValidator creates a new validator
-func NewValidator(config *HexagoConfig) *Validator {
+func NewValidator(config *HexagoConfig, projectRoot string) *Validator {
 	return &Validator{
-		config: config,
+		config:      config,
+		projectRoot: projectRoot,
 	}
+}
+
+func (v *Validator) abs(path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(v.projectRoot, path)
 }
 
 // Validate runs all validation checks
@@ -73,11 +82,11 @@ func (v *Validator) validateProjectStructure(result *ValidationResult) {
 		path        string
 		description string
 	}{
-		{"internal/core/domain", "Domain directory"},
-		{filepath.Join("internal/core", v.config.CoreLogicDir()), "Core logic directory"},
-		{filepath.Join("internal/adapters", v.config.AdapterInboundDir()), "Inbound adapters directory"},
-		{filepath.Join("internal/adapters", v.config.AdapterOutboundDir()), "Outbound adapters directory"},
-		{"internal/config", "Config directory"},
+		{v.abs("internal/core/domain"), "Domain directory"},
+		{v.abs(filepath.Join("internal/core", v.config.CoreLogicDir())), "Core logic directory"},
+		{v.abs(filepath.Join("internal/adapters", v.config.AdapterInboundDir())), "Inbound adapters directory"},
+		{v.abs(filepath.Join("internal/adapters", v.config.AdapterOutboundDir())), "Outbound adapters directory"},
+		{v.abs("internal/config"), "Config directory"},
 	}
 
 	for _, dir := range requiredDirs {
@@ -91,7 +100,7 @@ func (v *Validator) validateProjectStructure(result *ValidationResult) {
 
 // validateCoreDependencies ensures core/domain has no external dependencies
 func (v *Validator) validateCoreDependencies(result *ValidationResult) {
-	domainPath := filepath.Join("internal", "core", "domain")
+	domainPath := v.abs(filepath.Join("internal", "core", "domain"))
 
 	violations, err := v.checkImports(domainPath, func(importPath string) bool {
 		// Domain should not import from adapters or infrastructure
@@ -115,7 +124,7 @@ func (v *Validator) validateCoreDependencies(result *ValidationResult) {
 
 // validateServiceDependencies ensures services only depend on domain and ports
 func (v *Validator) validateServiceDependencies(result *ValidationResult) {
-	servicePath := filepath.Join("internal", "core", v.config.CoreLogicDir())
+	servicePath := v.abs(filepath.Join("internal", "core", v.config.CoreLogicDir()))
 
 	violations, err := v.checkImports(servicePath, func(importPath string) bool {
 		// Services can import domain and ports, but not adapters
@@ -142,7 +151,7 @@ func (v *Validator) validateServiceDependencies(result *ValidationResult) {
 
 // validateAdapterDependencies ensures adapters don't import from other adapters
 func (v *Validator) validateAdapterDependencies(result *ValidationResult) {
-	adaptersPath := filepath.Join("internal", "adapters")
+	adaptersPath := v.abs(filepath.Join("internal", "adapters"))
 
 	violations, err := v.checkImports(adaptersPath, func(importPath string) bool {
 		// Adapters can import from core, but not from other adapters
@@ -183,8 +192,8 @@ func (v *Validator) validateNamingConventions(result *ValidationResult) {
 	expectedInbound := v.config.AdapterInboundDir()
 	expectedOutbound := v.config.AdapterOutboundDir()
 
-	inboundPath := filepath.Join(adaptersPath, expectedInbound)
-	outboundPath := filepath.Join(adaptersPath, expectedOutbound)
+	inboundPath := v.abs(filepath.Join(adaptersPath, expectedInbound))
+	outboundPath := v.abs(filepath.Join(adaptersPath, expectedOutbound))
 
 	if _, err := os.Stat(inboundPath); err == nil {
 		result.Successes = append(result.Successes, fmt.Sprintf("Using %s for inbound adapters", expectedInbound))
@@ -196,7 +205,7 @@ func (v *Validator) validateNamingConventions(result *ValidationResult) {
 
 	// Check for consistent naming
 	// Check if core logic directory matches expected
-	coreLogicPath := filepath.Join("internal", "core", v.config.CoreLogicDir())
+	coreLogicPath := v.abs(filepath.Join("internal", "core", v.config.CoreLogicDir()))
 	if _, err := os.Stat(coreLogicPath); err == nil {
 		result.Successes = append(result.Successes, fmt.Sprintf("Using %s for business logic", v.config.CoreLogicDir()))
 	}
