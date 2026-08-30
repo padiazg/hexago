@@ -30,8 +30,9 @@ lint:
 mod-tidy:
 	go mod tidy
 
+# install via rename: cp fails with ETXTBSY while the running MCP server holds the binary
 install: build
-	cp $(BINARY) $(shell go env GOPATH)/bin/
+	install -m 755 $(BINARY) $(shell go env GOPATH)/bin/$(BINARY).new && mv $(shell go env GOPATH)/bin/$(BINARY).new $(shell go env GOPATH)/bin/$(BINARY)
 
 coverage:
 	go test -race -coverprofile=coverage.out ./...
