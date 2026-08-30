@@ -41,6 +41,11 @@ func Execute() error {
 }
 
 func init() {
+	// RunE errors print once via main(); cobra must not repeat the error or
+	// dump the full usage (which reads like a flag-parsing failure).
+	rootCmd.SilenceUsage = true
+	rootCmd.SilenceErrors = true
+
 	// Global flags
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose output")
 	rootCmd.PersistentFlags().StringVarP(&workingDir, "working-directory", "w", "", "Working directory (defaults to current directory)")
