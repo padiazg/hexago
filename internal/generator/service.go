@@ -2,6 +2,10 @@ package generator
 
 import (
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"go/types"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,12 +77,25 @@ func (g *ServiceGenerator) Generate(serviceName, entityName, description string,
 
 	fmt.Printf("📝 Creating service file: %s\n", filePath)
 
-	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description, hasEntity, portInfo); err != nil {
+	// Derive the entity constructor call from the entity file on disk so the
+	// generated service always matches the actual New<entity> signature.
+	var ctorInfo *entityCtorInfo
+	if hasEntity {
+		entityFile := filepath.Join(g.config.OutputDir, "internal", "core", "domain", pkgName, pkgName+".go")
+		var err error
+		ctorInfo, err = entityConstructorInfo(entityFile, resolvedEntity)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "⚠️  Warning: %v; falling back to uuid.NewString() only\n", err)
+			ctorInfo = nil
+		}
+	}
+
+	if err := g.generateServiceFile(filePath, serviceName, resolvedEntity, pkgName, description, hasEntity, ctorInfo, portInfo); err != nil {
 		return err
 	}
 
 	// Entity-bound services are generated with uuid.NewString() and need the dep.
-	if hasEntity {
+	if hasEntity && (ctorInfo == nil || ctorInfo.needsUUID) {
 		g.ensureUUIDDep()
 	}
 
@@ -100,8 +117,107 @@ func (g *ServiceGenerator) ensureUUIDDep() {
 	}
 }
 
+// entityCtorInfo describes how a generated service should call the entity
+// constructor, derived from the New<entity> signature found on disk.
+type entityCtorInfo struct {
+	createFields []Field // fields for Create<entity>Input (the non-auto params)
+	newArgs      string  // pre-joined argument list for New<entity>(...)
+	needsUUID    bool    // generated code references uuid.*
+	needsTime    bool    // generated code references time.*
+}
+
+// entityConstructorInfo parses the entity file and derives the arguments a
+// generated service needs to call New<entity>:
+//   - params named id/uuid of type string or uuid.UUID → uuid.NewString()/uuid.New()
+//   - params of type time.Time → time.Now()
+//   - everything else → Create<entity>Input field, passed as input.<Field>
+func entityConstructorInfo(entityFile, entityName string) (*entityCtorInfo, error) {
+	f, err := parser.ParseFile(token.NewFileSet(), entityFile, nil, 0)
+	if err != nil {
+		return nil, fmt.Errorf("parsing entity file %s: %w", entityFile, err)
+	}
+
+	constructorName := "New" + entityName
+	params, found := extractConstructorParams(f, constructorName)
+	if !found {
+		return nil, fmt.Errorf("constructor %s not found in %s", constructorName, entityFile)
+	}
+
+	info := &entityCtorInfo{}
+	for _, p := range params {
+		switch {
+		case isIDParam(p.name) && (p.typ == "string" || p.typ == "uuid.UUID"):
+			if p.typ == "uuid.UUID" {
+				info.newArgsOrAppend("uuid.New()")
+			} else {
+				info.newArgsOrAppend("uuid.NewString()")
+			}
+			info.needsUUID = true
+		case p.typ == "time.Time":
+			info.newArgsOrAppend("time.Now()")
+			info.needsTime = true
+		default:
+			fieldName := utils.ToTitleCase(p.name)
+			info.createFields = append(info.createFields, Field{Name: fieldName, Type: p.typ})
+			info.newArgsOrAppend("input." + fieldName)
+			if strings.Contains(p.typ, "time.") {
+				info.needsTime = true
+			}
+			if strings.Contains(p.typ, "uuid.") {
+				info.needsUUID = true
+			}
+		}
+	}
+	return info, nil
+}
+
+// namedParam is one parameter of an entity constructor.
+type namedParam struct {
+	name string
+	typ  string
+}
+
+// extractConstructorParams returns the named parameters of the given top-level
+// function declaration, expanding grouped names (e.g. "a, b string").
+func extractConstructorParams(f *ast.File, funcName string) ([]namedParam, bool) {
+	for _, decl := range f.Decls {
+		fd, ok := decl.(*ast.FuncDecl)
+		if !ok || fd.Name.Name != funcName || fd.Type.Params == nil {
+			continue
+		}
+		var params []namedParam
+		for _, pf := range fd.Type.Params.List {
+			typ := types.ExprString(pf.Type)
+			names := pf.Names
+			if len(names) == 0 {
+				names = []*ast.Ident{{Name: "_"}}
+			}
+			for _, n := range names {
+				params = append(params, namedParam{name: n.Name, typ: typ})
+			}
+		}
+		return params, true
+	}
+	return nil, false
+}
+
+// isIDParam reports whether a constructor parameter name denotes an identity
+// (id/uuid in any case).
+func isIDParam(name string) bool {
+	return strings.EqualFold(name, "id") || strings.EqualFold(name, "uuid")
+}
+
+// newArgsOrAppend adds an argument to the pre-joined argument list.
+func (c *entityCtorInfo) newArgsOrAppend(arg string) {
+	if c.newArgs == "" {
+		c.newArgs = arg
+	} else {
+		c.newArgs += ", " + arg
+	}
+}
+
 // generateServiceFile generates the service implementation file
-func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName, pkgName, description string, hasEntity bool, portInfo *analyzer.PortInfo) error {
+func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName, pkgName, description string, hasEntity bool, ctorInfo *entityCtorInfo, portInfo *analyzer.PortInfo) error {
 	desc := description
 	if desc == "" {
 		if hasEntity {
@@ -123,6 +239,17 @@ func (g *ServiceGenerator) generateServiceFile(filePath, serviceName, entityName
 		"EntityPackage":     pkgName,
 		"EntityImportAlias": entityImportAlias,
 		"Description":       desc,
+	}
+
+	if ctorInfo != nil {
+		data["CreateFields"] = ctorInfo.createFields
+		data["NewEntityArgs"] = ctorInfo.newArgs
+		data["NeedsUUID"] = ctorInfo.needsUUID
+		data["NeedsTime"] = ctorInfo.needsTime
+	} else if hasEntity {
+		// Fallback when the entity constructor could not be read.
+		data["NewEntityArgs"] = "uuid.NewString()"
+		data["NeedsUUID"] = true
 	}
 
 	if portInfo != nil {

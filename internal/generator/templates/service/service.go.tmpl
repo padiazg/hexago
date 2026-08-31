@@ -9,12 +9,21 @@ package {{.PackageName}}
 import (
 	"context"
 	"fmt"
+{{- if .NeedsTime}}
+	"time"
+{{- end}}
 
+{{- if .NeedsUUID}}
 	"github.com/google/uuid"
+{{- end}}
 	{{.EntityImportAlias}} "{{.ModuleName}}/internal/core/domain/{{.EntityPackage}}"
 )
 
-type Create{{.EntityName}}Input struct{}
+type Create{{.EntityName}}Input struct{
+{{- range .CreateFields}}
+	{{.Name}} {{.Type}}
+{{- end}}
+}
 
 type Update{{.EntityName}}Input struct{
 	ID string
@@ -29,7 +38,7 @@ func New{{.ServiceName}}Service(repo {{.EntityImportAlias}}.{{.EntityName}}Repos
 }
 
 func (s *{{.ServiceName}}Service) Create(ctx context.Context, input Create{{.EntityName}}Input) (*{{.EntityImportAlias}}.{{.EntityName}}, error){
-	entity, err := {{.EntityImportAlias}}.New{{.EntityName}}(uuid.NewString())
+	entity, err := {{.EntityImportAlias}}.New{{.EntityName}}({{.NewEntityArgs}})
 	if err != nil{
 		return nil, fmt.Errorf("invalid {{.EntityName}}: %w", err)
 	}
